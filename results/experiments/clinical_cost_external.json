@@ -1,0 +1,194 @@
+{
+  "note": "AUROC dengan UNSAFE_MISMATCH sebagai kelas positif; 0.5 = tanpa informasi",
+  "n_bootstrap": 2000,
+  "cohorts": [
+    {
+      "name": "OIA-DDR",
+      "split": "test",
+      "n_unsafe": 91,
+      "n_close": 1217,
+      "n_images": 187,
+      "n_pass_fusion": 3,
+      "images_without_primary_cache": 0,
+      "signals": {
+        "detector_score": {
+          "auroc": 0.4790152329182732,
+          "info_abs": 0.020984767081726807,
+          "ci95": [
+            0.34587086282317636,
+            0.5954874326680907
+          ],
+          "n_boot_valid": 2000,
+          "ci_contains_half": true,
+          "mean_unsafe": 0.4360890109890111,
+          "mean_close": 0.44475932621199665
+        },
+        "fused_3_pass": {
+          "auroc": 0.48257740615998634,
+          "info_abs": 0.017422593840013656,
+          "ci95": [
+            0.36286913314862146,
+            0.5848412089128435
+          ],
+          "n_boot_valid": 2000,
+          "ci_contains_half": true,
+          "mean_unsafe": 0.38085186446886443,
+          "mean_close": 0.3867838049849356
+        },
+        "kg_sdca": {
+          "auroc": 0.9945054945054945,
+          "info_abs": 0.4945054945054945,
+          "ci95": [
+            0.98125,
+            1.0
+          ],
+          "n_boot_valid": 2000,
+          "ci_contains_half": false,
+          "mean_unsafe": 0.7142857142857143,
+          "mean_close": 0.0
+        }
+      }
+    },
+    {
+      "name": "IDRiD",
+      "split": "test",
+      "n_unsafe": 25,
+      "n_close": 93,
+      "n_images": 26,
+      "n_pass_fusion": 3,
+      "images_without_primary_cache": 0,
+      "signals": {
+        "detector_score": {
+          "auroc": 0.36430107526881716,
+          "info_abs": 0.13569892473118284,
+          "ci95": [
+            0.25748469554334225,
+            0.45310301677489184
+          ],
+          "n_boot_valid": 2000,
+          "ci_contains_half": false,
+          "mean_unsafe": 0.46629200000000004,
+          "mean_close": 0.6022784946236559
+        },
+        "fused_3_pass": {
+          "auroc": 0.3686021505376344,
+          "info_abs": 0.1313978494623656,
+          "ci95": [
+            0.2783730158730158,
+            0.4443325982723352
+          ],
+          "n_boot_valid": 2000,
+          "ci_contains_half": false,
+          "mean_unsafe": 0.3927949066666666,
+          "mean_close": 0.5202898494623657
+        },
+        "kg_sdca": {
+          "auroc": 1.0,
+          "info_abs": 0.5,
+          "ci95": [
+            1.0,
+            1.0
+          ],
+          "n_boot_valid": 2000,
+          "ci_contains_half": false,
+          "mean_unsafe": 0.74,
+          "mean_close": 0.0
+        }
+      }
+    },
+    {
+      "name": "TJDR",
+      "split": "test",
+      "n_unsafe": 45,
+      "n_close": 81,
+      "n_images": 43,
+      "n_pass_fusion": 3,
+      "images_without_primary_cache": 0,
+      "signals": {
+        "detector_score": {
+          "auroc": 0.3256515775034294,
+          "info_abs": 0.17434842249657062,
+          "ci95": [
+            0.20890630378390274,
+            0.45741421568627444
+          ],
+          "n_boot_valid": 2000,
+          "ci_contains_half": false,
+          "mean_unsafe": 0.2621888888888889,
+          "mean_close": 0.40904074074074076
+        },
+        "fused_3_pass": {
+          "auroc": 0.4315500685871056,
+          "info_abs": 0.0684499314128944,
+          "ci95": [
+            0.3267874570191035,
+            0.5466170262664165
+          ],
+          "n_boot_valid": 2000,
+          "ci_contains_half": true,
+          "mean_unsafe": 0.3205977851851852,
+          "mean_close": 0.37498686008230453
+        },
+        "kg_sdca": {
+          "auroc": 1.0,
+          "info_abs": 0.5,
+          "ci95": [
+            1.0,
+            1.0
+          ],
+          "n_boot_valid": 2000,
+          "ci_contains_half": false,
+          "mean_unsafe": 0.7555555555555555,
+          "mean_close": 0.0
+        }
+      }
+    },
+    {
+      "name": "FGADR",
+      "split": "train",
+      "n_unsafe": 360,
+      "n_close": 1581,
+      "n_images": 797,
+      "n_pass_fusion": 2,
+      "images_without_primary_cache": 0,
+      "signals": {
+        "detector_score": {
+          "auroc": 0.47458798931759083,
+          "info_abs": 0.02541201068240917,
+          "ci95": [
+            0.4394547769602014,
+            0.5083250986119718
+          ],
+          "n_boot_valid": 2000,
+          "ci_contains_half": true,
+          "mean_unsafe": 0.41681472222222227,
+          "mean_close": 0.4365253004427578
+        },
+        "fused_2_pass": {
+          "auroc": 0.4593550144071965,
+          "info_abs": 0.040644985592803495,
+          "ci95": [
+            0.4231612226188921,
+            0.4934162398802718
+          ],
+          "n_boot_valid": 2000,
+          "ci_contains_half": false,
+          "mean_unsafe": 0.43746774166666663,
+          "mean_close": 0.4663175585072738
+        },
+        "kg_sdca": {
+          "auroc": 0.9652777777777778,
+          "info_abs": 0.4652777777777778,
+          "ci95": [
+            0.9504852491755644,
+            0.9783922733344562
+          ],
+          "n_boot_valid": 2000,
+          "ci_contains_half": false,
+          "mean_unsafe": 0.7020833333333333,
+          "mean_close": 0.0028462998102466793
+        }
+      }
+    }
+  ]
+}

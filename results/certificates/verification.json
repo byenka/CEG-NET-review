@@ -1,0 +1,100 @@
+{
+  "tau_star": 0.30613959568784477,
+  "delta": 0.3,
+  "checks": {
+    "C1_determinism": {
+      "per_cohort": {
+        "oiaddr": {
+          "stored_sha256": "333e4a34a30bac222e9164ab3950a3c9184aa3db1653eacdfc878ffb960326ee",
+          "reemitted_sha256": "333e4a34a30bac222e9164ab3950a3c9184aa3db1653eacdfc878ffb960326ee",
+          "identical": true
+        },
+        "idrid": {
+          "stored_sha256": "83635af5c72b71a1caad7f700560d676936f668e7b5a688aba71a4f139d1f48a",
+          "reemitted_sha256": "83635af5c72b71a1caad7f700560d676936f668e7b5a688aba71a4f139d1f48a",
+          "identical": true
+        },
+        "tjdr": {
+          "stored_sha256": "c760185ebf573b820cea0768b24249edb2af39c4c659d60bc065913e30e0ffa3",
+          "reemitted_sha256": "c760185ebf573b820cea0768b24249edb2af39c4c659d60bc065913e30e0ffa3",
+          "identical": true
+        },
+        "fgadr": {
+          "stored_sha256": "2a3ecbded6b8265021a2acb5d7461a3791a3d98401c8df19f4a30aba04bdb947",
+          "reemitted_sha256": "2a3ecbded6b8265021a2acb5d7461a3791a3d98401c8df19f4a30aba04bdb947",
+          "identical": true
+        }
+      },
+      "passed": true
+    },
+    "C2_decision_reconstruction": {
+      "matched": 634423,
+      "of": 634423,
+      "passed": true
+    },
+    "C3_prior_consistency": {
+      "matched": 634423,
+      "of": 634423,
+      "passed": true
+    },
+    "C4_label_disclosure": {
+      "differs": 33729,
+      "of": 634423,
+      "rate_overall": 0.053164844275822284,
+      "rate_oiaddr": 0.044055813374030584
+    },
+    "C5_ranker_independence": {
+      "matched": 634423,
+      "of": 634423,
+      "passed": true
+    }
+  },
+  "per_cohort": {
+    "oiaddr": {
+      "n": 64214,
+      "C2_decision_tier_match": 64214,
+      "C2_rate": 1.0,
+      "C3_sdca_match": 64214,
+      "C3_rate": 1.0,
+      "C4_emitted_differs_from_argmax": 2829,
+      "C4_rate": 0.044055813374030584,
+      "C5_prior_fields_ranker_free": 64214,
+      "C5_rate": 1.0
+    },
+    "idrid": {
+      "n": 8042,
+      "C2_decision_tier_match": 8042,
+      "C2_rate": 1.0,
+      "C3_sdca_match": 8042,
+      "C3_rate": 1.0,
+      "C4_emitted_differs_from_argmax": 207,
+      "C4_rate": 0.025739865705048496,
+      "C5_prior_fields_ranker_free": 8042,
+      "C5_rate": 1.0
+    },
+    "tjdr": {
+      "n": 23181,
+      "C2_decision_tier_match": 23181,
+      "C2_rate": 1.0,
+      "C3_sdca_match": 23181,
+      "C3_rate": 1.0,
+      "C4_emitted_differs_from_argmax": 1850,
+      "C4_rate": 0.07980673827703723,
+      "C5_prior_fields_ranker_free": 23181,
+      "C5_rate": 1.0
+    },
+    "fgadr": {
+      "n": 538986,
+      "C2_decision_tier_match": 538986,
+      "C2_rate": 1.0,
+      "C3_sdca_match": 538986,
+      "C3_rate": 1.0,
+      "C4_emitted_differs_from_argmax": 28843,
+      "C4_rate": 0.05351344932892506,
+      "C5_prior_fields_ranker_free": 538986,
+      "C5_rate": 1.0
+    }
+  },
+  "all_passed": true,
+  "scope_note": "Validasi auditability teknis. Tidak menunjukkan manfaat klinis dan bukan pengganti reader study."
+}

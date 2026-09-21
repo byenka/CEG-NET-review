@@ -1,0 +1,95 @@
+# ── LGov-Net Experiment Runner Configuration — Phase 17 ──────────────────────
+#
+# Consumed by src/experiment_runner.py.
+# Controls experiment repetitions, synthetic batch parameters, model bootstrap,
+# coverage evaluation rules, and default ablation subsets.
+
+# ── Default run settings ──────────────────────────────────────────────────────
+default_num_steps: 5 # step iterations per experiment (varied seeds)
+default_repeats: 1 # independent repeats of each experiment config
+default_base_seed: 42 # seed base; per-step seed = base + step_i + repeat*1000
+output_dir: outputs/experiments
+
+# ── Synthetic batch parameters ────────────────────────────────────────────────
+# Mirror the same patch used in run_ablation_suite.py / run_eval_step.py.
+batch:
+  image_ids: ["img_0001", "img_0002", "img_0003"]
+  bboxes_per_image: 4
+
+# ── Model bootstrap hyperparameters ──────────────────────────────────────────
+# These initialise fresh (untrained) models for smoke/integration tests.
+# Replace with checkpoint loading when real training is available.
+model:
+  node_feat_dim: 17
+  encoder_hidden_dim: 64
+  embedding_dim: 64
+  gate_hidden_dim: 128
+
+# ── Base step config (passed as `cfg` to run_lgovnet_step / run_single_ablation) ─
+# Matches values in configs/train.yaml.  Ablation cfg_overrides are merged on top.
+step_cfg:
+  gumbel_tau_start: 1.0
+  gumbel_tau_end: 0.1
+  gumbel_tau_anneal_steps: 10000
+  lambda_gate: 1.0
+  lambda_kg: 0.1
+  use_kg_embedding: true
+  gate_hard: true # hard argmax is cleaner for per-step coverage analysis
+
+# ── SDGLLoss constructor params ───────────────────────────────────────────────
+# Run-independent. Ablation cases that need eta=0.0 create their own instance.
+sdgl_loss:
+  lambda1: 1.0
+  lambda2: 1.0
+  lambda3: 0.5
+  lambda_kg: 0.1
+  eta: 1.0
+
+# ── GateLoss constructor params ───────────────────────────────────────────────
+gate_loss:
+  epsilon: 0.05
+
+# ── Default ablation subset (used when mode = ablation_suite_subset) ─────────
+# Subset of name keys from configs/ablation.yaml.
+# These are deliberately varied: reference (C1, C2, C3) mix.
+default_ablation_subset:
+  - baseline_full
+  - without_kg_embedding # C1: no KG embedding in gate
+  - without_aps # C1: APS neutralised
+  - without_r3_weighting # C3: uniform R3 weights
+  - baseline_no_governance # C3: all R1 (no routing)
+
+# ── Coverage rules ────────────────────────────────────────────────────────────
+# Evaluated in priority order by evaluate_tier_coverage().
+#
+# Rationale for "informative" requiring R2 AND R3:
+#   R2 is required to exercise L_soft^R2 (C3: SDM soft targets, C1: SDCA signal).
+#   R3 is required to exercise R3 per-box weighting (C3) and refinement (C2).
+#   Without both, the run cannot distinguish C2/C3 contributions from C1.
+#
+# A run with only R3+R4 (the smoke-test default) is therefore "partial":
+#   it exercises R3 weighting and refinement, but NOT L_R2.
+#
+# "non_informative": only a single tier seen — no tier variation observable.
+#   baseline_no_governance (all R1 forced) will always be non_informative.
+#   This is honest and intentional: that ablation bypasses governance entirely.
+coverage_rules:
+  informative:
+    require_tiers: ["R2", "R3"] # BOTH must appear in aggregated tier counts
+  partial:
+    min_distinct_tiers: 2 # at least 2 distinct tiers across all steps
+
+# ── Phase 17R — Real-data execution settings ──────────────────────────────────
+# Controls GPU-safe real-data runs on RTX 4090 24GB.
+# These values are read by tools/run_experiment.py and src/detector_backend.py.
+realdata:
+  detector_mode: stub # stub | single_head_real | multi_head_sequential | cached_predictions
+  sequential_heads: true # RECOMMENDED — one detector head on GPU at a time (RTX 4090 safety)
+  use_amp: true # fp16 inference — reduces VRAM ~40%
+  micro_batch_size: 2 # images per GPU forward pass per head
+  grad_accum_steps: 4 # effective batch = micro_batch_size * grad_accum_steps
+  max_images_per_split: null # null = no cap; e.g. 50 for safe incremental runs
+  dry_run_full_dataset: false # true = report plan only, do not execute pipeline
+  cache_dir: null # path for cached_predictions mode (one JSON per image stem)
+  non_informative:
+    min_distinct_tiers: 0 # fallthrough — catches all remaining cases

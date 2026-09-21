@@ -1,0 +1,266 @@
+# kg.yaml — Knowledge Graph configuration for LGov-Net
+# 9 nodes: 4 lesion + 5 ETDRS anatomical zones
+# 5 edge types: see architecture-lgov-net-v2_rev.txt (Contribution 1)
+# Fixed values sourced from ICDR grading scale + inter-observer kappa studies.
+
+# ── Node definitions ──────────────────────────────────────────────────────────
+nodes:
+  lesion_nodes: ["MA", "HE", "Hard_EX", "Soft_EX"]
+  anatomy_nodes:
+    ["Foveal", "Parafoveal", "Peripapillary", "Vascular_Arcades", "Peripheral"]
+
+  # If true, KG retains lesion nodes that have no observed training examples.
+  # Soft_EX is the primary case: it must stay in the graph to preserve the
+  # severity_transition and pathophysiological_mechanism edge geometry
+  # (SDM distances depend on all 4 nodes existing at training time).
+  allow_unobserved_conceptual_nodes: true
+
+# ── Raw dataset label -> canonical KG node mapping ───────────────────────────
+# This section mirrors RAW_TO_KG_MAP in src/data/ontology.py.
+# SINGLE SOURCE OF TRUTH: ontology.py (Python code).
+# This YAML block is for documentation / external tooling only.
+# If you update one, update the other.
+#
+# Entries marked [AMBIGUOUS] must be verified against XML audit output
+# before training. Run: python tools/audit_dataset.py --xml_dir data/xml/
+raw_to_kg_map:
+  # MA
+  ma: MA
+  microaneurysm: MA
+  microaneurysms: MA
+  micro_aneurysm: MA
+
+  # HE
+  he: HE
+  hemorrhage: HE
+  hemorrhages: HE
+  haemorrhage: HE
+  haemorrhages: HE
+
+  # Hard_EX
+  hard_ex: Hard_EX
+  hardex: Hard_EX
+  hard_exudate: Hard_EX
+  hard_exudates: Hard_EX
+  he_ex: Hard_EX
+  ex: Hard_EX # CONFIRMED: OIA-DDR uses `ex` for hard exudates. FROZEN 2025.
+  exudate: Hard_EX # [AMBIGUOUS] generic term — verify if used in other datasets
+  exudates: Hard_EX # [AMBIGUOUS] generic term — verify if used in other datasets
+
+  # Soft_EX
+  soft_ex: Soft_EX
+  softex: Soft_EX
+  soft_exudate: Soft_EX
+  soft_exudates: Soft_EX
+  cotton_wool: Soft_EX
+  cotton_wool_spot: Soft_EX
+  cws: Soft_EX
+  se: Soft_EX
+
+# Node feature: x_v = [one-hot(9) || clinical_attr(8)] => dim = 17
+node_feature_dim: 17
+embedding_dim: 64
+
+edges:
+  # 1. UNDIRECTED, FIXED — morphological similarity between lesion classes
+  morphological_confusability:
+    directed: false
+    trainable: false
+    pairs:
+      - [MA, HE, 0.8]
+      - [Hard_EX, Soft_EX, 0.5]
+      - [MA, Hard_EX, 0.1]
+
+  # 2. DIRECTED, FIXED topology — trainable weights
+  #    Encodes pathophysiological asymmetry (MA is upstream)
+  pathophysiological_mechanism:
+    directed: true
+    trainable: true # topology fixed; weights adapt
+    pairs:
+      - [MA, HE, 1.0] # rupture -> hemorrhage
+      - [MA, Hard_EX, 1.0] # leakage -> lipid deposition
+      - [MA, Soft_EX, 0.3] # weak upstream prior (not direct causation)
+
+  # 3. BIPARTITE lesion <-> zone, TRAINABLE
+  #    Initialized from dataset co-occurrence; updated during training
+  spatial_distribution:
+    directed: false
+    trainable: true
+    # init_weight: 1.0 for all pairs; will be replaced by dataset stats
+
+  # 4. UNDIRECTED, FIXED — ICDR severity grade transition cost
+  severity_transition:
+    directed: false
+    trainable: false
+    pairs:
+      - [MA, HE, 0.0] # same grade impact
+      - [MA, Hard_EX, 1.0] # 1 grade difference
+      - [MA, Soft_EX, 2.0] # 2 grade difference
+      - [HE, Hard_EX, 1.0]
+      - [HE, Soft_EX, 2.0]
+      - [Hard_EX, Soft_EX, 1.5]
+
+  # 5. UNDIRECTED, TRAINABLE — co-occurrence in same image
+  #    Initialized from OIA-DDR statistics via build_dataset_stats.py
+  co_occurrence_pattern:
+    directed: false
+    trainable: true
+    # init_weight: populated by tools/build_dataset_stats.py
+
+# SDM and Compat computation (see Contribution 1)
+sdm:
+  distance_metric: "l2" # SDM_learned(ci,cj) = ||e_ci - e_cj||_2
+
+compat:
+  # Compat(c,a) = sigmoid(e_c^T W_compat e_a)
+  high_affinity_pairs:
+    - [Hard_EX, Parafoveal]
+    - [Hard_EX, Foveal]
+    - [Soft_EX, Peripapillary]
+
+# ── Numerical stability ────────────────────────────────────────────────────────
+# Min-max normalization applied to CLINICAL_ATTRS before building node features.
+# Ensures all 8 clinical attribute dimensions are in [0, 1] so the encoder's
+# input_proj layer is not dominated by large-scale dimensions (size in µm).
+clinical_attr_normalization: "minmax"
+
+# Minimum operational edge weight for message-passing.
+# Severity transition MA<->HE has clinical_cost=0.0 (same ICDR grade impact),
+# which is a valid semantic fact. However, a zero init_weight would create a
+# dead edge in the GAT attention mechanism.
+# EdgeSpec.init_weight = max(clinical_cost, min_edge_weight_epsilon).
+min_edge_weight_epsilon: 0.05
+
+# When true, EdgeSpec stores two separate values:
+#   clinical_cost — original ICDR-derived semantic value (preserved, may be 0.0)
+#   init_weight   — operational weight for message passing (>= epsilon)
+use_separate_clinical_cost: true
+
+# ── SDCA normalization ────────────────────────────────────────────────────────
+# Method for normalizing raw L2 SDM distances into [0, 1] for governance input.
+#   "log_scaled":    norm = log(1 + raw) / log(1 + max_raw)
+#                    Compresses large values, preserves ordering, robust to
+#                    unknown range before training.  Recommended default.
+#   "divide_by_max": norm = raw / max_raw
+#                    Linear rescaling. Simple but sensitive to outlier pairs.
+sdca_normalization_method: "log_scaled"
+
+# Minimum denominator to prevent division by zero when all SDM values are
+# near zero (e.g. at random initialization before any training).
+sdca_eps: 1.0e-6
+
+# ── Compat initial calibration ────────────────────────────────────────────────
+# Additive logit bias applied to Compat(c, a) = σ(e_c^T W_compat e_a + prior).
+#   "high_affinity_prior": +1.0 bias for HIGH_AFFINITY pairs from schema.py
+#                          (Hard_EX↔Foveal/Parafoveal, Soft_EX↔Peripapillary).
+#                          Gives σ(1.0) ≈ 0.731 at init for these pairs vs
+#                          σ(0.0) = 0.500 for all others.  Minimal traceable
+#                          clinical prior without forcing any final value.
+#   "none":                no bias, pure bilinear (original behavior).
+compat_init_bias_mode: "high_affinity_prior"
+
+# ── Governance Gate (C2) — evidence vector contract ──────────────────────────
+# Formal evidence vector: g(b_j) = [SAS, SDCA_norm, APS, PSS, e_pred]
+# All components must conform to contracts in src/governance/contracts.py.
+#
+# Component readiness (updated each phase):
+#   SAS        — computable: YES  (from head_predictions, no gate needed)
+#   SDCA_norm  — computable: YES  (normalize_sdca, method=log_scaled)
+#   APS        — computable: YES  (compute_compat + compat_prior buffer)
+#   PSS        — status: placeholder (FALLBACK_PSS=0.5, see data.yaml pss section)
+#   e_pred     — computable: YES  (Σ_c P(c|b_j) * e_c, needs detector probs)
+#
+# Schema references:
+#   DetectorBox : src/governance/contracts.DetectorBox
+#   PSSResult   : src/governance/contracts.PSSResult
+governance:
+  evidence_components: ["SAS", "SDCA_norm", "APS", "PSS", "e_pred"]
+  pss_status: "placeholder" # mirrors data.yaml pss.status
+  detector_contract: "DetectorBox"
+
+# ── Learned Governance Gate (C2) — LGG architecture ──────────────────────────
+lgg:
+  hidden_dim: 128 # width of the single hidden layer in the 2-layer MLP
+
+  # Gumbel-Softmax temperature annealing schedule (linear decay).
+  # τ is read during training via get_gumbel_tau() in src/governance/gate.py.
+  gumbel:
+    tau_start: 1.0 # initial τ — soft distribution (high entropy)
+    tau_end: 0.1 # final τ after annealing — near-hard argmax
+    tau_anneal_steps: 10000 # number of training steps over which τ is annealed
+
+# ── Governance tier target derivation (routing.py) ───────────────────────────
+# Thresholds used by derive_gate_target() / route_bbox_batch() to assign
+# R1–R4 supervision targets.  All keys correspond to
+# DEFAULT_ROUTING_THRESHOLDS in src/governance/routing.py.
+routing:
+  # IoU between predicted bbox and GT bbox required to declare a match.
+  # Boxes below this threshold are assigned R4 (no GT match).
+  iou_match: 0.5
+
+  # Minimum number of detection heads (out of 4) that must predict the
+  # correct GT class for R1 ("high-confidence correct").
+  min_heads_r1: 3
+
+  # SDCA_norm ≤ clinical_sim_max → minority class is clinically similar
+  # to the majority class.  Used in the R2 ("majority correct, minority
+  # clinically similar") rule.  Corresponds to low severity_transition cost.
+  clinical_sim_max: 0.4
+
+  # δ1 / δ2: bounds of the R3 structured-disagreement range.
+  #   δ1 < SDCA_norm ≤ δ2  →  R3 ("escalate: structured disagreement")
+  # SDCA_norm outside this range for GT-matched boxes → fallback R3.
+  sdca_r3_lo: 0.3 # δ1 (exclusive lower bound)
+  sdca_r3_hi: 0.7 # δ2 (inclusive upper bound)
+
+# ── R3 bbox refinement (refine.py) ───────────────────────────────────────────
+# Thresholds used by refine_r3_bbox() / refine_r3_batch() for the four-step
+# R3 refinement pipeline.  All keys correspond to DEFAULT_REFINE_THRESHOLDS
+# in src/governance/refine.py.
+refine:
+  # Step 2 — KG class arbitration
+  # SDM_norm(majority, runner_up) ≤ delta_merge → commit to majority, upgrade R2.
+  delta_merge: 0.4
+
+  # Step 3 — Anatomical plausibility check
+  # APS(refined_class, zone) < aps_min → downgrade to R4.
+  aps_min: 0.5
+
+  # Step 4 — SDM-modulated NMS
+  # Standard IoU threshold for NMS suppression (clinically distinct classes).
+  nms_iou_thresh: 0.5
+  # Lower IoU threshold used when both boxes are clinically similar (more
+  # aggressive merging: suppress even at lower IoU).
+  nms_iou_similar: 0.3
+  # SDM_norm ≤ sdm_nms_similar_cap → treat pair as similar for NMS purposes.
+  sdm_nms_similar_cap: 0.4
+
+# ══════════════════════════════════════════════════════════════════════════════
+# FROZEN PARAMETERS — DO NOT CHANGE WITHOUT EXPLICIT REVIEW
+# These values are locked as of Phase 13.5 (pre-Phase 14 entry).
+# Any change requires updating (a) the source code constant, (b) this section,
+# (c) re-running all tests in tests/test_fase13.py and tests/test_patch135.py.
+# ══════════════════════════════════════════════════════════════════════════════
+
+# ── LGG architecture (Contribution 2) ────────────────────────────────────────
+# hidden_dim is also hard-coded in LGG.__init__ default (gate.py).
+# FROZEN: hidden_dim = 128
+# FROZEN: gumbel.tau_start = 1.0, tau_end = 0.1, tau_anneal_steps = 10000
+# (values already appear in lgg section above; repeated here as freeze record)
+frozen:
+  lgg_hidden_dim: 128 # gate.py: LGG(hidden_dim=128)
+  gumbel_tau_start: 1.0 # gate.py: get_gumbel_tau(tau_start=1.0)
+  gumbel_tau_end: 0.1 # gate.py: get_gumbel_tau(tau_end=0.1)
+  gumbel_tau_anneal_steps: 10000 # gate.py: get_gumbel_tau(tau_anneal_steps=10000)
+
+  # SAS official mode (Contribution 2, evidence.py).
+  # "unweighted" = head-agreement fraction = canonical definition.
+  # Fallback (no head_predictions) returns max(ensemble_probs) with
+  # used_fallback=True. Mode "max_ensemble" is explicit opt-in only.
+  sas_official_mode: "unweighted"
+  sas_fallback_is_degraded_proxy: true
+
+  # Gate input ablation switch (Contribution 2, gate.py concat_gate_input).
+  # Default true = full gate input [SAS, SDCA, APS, PSS, e_pred].
+  # Set false + LGG(embedding_dim=0) for C2 "gate without KG" ablation.
+  use_kg_embedding_default: true

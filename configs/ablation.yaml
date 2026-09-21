@@ -1,0 +1,173 @@
+# ── LGov-Net Ablation Configuration — Phase 16 ────────────────────────────────
+#
+# Each case in `ablation_cases` defines one ablation variant.
+# Fields:
+#   name:               unique identifier (snake_case)
+#   contribution:       C1 | C2 | C3 | null (full-model reference)
+#   description:        human-readable description for paper table
+#   cfg_overrides:      dict of keys to override in run_lgovnet_step cfg
+#   structural_override: string name of a structural injection point, or "none"
+#                        Handled by ablation._run_lgovnet_step_structural().
+#   supported:          bool — false means SKIPPED (consolidated / deferred)
+#   caveat:             optional honest limitation note
+#
+# Structural override codes:
+#   "none"                  → pure cfg-based, use run_lgovnet_step directly
+#   "without_aps"           → neutralize compat_scores before evidence/routing
+#   "without_sdca"          → neutralize sdm_norm before evidence/routing
+#   "without_gumbel"        → gate.forward() instead of gate.gumbel_forward()
+#   "without_refinement"    → skip refine_r3_batch()
+#   "baseline_no_governance"→ force all routing tier = R1
+#   "without_r3_weighting"  → uniform consensus=1.0, aps=1.0 for R3 SDGL weights
+
+ablation_cases:
+  # ── Reference run ─────────────────────────────────────────────────────────
+  - name: baseline_full
+    contribution: null
+    description: >
+      Full LGov-Net with all three contributions active.
+      All KG signals, Gumbel routing, SDM-shaped soft targets, and R3 weighting
+      are on. This is the reference run all other cases are compared against.
+    cfg_overrides: {}
+    structural_override: "none"
+    supported: true
+
+  # ── C1: Clinical KG ablations ─────────────────────────────────────────────
+  - name: without_kg_embedding
+    contribution: C1
+    description: >
+      C1 ablation: Gate input uses only evidence vector [SAS, SDCA, APS, PSS]—
+      no KG embedding e_pred. Tests whether projecting the predicted class into
+      the KG embedding space adds value beyond scalar evidence signals alone.
+    cfg_overrides: {}
+    structural_override: "none"
+    supported: true
+    note: >
+      This ablation requires a gate built with embedding_dim=0.
+      run_single_ablation instantiates a fresh LGG(embedding_dim=0) for this case.
+      CONSOLIDATED: Semantically identical to 'without_gate_kg_context' (C2, #7).
+      That case is marked supported=false and not run separately.
+
+  - name: without_aps
+    contribution: C1
+    description: >
+      C1 ablation: Anatomical Plausibility Score neutralised — compat_scores set
+      to empty dict so all APS lookups return the neutral value 0.5.
+      Tests whether zone-based anatomical compatibility improves routing quality.
+    cfg_overrides: {}
+    structural_override: "without_aps"
+    supported: true
+
+  - name: without_sdca
+    contribution: C1
+    description: >
+      C1 ablation: Semantic Distance Conflict Assessment neutralised — sdm_norm
+      set to empty dict so all SDCA lookups return fallback 0.0.
+      Tests whether KG-derived class-separation signal adds value beyond SAS alone.
+    cfg_overrides: {}
+    structural_override: "without_sdca"
+    supported: true
+
+  - name: without_l_kg
+    contribution: C1
+    description: >
+      C1 ablation: KG-alignment auxiliary loss disabled (lambda_kg = 0.0).
+      Tests whether L_KG anchoring to clinical distances prevents semantic drift
+      of the learned KG embeddings.
+    cfg_overrides:
+      lambda_kg: 0.0
+    structural_override: "none"
+    supported: true
+
+  # ── C2: Governance gate ablations ─────────────────────────────────────────
+  - name: without_gumbel
+    contribution: C2
+    description: >
+      C2 ablation: Gumbel-Softmax routing replaced by plain deterministic softmax
+      (gate.forward() instead of gate.gumbel_forward()). Tests whether differentiable
+      discrete routing improves over a deterministic soft routing baseline.
+    cfg_overrides: {}
+    structural_override: "without_gumbel"
+    supported: true
+    caveat: >
+      EXPECTED: Single-step loss values are identical to baseline_full by design.
+      Gumbel-Softmax is a training-time reparameterization trick for gradients, not a
+      loss modifier. Both paths produce identical tier_logits -> identical gate loss.
+      The ablation effect is only observable through gradient dynamics over a full
+      training run, not from single-step loss comparison.
+
+  - name: without_refinement
+    contribution: C2
+    description: >
+      C2 ablation: R3 KG-guided bbox refinement skipped entirely.
+      Tests the effect of the refinement step on governance certificates.
+      CAVEAT: In the current implementation (Phase 16), refinement output does NOT
+      feed into SDGL loss computation (refinement→loss integration is future work).
+      Therefore loss_total will be IDENTICAL to baseline_full for this ablation.
+      Differences are visible only in certificates and debug_info.
+    cfg_overrides: {}
+    structural_override: "without_refinement"
+    supported: true
+    caveat: >
+      PARTIAL: refinement currently only affects governance certificates and
+      debug_info, NOT SDGL loss computation. loss_total will match baseline_full.
+      This is an architectural note, not a bug.
+
+  - name: without_gate_kg_context
+    contribution: C2
+    description: >
+      C2 ablation: Gate without KG-derived context.
+      CONSOLIDATED: Semantically identical to 'without_kg_embedding' (C1).
+      Both ablations disable e_pred from gate input. Not run as a separate case.
+    cfg_overrides: {}
+    structural_override: "none"
+    supported: false
+    note: "CONSOLIDATED with 'without_kg_embedding'. Not run as a separate case."
+
+  # ── C3: SDGL / loss-shaping ablations ─────────────────────────────────────
+  - name: without_sdm_soft_targets
+    contribution: C3
+    description: >
+      C3 ablation: SDM-modulated temperature disabled (sdgl_eta = 0.0).
+      tau_SDM(c) = 1 + 0 * SDM = 1 for all classes, so q_SDM degenerates to
+      plain softmax(log P_ens) = P_ens — uniform soft target, not distance-modulated.
+      Tests whether clinical-distance temperature shaping improves over uniform
+      soft-label supervision for R2 boxes.
+    cfg_overrides:
+      sdgl_eta: 0.0
+    structural_override: "none"
+    supported: true
+    note: >
+      sdgl_eta=0.0 is implemented by instantiating a fresh SDGLLoss(eta=0.0)
+      inside run_single_ablation, since eta is a constructor parameter of SDGLLoss.
+    caveat: >
+      UNVERIFIABLE via smoke-test batch: L_R2 loss is only computed for R2-tier
+      boxes. The synthetic smoke-test batch produces 0 R2 boxes (all land in R3/R4),
+      so eta has no effect on any loss term and loss_total equals baseline_full.
+      To validate this ablation, use a controlled batch that contains R2 boxes
+      (e.g. bboxes with 0.5 < IoU < threshold and SAS >= 0.7).
+
+  - name: without_r3_weighting
+    contribution: C3
+    description: >
+      C3 ablation: R3 per-box weighting disabled — w_j = 1.0 constant (instead
+      of consensus × APS). Tests whether down-weighting contested detections
+      by clinical confidence is beneficial.
+    cfg_overrides: {}
+    structural_override: "without_r3_weighting"
+    supported: true
+
+  - name: baseline_no_governance
+    contribution: C3
+    description: >
+      C3 ablation: Governance routing decision bypassed — all bboxes forced to
+      tier R1 (standard detection loss path). L_SDGL = lambda1 * L_R1_mean over
+      all boxes. Tests the value of the full 4-tier governance pipeline against
+      a flat all-positive supervision baseline.
+      NOTE: The KG encoder, gate forward pass, and L_KG loss still run in this
+      configuration. This is NOT a vanilla detector — it is LGov-Net with routing
+      decisions replaced by a constant R1 assignment. The proper label for a paper
+      table is 'w/o governance routing', not 'w/o LGov-Net'.
+    cfg_overrides: {}
+    structural_override: "baseline_no_governance"
+    supported: true

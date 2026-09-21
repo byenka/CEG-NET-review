@@ -1,0 +1,292 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+"""Bangkitkan tabel appendix dari artefak, bukan diketik ulang.
+
+Setiap angka pada ketiga tabel dibaca langsung dari berkas keluaran, sehingga tidak
+ada peluang salah salin. Audit T12 menunjukkan itu bukan kekhawatiran teoretis: dua
+sel di sana meleset satu digit terakhir dari artefaknya.
+
+Keluaran:
+  _FINAL_Latex/tables/S1_kg_edges.tex              daftar 38 sisi knowledge graph
+  _FINAL_Latex/tables/S2_sdm_sensitivity.tex       9 varian prior, nilai per-seed
+  _FINAL_Latex/tables/S3_domain_shift_per_seed.tex AUPRC per-seed keempat kohort
+
+Jalankan dari root repo:
+    python tools/make_supplementary_tables.py
+"""
+from __future__ import annotations
+
+import json
+from decimal import Decimal, ROUND_HALF_UP
+from pathlib import Path
+
+ROOT = Path(__file__).resolve().parents[1]
+TAB = ROOT / "_FINAL_Latex/tables"
+EDGES = ROOT / "outputs/stage3_audit/edges.json"
+SDM_SENS = ROOT / "outputs/0506/sdm_prior_sensitivity.json"
+DOMAIN = ROOT / "outputs/0506/evsds_pss/domain_shift_5seed.json"
+
+# Pembulatan setengah-ke-atas, sama dengan tabel lain dan dengan _style.fmt().
+def q(v, nd=3):
+    return str(Decimal(repr(float(v))).quantize(Decimal(1).scaleb(-nd),
+                                                rounding=ROUND_HALF_UP))
+
+
+def tex_escape(s: str) -> str:
+    return s.replace("_", r"\_")
+
+
+# ── S1: daftar sisi knowledge graph ──────────────────────────────────────────
+
+EDGE_ORDER = ["severity_transition", "pathophysiological_mechanism",
+              "morphological_confusability", "spatial_distribution",
+              "co_occurrence_pattern"]
+EDGE_NAME = {
+    "severity_transition": "Severity transition",
+    "pathophysiological_mechanism": "Pathophysiological mechanism",
+    "morphological_confusability": "Morphological confusability",
+    "spatial_distribution": "Spatial distribution",
+    "co_occurrence_pattern": "Co-occurrence pattern",
+}
+
+
+def build_s1() -> str:
+    """Daftar sisi. Relasi yang lengkap-menurut-konstruksi dipadatkan, TETAPI hanya
+    setelah keseragaman bobotnya diperiksa di sini. Pemeriksaan itu bukan formalitas:
+    spatial_distribution ternyata TIDAK seragam, 17 sisi pada 1.0 dan 3 pada 2.0, jadi
+    ketiga sisi yang menonjol itu tetap dicantumkan satu per satu.
+    """
+    edges = json.loads(EDGES.read_text(encoding="utf-8"))
+    by_type = {t: [e for e in edges if e["edge_type"] == t] for t in EDGE_ORDER}
+    n_total = len(edges)
+
+    def edge_row(label, e):
+        arrow = r"$\rightarrow$" if e.get("directed") else r"--"
+        return (f"{label} & {tex_escape(e['src_name'])} {arrow} "
+                f"{tex_escape(e['dst_name'])} & {q(e.get('init_weight'), 2)} \\\\")
+
+    rows = []
+    for t in ("severity_transition", "pathophysiological_mechanism",
+              "morphological_confusability"):
+        es = by_type[t]
+        if rows:
+            rows.append(r"\midrule")
+        for i, e in enumerate(es):
+            rows.append(edge_row(EDGE_NAME[t] if i == 0 else "", e))
+
+    # spatial_distribution: sisi yang bobotnya di atas dasar dicantumkan, sisanya
+    # diringkas. Nilai dasar dan cacahnya dihitung, tidak diketik.
+    sp = by_type["spatial_distribution"]
+    base = min(float(e["init_weight"]) for e in sp)
+    raised = [e for e in sp if float(e["init_weight"]) > base]
+    n_base = len(sp) - len(raised)
+    rows.append(r"\midrule")
+    for i, e in enumerate(sorted(raised, key=lambda x: x["src_name"])):
+        rows.append(edge_row(EDGE_NAME["spatial_distribution"] if i == 0 else "", e))
+    rows.append(f" & remaining {n_base} lesion-zone pairs & {q(base, 2)} \\\\")
+
+    # co_occurrence: diringkas hanya bila benar-benar seragam dan lengkap.
+    co = by_type["co_occurrence_pattern"]
+    co_w = {float(e["init_weight"]) for e in co}
+    rows.append(r"\midrule")
+    if len(co_w) == 1:
+        rows.append(f"{EDGE_NAME['co_occurrence_pattern']} & all {len(co)} unordered "
+                    f"lesion pairs & {q(co_w.pop(), 2)} \\\\")
+    else:
+        for i, e in enumerate(co):
+            rows.append(edge_row(EDGE_NAME["co_occurrence_pattern"] if i == 0 else "", e))
+    body = "\n".join(rows)
+
+    n_raised = len(raised)
+    # KOREKSI 2026-09-15: "initial weight" menyiratkan bobot yang kemudian dilatih. Graf
+    # dan encodernya tidak pernah dilatih (outputs/stage3_audit/kg_encoder_init.pt), jadi
+    # nilai di kolom ini adalah bobot yang dipakai apa adanya.
+    caption = (
+        f"Edge list of the fixed clinical knowledge graph: {n_total} edges over four "
+        "lesion and five ETDRS zone nodes. An arrow marks a directed edge, a dash an "
+        f"undirected one; for the spatial-distribution relation the {n_raised} pairs "
+        f"with a raised weight are listed and the remaining {n_base} summarized. Weight "
+        "is the untrained message-passing weight, floored at a small epsilon, so the "
+        "microaneurysm-hemorrhage entry reads 0.05 although its SDCA cost is zero."
+    )
+    return "\n".join([
+        "% Generated by tools/make_supplementary_tables.py from frozen JSON; do not edit by hand.",
+        "% Source: outputs/stage3_audit/edges.json",
+        r"\begin{table}[htbp]",
+        r"\centering",
+        r"\caption{" + caption + "}",
+        r"\label{tab:kg_edges}",
+        r"\footnotesize",
+        r"\setlength{\tabcolsep}{4pt}",
+        r"\begin{tabular}{ll r}",
+        r"\toprule",
+        r"Edge type & Node pair & Weight \\",
+        r"\midrule",
+        body,
+        r"\bottomrule",
+        r"\end{tabular}",
+        r"\end{table}",
+        "",
+    ])
+
+
+# ── S2: sensitivitas prior SDM ───────────────────────────────────────────────
+
+PAIR_ORDER = ["HE__MA", "Hard_EX__MA", "HE__Hard_EX",
+              "Hard_EX__Soft_EX", "MA__Soft_EX", "HE__Soft_EX"]
+VARIANT_LABEL = {
+    "locked": "Deployed prior",
+    "integer_steps": "Whole boundary steps",
+    "binary": "Binary within/cross grade",
+    "uniform": "Uniform (no information)",
+}
+
+
+def build_s2() -> str:
+    d = json.loads(SDM_SENS.read_text(encoding="utf-8"))
+    res = {r["variant"]: r for r in d["results"]}
+    n_seeds = d["n_seeds"]
+
+    def row(r, label):
+        prior = " ".join(q(r["prior"][p], 2) for p in PAIR_ORDER)
+        seeds = " & ".join(q(v) for v in r["gate_auprc_per_seed"])
+        # Selisih dicetak 4 desimal: seluruh efeknya, kecuali varian seragam, berada
+        # di bawah 0.001, sehingga 3 desimal akan membulatkannya menjadi nol.
+        dv = r["delta_vs_locked"]
+        if r["variant"] == "locked":
+            delta = "reference"
+        elif q(abs(dv), 4) == "0.0000":
+            delta = "0.0000"   # tanda akan menyesatkan pada besaran sekecil ini
+        else:
+            delta = ("$+$" if dv >= 0 else "$-$") + q(abs(dv), 4)
+        return (f"{label} & {prior} & {seeds} & "
+                f"{q(r['gate_auprc_mean'])}$\\pm${q(r['gate_auprc_sd'])} & "
+                f"{delta} \\\\")
+
+    lines = [row(res[k], VARIANT_LABEL[k]) for k in VARIANT_LABEL if k in res]
+    shuf = [r for r in d["results"] if r["variant"].startswith("shuffled")]
+    lines.append(r"\midrule")
+    for i, r in enumerate(shuf, 1):
+        lines.append(row(r, f"Permuted, draw {i}"))
+    body = "\n".join(lines)
+
+    m0 = res["locked"]["m0_auprc"]
+    caption = (
+        "Sensitivity of the gate to the six severity costs of the normalized "
+        "semantic-distance matrix on "
+        f"OIA-DDR test, over {n_seeds} gate-initialization seeds. The six normalized "
+        "costs are listed in the order MA-HE, MA-Hard\\_EX, HE-Hard\\_EX, "
+        "Hard\\_EX-Soft\\_EX, MA-Soft\\_EX, HE-Soft\\_EX. The detector score reaches "
+        f"AUPRC {q(m0)}."
+    )
+    seed_head = " & ".join(f"seed {i}" for i in range(n_seeds))
+    return "\n".join([
+        "% Generated by tools/make_supplementary_tables.py from frozen JSON; do not edit by hand.",
+        "% Source: outputs/0506/sdm_prior_sensitivity.json",
+        r"\begin{table}[htbp]",
+        r"\centering",
+        r"\caption{" + caption + "}",
+        r"\label{tab:sdm_sensitivity}",
+        r"\footnotesize",
+        r"\setlength{\tabcolsep}{3pt}",
+        r"\resizebox{\textwidth}{!}{%",
+        r"\begin{tabular}{ll" + "c" * n_seeds + "cc}",
+        r"\toprule",
+        r" & & \multicolumn{" + str(n_seeds) + r"}{c}{Gate AUPRC per seed} & & \\",
+        r"\cmidrule(lr){3-" + str(2 + n_seeds) + "}",
+        r"Prior variant & $\mathrm{SDM_{norm}}$ entries & " + seed_head
+        + r" & Mean$\pm$SD & $\Delta$ vs deployed \\",
+        r"\midrule",
+        body,
+        r"\bottomrule",
+        r"\end{tabular}}",
+        r"\end{table}",
+        "",
+    ])
+
+
+# ── S3: AUPRC per-seed lintas domain ─────────────────────────────────────────
+
+def sd_sample(values) -> float:
+    """SD sampel (ddof=1). KOREKSI 2026-09-15: JSON domain_shift_5seed menyimpan SD populasi
+    (ddof=0), sedangkan S2, S4 dan Tabel 2/3 memakai SD sampel. Satu konvensi dipakai di
+    seluruh naskah, jadi SD dihitung ulang di sini dari nilai per-seed."""
+    import statistics
+    return statistics.stdev([float(v) for v in values])
+
+
+def build_s3() -> str:
+    d = json.loads(DOMAIN.read_text(encoding="utf-8"))
+    n_seeds = len(d["seeds"])
+    lines = []
+    for i, c in enumerate(d["cohorts"]):
+        if i:
+            lines.append(r"\midrule")
+        role = "in-domain" if c["role"] == "in-domain" else "zero-shot"
+        head = f"{c['name']} ({role})"
+        specs = [
+            ("KG-gate (B4)", c["b4_auprc_per_seed"], c["b4_auprc_mean"], None),
+            ("$+$multi-source (B6)", c["b6_auprc_per_seed"], c["b6_auprc_mean"], None),
+            (r"$\Delta$(B6$-$B4)", c["gain_b6_b4"]["per_seed"],
+             c["gain_b6_b4"]["mean"], sd_sample(c["gain_b6_b4"]["per_seed"])),
+            (r"B6 $-$ $M_0$", c["gain_b6_m0"]["per_seed"],
+             c["gain_b6_m0"]["mean"], sd_sample(c["gain_b6_m0"]["per_seed"])),
+        ]
+        for j, (name, per_seed, mean, sd) in enumerate(specs):
+            first = head if j == 0 else ""
+            m0 = q(c["m0_auprc"]) if j == 0 else ""
+            cells = " & ".join(
+                ("$+$" if (sd is not None and v >= 0) else
+                 ("$-$" if sd is not None else "")) + q(abs(v) if sd is not None else v)
+                for v in per_seed)
+            tail = (f"{'$+$' if mean >= 0 else '$-$'}{q(abs(mean))}$\\pm${q(sd)}"
+                    if sd is not None else q(mean))
+            lines.append(f"{first} & {m0} & {name} & {cells} & {tail} \\\\")
+    body = "\n".join(lines)
+
+    caption = (
+        "Per-seed AUPRC behind the domain-shift table of the main article. $M_0$ does not "
+        "depend on the gate seed, and the gain rows are differences within the same "
+        "seed."
+    )
+    seed_head = " & ".join(f"seed {s}" for s in d["seeds"])
+    return "\n".join([
+        "% Generated by tools/make_supplementary_tables.py from frozen JSON; do not edit by hand.",
+        "% Source: outputs/0506/evsds_pss/domain_shift_5seed.json",
+        r"\begin{table}[htbp]",
+        r"\centering",
+        r"\caption{" + caption + "}",
+        r"\label{tab:domain_per_seed}",
+        r"\footnotesize",
+        r"\setlength{\tabcolsep}{3pt}",
+        r"\resizebox{\textwidth}{!}{%",
+        r"\begin{tabular}{llc" + "c" * n_seeds + "c}",
+        r"\toprule",
+        r" & & & \multicolumn{" + str(n_seeds) + r"}{c}{Per seed} & \\",
+        r"\cmidrule(lr){4-" + str(3 + n_seeds) + "}",
+        r"Domain & $M_0$ & Quantity & " + seed_head + r" & Mean \\",
+        r"\midrule",
+        body,
+        r"\bottomrule",
+        r"\end{tabular}}",
+        r"\end{table}",
+        "",
+    ])
+
+
+def main() -> int:
+    for p in (EDGES, SDM_SENS, DOMAIN):
+        if not p.is_file():
+            print(f"[supp] berkas tidak ada: {p}")
+            return 2
+    TAB.mkdir(parents=True, exist_ok=True)
+    for name, text in (("S1_kg_edges.tex", build_s1()),
+                       ("S2_sdm_sensitivity.tex", build_s2()),
+                       ("S3_domain_shift_per_seed.tex", build_s3())):
+        (TAB / name).write_text(text, encoding="utf-8")
+        print(f"[supp] ditulis {name} ({len(text.splitlines())} baris)")
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

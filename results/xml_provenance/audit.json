@@ -1,0 +1,194 @@
+{
+  "tool": "tools/audit_xml_provenance.py",
+  "cohorts": {
+    "oiaddr": {
+      "splits": {
+        "test": {
+          "files": 225,
+          "objects": 17032,
+          "distinct_boxes": 17032,
+          "duplicate_ratio": 1.0
+        },
+        "train": {
+          "files": 383,
+          "objects": 58200,
+          "distinct_boxes": 24671,
+          "duplicate_ratio": 2.359
+        },
+        "valid": {
+          "files": 149,
+          "objects": 6167,
+          "distinct_boxes": 6167,
+          "duplicate_ratio": 1.0
+        }
+      },
+      "files_total": 757,
+      "objects_total": 81399,
+      "distinct_boxes_total": 47870,
+      "duplicate_objects": 33529,
+      "classes": {
+        "ex": 45936,
+        "he": 17277,
+        "ma": 16163,
+        "se": 2023
+      },
+      "coordinate_issues": {
+        "duplikat_persis": 33529
+      },
+      "schema_variant": {
+        "no_path": 757,
+        "no_segmented": 757
+      },
+      "folder_tags": {
+        "OurDataset": 757
+      },
+      "absolute_path_leak_files": 0,
+      "split_id_overlap": {},
+      "source_masks_present": true,
+      "source_mask_files": 757
+    },
+    "idrid": {
+      "splits": {
+        "test": {
+          "files": 27,
+          "objects": 5774,
+          "distinct_boxes": 5774,
+          "duplicate_ratio": 1.0
+        },
+        "train": {
+          "files": 54,
+          "objects": 10583,
+          "distinct_boxes": 10583,
+          "duplicate_ratio": 1.0
+        }
+      },
+      "files_total": 81,
+      "objects_total": 16357,
+      "distinct_boxes_total": 16357,
+      "duplicate_objects": 0,
+      "classes": {
+        "hard_ex": 10949,
+        "ma": 3308,
+        "he": 1963,
+        "soft_ex": 137
+      },
+      "coordinate_issues": {
+        "kotak_degenerat": 60
+      },
+      "schema_variant": {
+        "with_path": 81,
+        "with_segmented": 81
+      },
+      "folder_tags": {
+        "idrid_train": 54,
+        "idrid_test": 27
+      },
+      "absolute_path_leak_files": 81,
+      "split_id_overlap": {},
+      "source_masks_present": true,
+      "source_mask_files": 81
+    },
+    "tjdr": {
+      "splits": {
+        "test": {
+          "files": 113,
+          "objects": 1646,
+          "distinct_boxes": 1646,
+          "duplicate_ratio": 1.0
+        },
+        "train": {
+          "files": 448,
+          "objects": 6911,
+          "distinct_boxes": 6911,
+          "duplicate_ratio": 1.0
+        }
+      },
+      "files_total": 561,
+      "objects_total": 8557,
+      "distinct_boxes_total": 8557,
+      "duplicate_objects": 0,
+      "classes": {
+        "hard_ex": 3352,
+        "he": 3195,
+        "ma": 1507,
+        "soft_ex": 503
+      },
+      "coordinate_issues": {
+        "kotak_degenerat": 3
+      },
+      "schema_variant": {
+        "with_path": 561,
+        "with_segmented": 561
+      },
+      "folder_tags": {
+        "tjdr_train": 448,
+        "tjdr_test": 113
+      },
+      "absolute_path_leak_files": 561,
+      "split_id_overlap": {},
+      "source_masks_present": true,
+      "source_mask_files": 561
+    },
+    "fgadr": {
+      "splits": {
+        "test": {
+          "files": 0,
+          "objects": 0,
+          "distinct_boxes": 0,
+          "duplicate_ratio": null
+        },
+        "train": {
+          "files": 1842,
+          "objects": 102921,
+          "distinct_boxes": 102921,
+          "duplicate_ratio": 1.0
+        },
+        "valid": {
+          "files": 0,
+          "objects": 0,
+          "distinct_boxes": 0,
+          "duplicate_ratio": null
+        }
+      },
+      "files_total": 1842,
+      "objects_total": 102921,
+      "distinct_boxes_total": 102921,
+      "duplicate_objects": 0,
+      "classes": {
+        "hard_ex": 51813,
+        "he": 37808,
+        "ma": 11221,
+        "soft_ex": 2079
+      },
+      "coordinate_issues": {
+        "kotak_degenerat": 6
+      },
+      "schema_variant": {
+        "no_path": 1842,
+        "no_segmented": 1842
+      },
+      "folder_tags": {
+        "FGADR": 1842
+      },
+      "absolute_path_leak_files": 0,
+      "split_id_overlap": {},
+      "source_masks_present": true,
+      "source_mask_files": 1842
+    }
+  },
+  "fgadr_conversion_report": {
+    "file": "data/fgadr/fgadr_xml_conversion_report.csv",
+    "sha256": "e33a099b719d1f60bfcbdab614fb1fbcf0b62a0ffbf6352ac5ae499f5dc40a90",
+    "rows": 7368,
+    "images": 1842,
+    "status_counts": {
+      "OK": 7368
+    },
+    "components_found": 102937,
+    "components_kept": 102921,
+    "components_dropped": 16,
+    "mask_size_differs_from_image": 0,
+    "xml_objects_in_repo": 102921,
+    "reconciles": true
+  }
+}

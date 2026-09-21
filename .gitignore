@@ -1,0 +1,19 @@
+__pycache__/
+*.pyc
+*.pyo
+.ipynb_checkpoints/
+.venv/
+venv/
+.DS_Store
+
+# Large intermediate artifacts are deliberately NOT part of this repository.
+# Per-detection evidence CSVs, detector caches, routing manifests and model
+# checkpoints run to several hundred megabytes and exceed the per-file limit of
+# common git hosts. See README.md, section "What is not in this repository".
+*.pt
+*.pth
+*.onnx
+detector_cache/
+governance_features_*.csv
+routing_manifest.json
+*_gate_tiers.csv

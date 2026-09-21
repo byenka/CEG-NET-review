@@ -1,0 +1,79 @@
+# ── LGov-Net Real-data detector pilot config — FASE 19A + FASE 19B ───────────
+#
+# Consumed by:
+#   tools/run_single_head_pilot.py          (FASE 19A)
+#   tools/run_multi_head_sequential_pilot.py (FASE 19B)
+# All values are overridable via CLI args.
+
+# ── Training hyperparameters ──────────────────────────────────────────────────
+batch_size: 2 # small for pilot safety on RTX 4090 (raise to 4 once stable)
+img_size: 512 # resize target in pixels (square); matches EfficientNet-B4
+lr: 1.0e-4 # Adam learning rate
+lambda_bbox: 1.0 # weight for SmoothL1 bbox regression loss
+
+# ── AMP ───────────────────────────────────────────────────────────────────────
+# Uses torch.amp.autocast("cuda") — NOT the deprecated torch.cuda.amp.autocast.
+use_amp: true # fp16 forward — reduces RTX 4090 VRAM ~40%
+
+# ── Dataset ───────────────────────────────────────────────────────────────────
+split: train
+max_images: 32 # cap for initial pilot run; set null for full split
+
+# ── Model ─────────────────────────────────────────────────────────────────────
+model:
+  # EfficientNet-B4 backbone (torchvision, IMAGENET1K_V1 weights)
+  pretrained: true # download ImageNet weights on first run
+  head_hidden_dim: 256 # hidden layer width in cls + bbox heads (19A single-head)
+  dropout: 0.3 # dropout in heads (19A single-head)
+
+# ── FASE 19B — Multi-head sequential settings ─────────────────────────────────
+# Used by run_multi_head_sequential_pilot.py.
+# Backbone is shared; heads run sequentially to stay within RTX 4090 VRAM.
+#
+# Head-specific configs are hardcoded in src/models/multi_head_sequential.py.
+# Override 'pretrained' here to skip downloading weights again.
+multi_head:
+  pretrained: true # set false to skip re-downloading weights
+  sequential_heads: true # MUST be true for pilot (parallel not implemented)
+
+# ── Governance (FASE 19B) ──────────────────────────────────────────────────────
+# Evidence / routing use the same KG artifact generation as the synthetic pilot.
+# Real KG artifacts (from build_static_kg.py) should be used in Phase 20+.
+governance:
+  use_synthetic_kg: true # true = build_synthetic_kg_artifacts() (pilot safe)
+  encoder_embedding_dim: 64
+  encoder_hidden_dim: 64
+  node_feat_dim: 17
+
+# ── FASE 19C — Mini-training settings ─────────────────────────────────────────
+# Used by tools/train_multi_head_mini.py.
+# CLI args always override these values.
+mini_train:
+  lr: 1.0e-4 # Adam learning rate (same as pilot default)
+  lambda_bbox: 1.0 # SmoothL1 bbox regression weight
+  use_amp: true # torch.amp.autocast("cuda")
+  epochs: 2 # default short run; use --epochs to override
+  max_images: 64 # default image cap; use --max_images to override
+  batch_size: 2 # safe for EfficientNet-B4 + 4 heads on RTX 4090
+  gov_eval_batches: 3 # batches used for governance eval per epoch
+  # Outputs (relative to project root):
+  #   outputs/training/mini_train_log.json
+  #   outputs/training/mini_train_log.csv
+  #   outputs/checkpoints/multi_head_mini_last.pt
+
+# ── FASE 19D.5 — Governed mini training loop settings ────────────────────────
+# Used by tools/train_governed_mini.py.
+# mode: natural | warmstart_aligned
+# CLI args always override these values.
+governed_mini:
+  lr: 1.0e-4 # Adam learning rate
+  use_amp: true # torch.amp.autocast("cuda")
+  epochs: 1 # default single epoch; use --epochs to override
+  max_images: 32 # dataset cap; use --max_images to override
+  batch_size: 2 # safe for EfficientNet-B4 + 4 heads on RTX 4090
+  lambda_gate: 0.1 # L_gate weight — LGG wired (FASE 19E.2)
+  lambda_kg: 0.1 # L_KG weight
+  # Outputs (relative to project root):
+  #   outputs/training/governed_mini_log.json
+  #   outputs/training/governed_mini_log.csv
+  #   outputs/checkpoints/governed_mini_last.pt

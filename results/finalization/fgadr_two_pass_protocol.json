@@ -1,0 +1,32 @@
+{
+  "fit": "OIA-DDR valid only",
+  "target": "FGADR train, held-out cohort",
+  "evidence": [
+    "ev_sas",
+    "ev_sdca",
+    "ev_aps",
+    "ev_pss",
+    "ev_sds",
+    "ev_sds_nsrc"
+  ],
+  "fusion": "(primary + matched flip)/2 on source and target",
+  "missing_match_score": 0,
+  "iou_min": 0.15,
+  "seeds": [
+    0,
+    1,
+    2,
+    3,
+    4
+  ],
+  "hidden": 16,
+  "iterations": 1500,
+  "learning_rate": 0.1,
+  "bootstrap_samples": 2000,
+  "bootstrap_seed": 0,
+  "cluster": "image_id",
+  "estimator": "average_precision",
+  "tuning": "none",
+  "interpretation": "Report all seeds and paired CIs regardless of sign; not pooled with the three-pass protocol and not clinical validation.",
+  "historical_secondary_evidence_retained": true
+}

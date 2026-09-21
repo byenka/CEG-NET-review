@@ -1,0 +1,333 @@
+{
+  "target": "OIA-DDR test",
+  "m0_ap": 0.6485945987363362,
+  "n_target": 64214,
+  "prevalence_target": 0.3819883514498396,
+  "sources": [
+    {
+      "name": "OIA-DDR valid",
+      "n": 39710,
+      "prevalence": 0.3559808612440191,
+      "n_images": 149,
+      "gates": {
+        "kg_gate": {
+          "ap_per_seed": [
+            0.6755699218940897,
+            0.6840892510542073,
+            0.6846971155914741,
+            0.6849095098155192,
+            0.6782204135481775
+          ],
+          "ap_mean": 0.6814972423806935,
+          "ap_sd": 0.004314858106703361,
+          "gain_vs_m0_mean": 0.032902643644357375,
+          "n_gain_pos": 5
+        },
+        "full_gate": {
+          "ap_per_seed": [
+            0.6980469851565689,
+            0.6985244747843314,
+            0.7009853135872303,
+            0.698977881508549,
+            0.6962032544518817
+          ],
+          "ap_mean": 0.6985475818977123,
+          "ap_sd": 0.0017229840215722502,
+          "gain_vs_m0_mean": 0.049952983161376086,
+          "n_gain_pos": 5,
+          "bootstrap_vs_m0": [
+            {
+              "gain_mean": 0.04948258032909509,
+              "gain_ci95": [
+                0.038013652452246194,
+                0.06136665977304147
+              ],
+              "p_gain_gt0": 1.0,
+              "sig": true,
+              "n_bootstrap": 2000,
+              "cluster": "image_id",
+              "n_clusters": 225,
+              "estimator": "average_precision",
+              "seed": 0
+            },
+            {
+              "gain_mean": 0.05001100147266156,
+              "gain_ci95": [
+                0.039351210534258885,
+                0.06089873134293688
+              ],
+              "p_gain_gt0": 1.0,
+              "sig": true,
+              "n_bootstrap": 2000,
+              "cluster": "image_id",
+              "n_clusters": 225,
+              "estimator": "average_precision",
+              "seed": 1
+            },
+            {
+              "gain_mean": 0.05244398761680027,
+              "gain_ci95": [
+                0.04087958752805923,
+                0.06418856865447455
+              ],
+              "p_gain_gt0": 1.0,
+              "sig": true,
+              "n_bootstrap": 2000,
+              "cluster": "image_id",
+              "n_clusters": 225,
+              "estimator": "average_precision",
+              "seed": 2
+            },
+            {
+              "gain_mean": 0.050452309173607185,
+              "gain_ci95": [
+                0.03960399989855237,
+                0.061376095476106
+              ],
+              "p_gain_gt0": 1.0,
+              "sig": true,
+              "n_bootstrap": 2000,
+              "cluster": "image_id",
+              "n_clusters": 225,
+              "estimator": "average_precision",
+              "seed": 3
+            },
+            {
+              "gain_mean": 0.04763962105266063,
+              "gain_ci95": [
+                0.03592412724930402,
+                0.05911139055868716
+              ],
+              "p_gain_gt0": 1.0,
+              "sig": true,
+              "n_bootstrap": 2000,
+              "cluster": "image_id",
+              "n_clusters": 225,
+              "estimator": "average_precision",
+              "seed": 4
+            }
+          ],
+          "n_ci_above_0": 5
+        }
+      }
+    },
+    {
+      "name": "FGADR train",
+      "n": 538986,
+      "prevalence": 0.1659282430341419,
+      "n_images": 1842,
+      "gates": {
+        "kg_gate": {
+          "ap_per_seed": [
+            0.6666071430809117,
+            0.669322792569612,
+            0.6694257116790818,
+            0.6681039372691284,
+            0.6676889894172906
+          ],
+          "ap_mean": 0.6682297148032049,
+          "ap_sd": 0.0011796366448568905,
+          "gain_vs_m0_mean": 0.01963511606686874,
+          "n_gain_pos": 5
+        },
+        "full_gate": {
+          "ap_per_seed": [
+            0.68890978164534,
+            0.6849739722767622,
+            0.6858332366201288,
+            0.6840368642409198,
+            0.6838634803412073
+          ],
+          "ap_mean": 0.6855234670248717,
+          "ap_sd": 0.0020512540076950457,
+          "gain_vs_m0_mean": 0.036928868288535435,
+          "n_gain_pos": 5,
+          "bootstrap_vs_m0": [
+            {
+              "gain_mean": 0.04049132371311141,
+              "gain_ci95": [
+                0.0330479613251877,
+                0.04772202463228404
+              ],
+              "p_gain_gt0": 1.0,
+              "sig": true,
+              "n_bootstrap": 2000,
+              "cluster": "image_id",
+              "n_clusters": 225,
+              "estimator": "average_precision",
+              "seed": 0
+            },
+            {
+              "gain_mean": 0.036594288146354376,
+              "gain_ci95": [
+                0.0298069561543487,
+                0.0435554132741594
+              ],
+              "p_gain_gt0": 1.0,
+              "sig": true,
+              "n_bootstrap": 2000,
+              "cluster": "image_id",
+              "n_clusters": 225,
+              "estimator": "average_precision",
+              "seed": 1
+            },
+            {
+              "gain_mean": 0.0374592021388309,
+              "gain_ci95": [
+                0.030813390753149848,
+                0.044373213980581666
+              ],
+              "p_gain_gt0": 1.0,
+              "sig": true,
+              "n_bootstrap": 2000,
+              "cluster": "image_id",
+              "n_clusters": 225,
+              "estimator": "average_precision",
+              "seed": 2
+            },
+            {
+              "gain_mean": 0.035643411160823715,
+              "gain_ci95": [
+                0.028635160340454085,
+                0.04268089336415128
+              ],
+              "p_gain_gt0": 1.0,
+              "sig": true,
+              "n_bootstrap": 2000,
+              "cluster": "image_id",
+              "n_clusters": 225,
+              "estimator": "average_precision",
+              "seed": 3
+            },
+            {
+              "gain_mean": 0.03548222789272518,
+              "gain_ci95": [
+                0.02844935151098629,
+                0.042412291120265615
+              ],
+              "p_gain_gt0": 1.0,
+              "sig": true,
+              "n_bootstrap": 2000,
+              "cluster": "image_id",
+              "n_clusters": 225,
+              "estimator": "average_precision",
+              "seed": 4
+            }
+          ],
+          "n_ci_above_0": 5
+        }
+      }
+    },
+    {
+      "name": "TJDR test",
+      "n": 23181,
+      "prevalence": 0.1382597817177861,
+      "n_images": 113,
+      "gates": {
+        "kg_gate": {
+          "ap_per_seed": [
+            0.6774700316570561,
+            0.6781311592070322,
+            0.6789124307281903,
+            0.6784517722230585,
+            0.6762069775739425
+          ],
+          "ap_mean": 0.6778344742778559,
+          "ap_sd": 0.0010503133763636314,
+          "gain_vs_m0_mean": 0.029239875541519744,
+          "n_gain_pos": 5
+        },
+        "full_gate": {
+          "ap_per_seed": [
+            0.694294713196403,
+            0.693984918982901,
+            0.6949422632598737,
+            0.6928856852012782,
+            0.6947687867753873
+          ],
+          "ap_mean": 0.6941752734831687,
+          "ap_sd": 0.0008145658296401016,
+          "gain_vs_m0_mean": 0.04558067474683249,
+          "n_gain_pos": 5,
+          "bootstrap_vs_m0": [
+            {
+              "gain_mean": 0.0458011817580859,
+              "gain_ci95": [
+                0.03596214404381092,
+                0.05581764275524728
+              ],
+              "p_gain_gt0": 1.0,
+              "sig": true,
+              "n_bootstrap": 2000,
+              "cluster": "image_id",
+              "n_clusters": 225,
+              "estimator": "average_precision",
+              "seed": 0
+            },
+            {
+              "gain_mean": 0.04548771925109733,
+              "gain_ci95": [
+                0.0352879125241035,
+                0.05630900214099962
+              ],
+              "p_gain_gt0": 1.0,
+              "sig": true,
+              "n_bootstrap": 2000,
+              "cluster": "image_id",
+              "n_clusters": 225,
+              "estimator": "average_precision",
+              "seed": 1
+            },
+            {
+              "gain_mean": 0.04645114757181364,
+              "gain_ci95": [
+                0.03681937403951012,
+                0.05631667675675254
+              ],
+              "p_gain_gt0": 1.0,
+              "sig": true,
+              "n_bootstrap": 2000,
+              "cluster": "image_id",
+              "n_clusters": 225,
+              "estimator": "average_precision",
+              "seed": 2
+            },
+            {
+              "gain_mean": 0.04439038437837384,
+              "gain_ci95": [
+                0.03486508475075123,
+                0.054044758187867206
+              ],
+              "p_gain_gt0": 1.0,
+              "sig": true,
+              "n_bootstrap": 2000,
+              "cluster": "image_id",
+              "n_clusters": 225,
+              "estimator": "average_precision",
+              "seed": 3
+            },
+            {
+              "gain_mean": 0.046243174932294344,
+              "gain_ci95": [
+                0.03640310637507562,
+                0.05607112180882211
+              ],
+              "p_gain_gt0": 1.0,
+              "sig": true,
+              "n_bootstrap": 2000,
+              "cluster": "image_id",
+              "n_clusters": 225,
+              "estimator": "average_precision",
+              "seed": 4
+            }
+          ],
+          "n_ci_above_0": 5
+        }
+      }
+    }
+  ],
+  "verdict": {
+    "criterion": "gate FGADR unggul atas M0 pada >=4 dari 5 seed dengan rerata gain > 0",
+    "criterion_met": true
+  }
+}

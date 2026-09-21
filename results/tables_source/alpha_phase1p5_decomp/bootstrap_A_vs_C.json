@@ -1,0 +1,176 @@
+{
+  "tool": "bootstrap_paired_ci",
+  "seeds": [
+    42,
+    101,
+    202
+  ],
+  "metrics": [
+    "overall_ece",
+    "overall_brier",
+    "macro_auroc",
+    "mAP_50"
+  ],
+  "directions": [
+    "minimize",
+    "minimize",
+    "maximize",
+    "maximize"
+  ],
+  "n_bootstrap": 2000,
+  "alpha": 0.05,
+  "results": {
+    "overall_ece": {
+      "direction": "minimize",
+      "per_seed": [
+        {
+          "seed": 42,
+          "kg_value": 0.17832413560303498,
+          "nokg_value": 0.1991113133016708,
+          "delta_kg_improves": 0.020787177698635834,
+          "kg_source": "outputs/mode2_r4_mode2a_REAL_full_seed42_REV7C/audit_topk/clinical_metrics.json",
+          "nokg_source": "outputs/mode2_r4_anchor_only_seed42_REV7D/audit_topk/clinical_metrics.json"
+        },
+        {
+          "seed": 101,
+          "kg_value": 0.1918792938913969,
+          "nokg_value": 0.18463324844611562,
+          "delta_kg_improves": -0.007246045445281291,
+          "kg_source": "outputs/mode2_r4_mode2a_REAL_full_seed101_REV7C/audit_topk/clinical_metrics.json",
+          "nokg_source": "outputs/mode2_r4_anchor_only_seed101_REV7D/audit_topk/clinical_metrics.json"
+        },
+        {
+          "seed": 202,
+          "kg_value": 0.18258798123056785,
+          "nokg_value": 0.18364333879949876,
+          "delta_kg_improves": 0.0010553575689309092,
+          "kg_source": "outputs/mode2_r4_mode2a_REAL_full_seed202_REV7C/audit_topk/clinical_metrics.json",
+          "nokg_source": "outputs/mode2_r4_anchor_only_seed202_REV7D/audit_topk/clinical_metrics.json"
+        }
+      ],
+      "delta_mean": 0.004865496607428484,
+      "delta_ci_lo": -0.007246045445281291,
+      "delta_ci_hi": 0.020787177698635834,
+      "ci_excludes_zero": false,
+      "p_positive": 0.739,
+      "verdict": "MARGINAL_CI_INCLUDES_ZERO",
+      "n_seeds": 3,
+      "n_bootstrap": 2000,
+      "alpha": 0.05
+    },
+    "overall_brier": {
+      "direction": "minimize",
+      "per_seed": [
+        {
+          "seed": 42,
+          "kg_value": 0.10793896019458771,
+          "nokg_value": 0.11547348648309708,
+          "delta_kg_improves": 0.007534526288509369,
+          "kg_source": "outputs/mode2_r4_mode2a_REAL_full_seed42_REV7C/audit_topk/clinical_metrics.json",
+          "nokg_source": "outputs/mode2_r4_anchor_only_seed42_REV7D/audit_topk/clinical_metrics.json"
+        },
+        {
+          "seed": 101,
+          "kg_value": 0.11110832542181015,
+          "nokg_value": 0.11178719997406006,
+          "delta_kg_improves": 0.0006788745522499084,
+          "kg_source": "outputs/mode2_r4_mode2a_REAL_full_seed101_REV7C/audit_topk/clinical_metrics.json",
+          "nokg_source": "outputs/mode2_r4_anchor_only_seed101_REV7D/audit_topk/clinical_metrics.json"
+        },
+        {
+          "seed": 202,
+          "kg_value": 0.10845787823200226,
+          "nokg_value": 0.10925119370222092,
+          "delta_kg_improves": 0.0007933154702186584,
+          "kg_source": "outputs/mode2_r4_mode2a_REAL_full_seed202_REV7C/audit_topk/clinical_metrics.json",
+          "nokg_source": "outputs/mode2_r4_anchor_only_seed202_REV7D/audit_topk/clinical_metrics.json"
+        }
+      ],
+      "delta_mean": 0.0030022387703259787,
+      "delta_ci_lo": 0.0006788745522499084,
+      "delta_ci_hi": 0.007534526288509369,
+      "ci_excludes_zero": true,
+      "p_positive": 1.0,
+      "verdict": "PASS_ATTRIBUTION_KG_HELPS",
+      "n_seeds": 3,
+      "n_bootstrap": 2000,
+      "alpha": 0.05
+    },
+    "macro_auroc": {
+      "direction": "maximize",
+      "per_seed": [
+        {
+          "seed": 42,
+          "kg_value": 0.3484637969253811,
+          "nokg_value": 0.34774840906268256,
+          "delta_kg_improves": 0.0007153878626985355,
+          "kg_source": "outputs/mode2_r4_mode2a_REAL_full_seed42_REV7C/audit_topk/clinical_metrics.json",
+          "nokg_source": "outputs/mode2_r4_anchor_only_seed42_REV7D/audit_topk/clinical_metrics.json"
+        },
+        {
+          "seed": 101,
+          "kg_value": 0.3514272348652853,
+          "nokg_value": 0.34827052113627693,
+          "delta_kg_improves": 0.003156713729008387,
+          "kg_source": "outputs/mode2_r4_mode2a_REAL_full_seed101_REV7C/audit_topk/clinical_metrics.json",
+          "nokg_source": "outputs/mode2_r4_anchor_only_seed101_REV7D/audit_topk/clinical_metrics.json"
+        },
+        {
+          "seed": 202,
+          "kg_value": 0.35199852131789383,
+          "nokg_value": 0.3504273492494637,
+          "delta_kg_improves": 0.0015711720684301045,
+          "kg_source": "outputs/mode2_r4_mode2a_REAL_full_seed202_REV7C/audit_topk/clinical_metrics.json",
+          "nokg_source": "outputs/mode2_r4_anchor_only_seed202_REV7D/audit_topk/clinical_metrics.json"
+        }
+      ],
+      "delta_mean": 0.0018144245533790089,
+      "delta_ci_lo": 0.0007153878626985355,
+      "delta_ci_hi": 0.003156713729008387,
+      "ci_excludes_zero": true,
+      "p_positive": 1.0,
+      "verdict": "PASS_ATTRIBUTION_KG_HELPS",
+      "n_seeds": 3,
+      "n_bootstrap": 2000,
+      "alpha": 0.05
+    },
+    "mAP_50": {
+      "direction": "maximize",
+      "per_seed": [
+        {
+          "seed": 42,
+          "kg_value": 0.24383,
+          "nokg_value": 0.241065,
+          "delta_kg_improves": 0.0027649999999999897,
+          "kg_source": "outputs/mode2_r4_mode2a_REAL_full_seed42_REV7C/audit_topk/pareto_summary.json",
+          "nokg_source": "outputs/mode2_r4_anchor_only_seed42_REV7D/audit_topk/pareto_summary.json"
+        },
+        {
+          "seed": 101,
+          "kg_value": 0.244147,
+          "nokg_value": 0.244754,
+          "delta_kg_improves": -0.0006069999999999964,
+          "kg_source": "outputs/mode2_r4_mode2a_REAL_full_seed101_REV7C/audit_topk/pareto_summary.json",
+          "nokg_source": "outputs/mode2_r4_anchor_only_seed101_REV7D/audit_topk/pareto_summary.json"
+        },
+        {
+          "seed": 202,
+          "kg_value": 0.247419,
+          "nokg_value": 0.24417,
+          "delta_kg_improves": 0.003249000000000002,
+          "kg_source": "outputs/mode2_r4_mode2a_REAL_full_seed202_REV7C/audit_topk/pareto_summary.json",
+          "nokg_source": "outputs/mode2_r4_anchor_only_seed202_REV7D/audit_topk/pareto_summary.json"
+        }
+      ],
+      "delta_mean": 0.0018023333333333318,
+      "delta_ci_lo": -0.0006069999999999964,
+      "delta_ci_hi": 0.003249000000000002,
+      "ci_excludes_zero": false,
+      "p_positive": 0.9555,
+      "verdict": "MARGINAL_CI_INCLUDES_ZERO",
+      "n_seeds": 3,
+      "n_bootstrap": 2000,
+      "alpha": 0.05
+    }
+  }
+}

@@ -1,0 +1,30 @@
+{
+  "tool": "tools/sanitize_xml_paths.py",
+  "write": true,
+  "cohorts": {
+    "idrid": {
+      "files": 81,
+      "path_element_stripped": 81,
+      "already_clean": 0,
+      "content_mismatch": 0,
+      "user_dir_remaining": 0,
+      "destination": "data/idrid/xml_clean"
+    },
+    "tjdr": {
+      "files": 561,
+      "path_element_stripped": 561,
+      "already_clean": 0,
+      "content_mismatch": 0,
+      "user_dir_remaining": 0,
+      "destination": "data/tjdr/xml_clean"
+    }
+  },
+  "total": {
+    "files": 642,
+    "stripped": 642,
+    "clean_already": 0,
+    "mismatch": 0,
+    "leak_after": 0
+  },
+  "passed": true
+}

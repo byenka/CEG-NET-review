@@ -1,0 +1,236 @@
+{
+  "task": "governance_retain",
+  "cohort": "OIA-DDR test (in-domain)",
+  "valid_csv": "outputs/0506/evsds_v2sec/oiaddr/valid/governance_features_valid.csv",
+  "test_csv": "outputs/0506/evsds_v2sec/oiaddr/test/governance_features_test.csv",
+  "n_seeds": 5,
+  "n_test_rows": 64214,
+  "reconstruction_mismatch_rows": 11,
+  "results": [
+    {
+      "variant": "locked",
+      "description": "prior ICDR terpasang {0, 0.50, 0.75, 1.00}",
+      "prior": {
+        "HE__MA": 0.0,
+        "Hard_EX__MA": 0.5,
+        "MA__Soft_EX": 1.0,
+        "HE__Hard_EX": 0.5,
+        "HE__Soft_EX": 1.0,
+        "Hard_EX__Soft_EX": 0.75
+      },
+      "gate_auprc_mean": 0.6814984510983486,
+      "gate_auprc_sd": 0.004321864464492918,
+      "gate_auprc_per_seed": [
+        0.6755625983685442,
+        0.6841012092730147,
+        0.6847048982430154,
+        0.6849096120888506,
+        0.6782139375183182
+      ],
+      "m0_auprc": 0.6486111952890347,
+      "gain_mean": 0.03288725580931393,
+      "gain_sd": 0.004321864464492918,
+      "delta_vs_locked": 0.0
+    },
+    {
+      "variant": "integer_steps",
+      "description": "Hard_EX-Soft_EX dijadikan satu langkah penuh (0.75 -> 0.50)",
+      "prior": {
+        "HE__MA": 0.0,
+        "Hard_EX__MA": 0.5,
+        "MA__Soft_EX": 1.0,
+        "HE__Hard_EX": 0.5,
+        "HE__Soft_EX": 1.0,
+        "Hard_EX__Soft_EX": 0.5
+      },
+      "gate_auprc_mean": 0.680609249404833,
+      "gate_auprc_sd": 0.0036688972601335392,
+      "gate_auprc_per_seed": [
+        0.6767048879759697,
+        0.681587939827967,
+        0.6838781414640123,
+        0.6841048448765354,
+        0.676770432879681
+      ],
+      "m0_auprc": 0.6486111952890347,
+      "gain_mean": 0.03199805411579841,
+      "gain_sd": 0.0036688972601335397,
+      "delta_vs_locked": -0.0008892016935155844
+    },
+    {
+      "variant": "binary",
+      "description": "0 bila satu kelompok keparahan, 1 bila lintas-grade",
+      "prior": {
+        "HE__MA": 0.0,
+        "Hard_EX__MA": 1.0,
+        "MA__Soft_EX": 1.0,
+        "HE__Hard_EX": 1.0,
+        "HE__Soft_EX": 1.0,
+        "Hard_EX__Soft_EX": 1.0
+      },
+      "gate_auprc_mean": 0.6811900601587096,
+      "gate_auprc_sd": 0.0030252967548335154,
+      "gate_auprc_per_seed": [
+        0.6782611992100225,
+        0.6817152726260356,
+        0.684103104713225,
+        0.6840289067290828,
+        0.6778418175151824
+      ],
+      "m0_auprc": 0.6486111952890347,
+      "gain_mean": 0.032578864869674984,
+      "gain_sd": 0.0030252967548335154,
+      "delta_vs_locked": -0.00030839093963896946
+    },
+    {
+      "variant": "uniform",
+      "description": "seluruh pasangan bernilai sama (SDCA tanpa informasi)",
+      "prior": {
+        "HE__MA": 0.5,
+        "Hard_EX__MA": 0.5,
+        "MA__Soft_EX": 0.5,
+        "HE__Hard_EX": 0.5,
+        "HE__Soft_EX": 0.5,
+        "Hard_EX__Soft_EX": 0.5
+      },
+      "gate_auprc_mean": 0.6737654482877022,
+      "gate_auprc_sd": 0.0002868317978655561,
+      "gate_auprc_per_seed": [
+        0.6737627130621443,
+        0.6739439580095606,
+        0.6735618762599408,
+        0.6734220035233764,
+        0.6741366905834885
+      ],
+      "m0_auprc": 0.6486111952890347,
+      "gain_mean": 0.02515425299866747,
+      "gain_sd": 0.0002868317978655561,
+      "delta_vs_locked": -0.007733002810646372
+    },
+    {
+      "variant": "shuffled_s0",
+      "description": "nilai yang sama, pasangan diacak",
+      "prior": {
+        "HE__MA": 0.5,
+        "Hard_EX__MA": 1.0,
+        "MA__Soft_EX": 0.5,
+        "HE__Hard_EX": 1.0,
+        "HE__Soft_EX": 0.0,
+        "Hard_EX__Soft_EX": 0.75
+      },
+      "gate_auprc_mean": 0.6810010248360512,
+      "gate_auprc_sd": 0.002731776600750249,
+      "gate_auprc_per_seed": [
+        0.6815891281063767,
+        0.679952420030772,
+        0.6826460549944744,
+        0.6839441033534754,
+        0.6768734176951573
+      ],
+      "m0_auprc": 0.6486111952890347,
+      "gain_mean": 0.032389829547016524,
+      "gain_sd": 0.002731776600750249,
+      "delta_vs_locked": -0.000497426262297429
+    },
+    {
+      "variant": "shuffled_s1",
+      "description": "nilai yang sama, pasangan diacak",
+      "prior": {
+        "HE__MA": 0.5,
+        "Hard_EX__MA": 1.0,
+        "MA__Soft_EX": 1.0,
+        "HE__Hard_EX": 0.75,
+        "HE__Soft_EX": 0.5,
+        "Hard_EX__Soft_EX": 0.0
+      },
+      "gate_auprc_mean": 0.6814538590639634,
+      "gate_auprc_sd": 0.005512589500254417,
+      "gate_auprc_per_seed": [
+        0.6722973806364532,
+        0.6862070689834076,
+        0.682894877497353,
+        0.6808545426356902,
+        0.6850154255669129
+      ],
+      "m0_auprc": 0.6486111952890347,
+      "gain_mean": 0.032842663774928706,
+      "gain_sd": 0.005512589500254416,
+      "delta_vs_locked": -4.459203438522685e-05
+    },
+    {
+      "variant": "shuffled_s2",
+      "description": "nilai yang sama, pasangan diacak",
+      "prior": {
+        "HE__MA": 0.5,
+        "Hard_EX__MA": 1.0,
+        "MA__Soft_EX": 0.0,
+        "HE__Hard_EX": 1.0,
+        "HE__Soft_EX": 0.75,
+        "Hard_EX__Soft_EX": 0.5
+      },
+      "gate_auprc_mean": 0.6762432487990845,
+      "gate_auprc_sd": 0.0007418849745559019,
+      "gate_auprc_per_seed": [
+        0.6761016857151675,
+        0.6762284039241827,
+        0.6755176926671839,
+        0.6758886333470719,
+        0.6774798283418166
+      ],
+      "m0_auprc": 0.6486111952890347,
+      "gain_mean": 0.02763205351004987,
+      "gain_sd": 0.0007418849745559019,
+      "delta_vs_locked": -0.005255202299264128
+    },
+    {
+      "variant": "shuffled_s3",
+      "description": "nilai yang sama, pasangan diacak",
+      "prior": {
+        "HE__MA": 1.0,
+        "Hard_EX__MA": 0.0,
+        "MA__Soft_EX": 0.5,
+        "HE__Hard_EX": 0.75,
+        "HE__Soft_EX": 1.0,
+        "Hard_EX__Soft_EX": 0.5
+      },
+      "gate_auprc_mean": 0.6829317436813465,
+      "gate_auprc_sd": 0.0010487703755950313,
+      "gate_auprc_per_seed": [
+        0.6826260959301457,
+        0.6845818641678533,
+        0.6818130367108586,
+        0.682427473101763,
+        0.6832102484961123
+      ],
+      "m0_auprc": 0.6486111952890347,
+      "gain_mean": 0.03432054839231191,
+      "gain_sd": 0.0010487703755950313,
+      "delta_vs_locked": 0.0014332925829978471
+    },
+    {
+      "variant": "shuffled_s4",
+      "description": "nilai yang sama, pasangan diacak",
+      "prior": {
+        "HE__MA": 0.5,
+        "Hard_EX__MA": 1.0,
+        "MA__Soft_EX": 0.0,
+        "HE__Hard_EX": 0.75,
+        "HE__Soft_EX": 1.0,
+        "Hard_EX__Soft_EX": 0.5
+      },
+      "gate_auprc_mean": 0.6764742402895337,
+      "gate_auprc_sd": 0.0007932052086358156,
+      "gate_auprc_per_seed": [
+        0.6763726304332114,
+        0.6763127134551051,
+        0.6757122713949786,
+        0.6761578584635032,
+        0.67781572770087
+      ],
+      "m0_auprc": 0.6486111952890347,
+      "gain_mean": 0.027863045000498986,
+      "gain_sd": 0.0007932052086358156,
+      "delta_vs_locked": -0.005024210808814877
+    }
+  ]
+}

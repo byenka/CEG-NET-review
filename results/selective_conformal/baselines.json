@@ -1,0 +1,676 @@
+{
+  "task": "governance_retain",
+  "alpha": 0.2,
+  "seeds": [
+    0,
+    1,
+    2,
+    3,
+    4
+  ],
+  "n_boot": 2000,
+  "boot_seed": 0,
+  "protocol": "identik dengan tools/eval_fp_reduction_benchmark.py",
+  "not_feasible": {
+    "mc_dropout": "menuntut eksekusi ulang detektor; dikecualikan protokol detektor beku",
+    "weight_space_deep_ensemble": "menuntut beberapa detektor terlatih; keluarga ensemble diwakili flip TTA, ensemble dua detektor, dan rata-rata tiga pass di Tabel 8"
+  },
+  "cohorts": {
+    "OIA-DDR test": {
+      "n": 64214,
+      "n_positive": 24529,
+      "prevalence": 0.3819883514498396,
+      "methods": {
+        "M0_score": {
+          "family": "threshold",
+          "n_seeds": 1,
+          "aurc": 0.42630564507773006,
+          "aurc_sd": 0.0,
+          "e_aurc": 0.17590146709963778,
+          "auprc": 0.6486111952890347,
+          "conformal_empirical_coverage": 0.8880508785519181,
+          "conformal_retained_fraction": 0.7396206434733859,
+          "conformal_nominal_coverage": 0.8,
+          "conformal_coverage_gap": 0.08805087855191807,
+          "aurc_ci95": [
+            0.39788212602137,
+            0.45663014498687143
+          ]
+        },
+        "MSP": {
+          "family": "confidence",
+          "n_seeds": 1,
+          "aurc": 0.5454358595301424,
+          "aurc_sd": 0.0,
+          "e_aurc": 0.2950316815520501,
+          "auprc": 0.47366145438968915,
+          "conformal_empirical_coverage": 0.8488727628521342,
+          "conformal_retained_fraction": 0.8616345345251815,
+          "conformal_nominal_coverage": 0.8,
+          "conformal_coverage_gap": 0.048872762852134155,
+          "aurc_ci95": [
+            0.5150389635130304,
+            0.578269399385338
+          ]
+        },
+        "Entropy": {
+          "family": "uncertainty",
+          "n_seeds": 1,
+          "aurc": 0.5446193340762615,
+          "aurc_sd": 0.0,
+          "e_aurc": 0.29421515609816923,
+          "auprc": 0.47447667761845946,
+          "conformal_empirical_coverage": 0.8487504586407926,
+          "conformal_retained_fraction": 0.8596256268103529,
+          "conformal_nominal_coverage": 0.8,
+          "conformal_coverage_gap": 0.04875045864079253,
+          "aurc_ci95": [
+            0.5140863016450758,
+            0.5774470897296795
+          ]
+        },
+        "Margin": {
+          "family": "uncertainty",
+          "n_seeds": 1,
+          "aurc": 0.5467246754349705,
+          "aurc_sd": 0.0,
+          "e_aurc": 0.2963204974568782,
+          "auprc": 0.4716934809725548,
+          "conformal_empirical_coverage": 0.8482204737249786,
+          "conformal_retained_fraction": 0.8620861494378173,
+          "conformal_nominal_coverage": 0.8,
+          "conformal_coverage_gap": 0.04822047372497851,
+          "aurc_ci95": [
+            0.5163544072896095,
+            0.5794178356587989
+          ]
+        },
+        "TempScale(T=2.00)": {
+          "family": "calibration",
+          "n_seeds": 1,
+          "aurc": 0.42630564507773006,
+          "aurc_sd": 0.0,
+          "e_aurc": 0.17590146709963778,
+          "auprc": 0.6486111952890347,
+          "conformal_empirical_coverage": 0.8880508785519181,
+          "conformal_retained_fraction": 0.7396206434733859,
+          "conformal_nominal_coverage": 0.8,
+          "conformal_coverage_gap": 0.08805087855191807,
+          "aurc_ci95": [
+            0.39788212602137,
+            0.45663014498687143
+          ]
+        },
+        "Evidence-LogReg": {
+          "family": "learned-linear",
+          "n_seeds": 5,
+          "aurc": 0.5138406644154366,
+          "aurc_sd": 0.0,
+          "e_aurc": 0.26343648643734435,
+          "auprc": 0.5292407107014004,
+          "conformal_empirical_coverage": 0.8909454115536711,
+          "conformal_retained_fraction": 0.7814495281402809,
+          "conformal_nominal_coverage": 0.8,
+          "conformal_coverage_gap": 0.09094541155367108,
+          "aurc_ci95": [
+            0.47298929602146267,
+            0.5290812911766887
+          ]
+        },
+        "Score-MLP": {
+          "family": "learned-score",
+          "n_seeds": 5,
+          "aurc": 0.42630564507773006,
+          "aurc_sd": 0.0,
+          "e_aurc": 0.17590146709963778,
+          "auprc": 0.6486111953748663,
+          "conformal_empirical_coverage": 0.8880508785519181,
+          "conformal_retained_fraction": 0.7396206434733859,
+          "conformal_nominal_coverage": 0.8,
+          "conformal_coverage_gap": 0.08805087855191807,
+          "aurc_ci95": [
+            0.39788212602137,
+            0.45663014498687143
+          ]
+        },
+        "KG-gate-MLP (ours)": {
+          "family": "governance",
+          "n_seeds": 5,
+          "aurc": 0.40506836269895563,
+          "aurc_sd": 0.00175217565576615,
+          "e_aurc": 0.15466418472086335,
+          "auprc": 0.6814842019872609,
+          "conformal_empirical_coverage": 0.8081373068612662,
+          "conformal_retained_fraction": 0.5713271249260286,
+          "conformal_nominal_coverage": 0.8,
+          "conformal_coverage_gap": 0.008137306861266125,
+          "aurc_ci95": [
+            0.38047763168040116,
+            0.43810149314542024
+          ]
+        },
+        "KG-gate+SDS (B5)": {
+          "family": "governance",
+          "n_seeds": 5,
+          "aurc": 0.4034739138985935,
+          "aurc_sd": 0.0015013631052337153,
+          "e_aurc": 0.15306973592050127,
+          "auprc": 0.6840105616440257,
+          "conformal_empirical_coverage": 0.8111704513025397,
+          "conformal_retained_fraction": 0.5720559379574548,
+          "conformal_nominal_coverage": 0.8,
+          "conformal_coverage_gap": 0.011170451302539686,
+          "aurc_ci95": [
+            0.37897474665858344,
+            0.4359634508586804
+          ]
+        },
+        "KG-gate+SDS+corrob (B6)": {
+          "family": "governance",
+          "n_seeds": 5,
+          "aurc": 0.395999634288522,
+          "aurc_sd": 0.0007011475800473928,
+          "e_aurc": 0.14559545631042972,
+          "auprc": 0.6985390354239819,
+          "conformal_empirical_coverage": 0.8189245383016022,
+          "conformal_retained_fraction": 0.5734170118665711,
+          "conformal_nominal_coverage": 0.8,
+          "conformal_coverage_gap": 0.018924538301602123,
+          "aurc_ci95": [
+            0.36944631598379946,
+            0.4251070851629313
+          ]
+        }
+      },
+      "calibration": {
+        "raw score": {
+          "ece": 0.11816554350023789,
+          "brier": 0.2107045509539468,
+          "auprc": 0.6486111952890347
+        },
+        "temperature (T=2.00)": {
+          "ece": 0.08363336845343428,
+          "brier": 0.20386312547687546,
+          "auprc": 0.6486111952890347
+        },
+        "isotonic": {
+          "ece": 0.03670827601163203,
+          "brier": 0.1973991779581289,
+          "auprc": 0.6484753960184391
+        }
+      }
+    },
+    "IDRiD": {
+      "n": 8042,
+      "n_positive": 4177,
+      "prevalence": 0.5193981596617757,
+      "methods": {
+        "M0_score": {
+          "family": "threshold",
+          "n_seeds": 1,
+          "aurc": 0.2952990476058333,
+          "aurc_sd": 0.0,
+          "e_aurc": 0.15491702398637497,
+          "auprc": 0.7515709470051943,
+          "conformal_empirical_coverage": 0.9918601867368925,
+          "conformal_retained_fraction": 0.9671723451877643,
+          "conformal_nominal_coverage": 0.8,
+          "conformal_coverage_gap": 0.19186018673689242,
+          "aurc_ci95": [
+            0.24792543423438765,
+            0.349600827056485
+          ]
+        },
+        "MSP": {
+          "family": "confidence",
+          "n_seeds": 1,
+          "aurc": 0.3809493614924452,
+          "aurc_sd": 0.0,
+          "e_aurc": 0.24056733787298684,
+          "auprc": 0.637653150155449,
+          "conformal_empirical_coverage": 0.8927459899449366,
+          "conformal_retained_fraction": 0.8948022879880627,
+          "conformal_nominal_coverage": 0.8,
+          "conformal_coverage_gap": 0.09274598994493655,
+          "aurc_ci95": [
+            0.32696140907356336,
+            0.43981617706807946
+          ]
+        },
+        "Entropy": {
+          "family": "uncertainty",
+          "n_seeds": 1,
+          "aurc": 0.3800513178119823,
+          "aurc_sd": 0.0,
+          "e_aurc": 0.23966929419252397,
+          "auprc": 0.6387718673303125,
+          "conformal_empirical_coverage": 0.8910701460378262,
+          "conformal_retained_fraction": 0.8925640387963193,
+          "conformal_nominal_coverage": 0.8,
+          "conformal_coverage_gap": 0.09107014603782615,
+          "aurc_ci95": [
+            0.32609295456690274,
+            0.4391909902717542
+          ]
+        },
+        "Margin": {
+          "family": "uncertainty",
+          "n_seeds": 1,
+          "aurc": 0.38297234768095617,
+          "aurc_sd": 0.0,
+          "e_aurc": 0.24259032406149783,
+          "auprc": 0.6349144626098213,
+          "conformal_empirical_coverage": 0.8922671774000479,
+          "conformal_retained_fraction": 0.8943048992787864,
+          "conformal_nominal_coverage": 0.8,
+          "conformal_coverage_gap": 0.09226717740004786,
+          "aurc_ci95": [
+            0.32877027436380707,
+            0.4417357048094755
+          ]
+        },
+        "TempScale(T=2.00)": {
+          "family": "calibration",
+          "n_seeds": 1,
+          "aurc": 0.2952990476058333,
+          "aurc_sd": 0.0,
+          "e_aurc": 0.15491702398637497,
+          "auprc": 0.7515709470051943,
+          "conformal_empirical_coverage": 0.9918601867368925,
+          "conformal_retained_fraction": 0.9671723451877643,
+          "conformal_nominal_coverage": 0.8,
+          "conformal_coverage_gap": 0.19186018673689242,
+          "aurc_ci95": [
+            0.24792543423438765,
+            0.349600827056485
+          ]
+        },
+        "Evidence-LogReg": {
+          "family": "learned-linear",
+          "n_seeds": 5,
+          "aurc": 0.40173471317096254,
+          "aurc_sd": 0.0,
+          "e_aurc": 0.2613526895515042,
+          "auprc": 0.6060290104068526,
+          "conformal_empirical_coverage": 0.8350490782858511,
+          "conformal_retained_fraction": 0.7290475006217358,
+          "conformal_nominal_coverage": 0.8,
+          "conformal_coverage_gap": 0.03504907828585102,
+          "aurc_ci95": [
+            0.3337951359893516,
+            0.45715379435851655
+          ]
+        },
+        "Score-MLP": {
+          "family": "learned-score",
+          "n_seeds": 5,
+          "aurc": 0.2952990476058333,
+          "aurc_sd": 0.0,
+          "e_aurc": 0.15491702398637497,
+          "auprc": 0.7515709470051943,
+          "conformal_empirical_coverage": 0.9918601867368924,
+          "conformal_retained_fraction": 0.9671723451877643,
+          "conformal_nominal_coverage": 0.8,
+          "conformal_coverage_gap": 0.1918601867368923,
+          "aurc_ci95": [
+            0.24792543423438765,
+            0.349600827056485
+          ]
+        },
+        "KG-gate-MLP (ours)": {
+          "family": "governance",
+          "n_seeds": 5,
+          "aurc": 0.2890393309585053,
+          "aurc_sd": 0.006515319208950057,
+          "e_aurc": 0.14865730733904697,
+          "auprc": 0.7591468525308315,
+          "conformal_empirical_coverage": 0.8830739765381853,
+          "conformal_retained_fraction": 0.7418303904501368,
+          "conformal_nominal_coverage": 0.8,
+          "conformal_coverage_gap": 0.08307397653818527,
+          "aurc_ci95": [
+            0.2342051564099942,
+            0.33293932890932626
+          ]
+        },
+        "KG-gate+SDS (B5)": {
+          "family": "governance",
+          "n_seeds": 5,
+          "aurc": 0.28955771818012455,
+          "aurc_sd": 0.005000821543650379,
+          "e_aurc": 0.1491756945606662,
+          "auprc": 0.7575323029362192,
+          "conformal_empirical_coverage": 0.888628202058894,
+          "conformal_retained_fraction": 0.7483461825416563,
+          "conformal_nominal_coverage": 0.8,
+          "conformal_coverage_gap": 0.08862820205889399,
+          "aurc_ci95": [
+            0.23609811529943775,
+            0.333645643722474
+          ]
+        },
+        "KG-gate+SDS+corrob (B6)": {
+          "family": "governance",
+          "n_seeds": 5,
+          "aurc": 0.28119062030357284,
+          "aurc_sd": 0.00219903065637074,
+          "e_aurc": 0.14080859668411447,
+          "auprc": 0.7706729412555859,
+          "conformal_empirical_coverage": 0.888245152022983,
+          "conformal_retained_fraction": 0.7451380253668243,
+          "conformal_nominal_coverage": 0.8,
+          "conformal_coverage_gap": 0.088245152022983,
+          "aurc_ci95": [
+            0.23588104105139726,
+            0.333148576468188
+          ]
+        }
+      },
+      "calibration": {
+        "raw score": {
+          "ece": 0.1108477737959593,
+          "brier": 0.22074833660335627,
+          "auprc": 0.7515709470051943
+        },
+        "temperature (T=2.00)": {
+          "ece": 0.10346558608265688,
+          "brier": 0.22049850981151115,
+          "auprc": 0.7515709470051943
+        },
+        "isotonic": {
+          "ece": 0.03966284494810559,
+          "brier": 0.2090294827595538,
+          "auprc": 0.7534357669536409
+        }
+      }
+    },
+    "TJDR": {
+      "n": 23181,
+      "n_positive": 3205,
+      "prevalence": 0.1382597817177861,
+      "methods": {
+        "M0_score": {
+          "family": "threshold",
+          "n_seeds": 1,
+          "aurc": 0.7219182880499405,
+          "aurc_sd": 0.0,
+          "e_aurc": 0.1337231756312035,
+          "auprc": 0.44072584026065,
+          "conformal_empirical_coverage": 0.7438377535101404,
+          "conformal_retained_fraction": 0.4291876968206721,
+          "conformal_nominal_coverage": 0.8,
+          "conformal_coverage_gap": -0.05616224648985968
+        },
+        "MSP": {
+          "family": "confidence",
+          "n_seeds": 1,
+          "aurc": 0.8028605096153523,
+          "aurc_sd": 0.0,
+          "e_aurc": 0.21466539719661526,
+          "auprc": 0.24185181996770375,
+          "conformal_empirical_coverage": 0.8062402496099844,
+          "conformal_retained_fraction": 0.7872826884086105,
+          "conformal_nominal_coverage": 0.8,
+          "conformal_coverage_gap": 0.006240249609984372
+        },
+        "Entropy": {
+          "family": "uncertainty",
+          "n_seeds": 1,
+          "aurc": 0.802570909504305,
+          "aurc_sd": 0.0,
+          "e_aurc": 0.21437579708556798,
+          "auprc": 0.24214142614934298,
+          "conformal_empirical_coverage": 0.802808112324493,
+          "conformal_retained_fraction": 0.7815883697856003,
+          "conformal_nominal_coverage": 0.8,
+          "conformal_coverage_gap": 0.0028081123244929618
+        },
+        "Margin": {
+          "family": "uncertainty",
+          "n_seeds": 1,
+          "aurc": 0.803249775733006,
+          "aurc_sd": 0.0,
+          "e_aurc": 0.21505466331426903,
+          "auprc": 0.2412182061812388,
+          "conformal_empirical_coverage": 0.8065522620904836,
+          "conformal_retained_fraction": 0.789569043613304,
+          "conformal_nominal_coverage": 0.8,
+          "conformal_coverage_gap": 0.0065522620904835405
+        },
+        "TempScale(T=2.00)": {
+          "family": "calibration",
+          "n_seeds": 1,
+          "aurc": 0.7219182880499405,
+          "aurc_sd": 0.0,
+          "e_aurc": 0.1337231756312035,
+          "auprc": 0.44072584026065,
+          "conformal_empirical_coverage": 0.7438377535101404,
+          "conformal_retained_fraction": 0.4291876968206721,
+          "conformal_nominal_coverage": 0.8,
+          "conformal_coverage_gap": -0.05616224648985968
+        },
+        "Evidence-LogReg": {
+          "family": "learned-linear",
+          "n_seeds": 5,
+          "aurc": 0.7953813973316498,
+          "aurc_sd": 0.0,
+          "e_aurc": 0.20718628491291283,
+          "auprc": 0.22847630516882494,
+          "conformal_empirical_coverage": 0.943213728549142,
+          "conformal_retained_fraction": 0.8251153962296709,
+          "conformal_nominal_coverage": 0.8,
+          "conformal_coverage_gap": 0.14321372854914194
+        },
+        "Score-MLP": {
+          "family": "learned-score",
+          "n_seeds": 5,
+          "aurc": 0.7219182880499405,
+          "aurc_sd": 0.0,
+          "e_aurc": 0.1337231756312035,
+          "auprc": 0.44072569703255393,
+          "conformal_empirical_coverage": 0.7438377535101404,
+          "conformal_retained_fraction": 0.42918769682067215,
+          "conformal_nominal_coverage": 0.8,
+          "conformal_coverage_gap": -0.05616224648985968
+        },
+        "KG-gate-MLP (ours)": {
+          "family": "governance",
+          "n_seeds": 5,
+          "aurc": 0.7120586610534454,
+          "aurc_sd": 0.0006812625273522559,
+          "e_aurc": 0.12386354863470841,
+          "auprc": 0.45867988082467714,
+          "conformal_empirical_coverage": 0.7497659906396257,
+          "conformal_retained_fraction": 0.39259738579008674,
+          "conformal_nominal_coverage": 0.8,
+          "conformal_coverage_gap": -0.050234009360374365
+        },
+        "KG-gate+SDS (B5)": {
+          "family": "governance",
+          "n_seeds": 5,
+          "aurc": 0.7126826456454488,
+          "aurc_sd": 0.0008780813354893137,
+          "e_aurc": 0.1244875332267118,
+          "auprc": 0.45026949387281867,
+          "conformal_empirical_coverage": 0.7576287051482059,
+          "conformal_retained_fraction": 0.38825762477891373,
+          "conformal_nominal_coverage": 0.8,
+          "conformal_coverage_gap": -0.04237129485179414
+        },
+        "KG-gate+SDS+corrob (B6)": {
+          "family": "governance",
+          "n_seeds": 5,
+          "aurc": 0.7063723924503827,
+          "aurc_sd": 0.0008448303652600292,
+          "e_aurc": 0.11817728003164571,
+          "auprc": 0.47084809888607937,
+          "conformal_empirical_coverage": 0.7795943837753511,
+          "conformal_retained_fraction": 0.38391786376774084,
+          "conformal_nominal_coverage": 0.8,
+          "conformal_coverage_gap": -0.02040561622464898
+        }
+      },
+      "calibration": {
+        "raw score": {
+          "ece": 0.053734155522860295,
+          "brier": 0.10364573913683355,
+          "auprc": 0.44072584026065
+        },
+        "temperature (T=2.00)": {
+          "ece": 0.06217096972862736,
+          "brier": 0.1048355914621163,
+          "auprc": 0.44072584026065
+        },
+        "isotonic": {
+          "ece": 0.15071857177866885,
+          "brier": 0.12868401248206127,
+          "auprc": 0.43845597775524175
+        }
+      }
+    },
+    "FGADR": {
+      "n": 538986,
+      "n_positive": 89433,
+      "prevalence": 0.1659282430341419,
+      "methods": {
+        "M0_score": {
+          "family": "threshold",
+          "n_seeds": 1,
+          "aurc": 0.6751272858898864,
+          "aurc_sd": 0.0,
+          "e_aurc": 0.13909504125586525,
+          "auprc": 0.4732820685930797,
+          "conformal_empirical_coverage": 0.9412632920733958,
+          "conformal_retained_fraction": 0.7294400967743132,
+          "conformal_nominal_coverage": 0.8,
+          "conformal_coverage_gap": 0.14126329207339572
+        },
+        "MSP": {
+          "family": "confidence",
+          "n_seeds": 1,
+          "aurc": 0.7672482460611989,
+          "aurc_sd": 0.0,
+          "e_aurc": 0.2312160014271778,
+          "auprc": 0.2730524391009791,
+          "conformal_empirical_coverage": 0.8173045743741124,
+          "conformal_retained_fraction": 0.8095664822462921,
+          "conformal_nominal_coverage": 0.8,
+          "conformal_coverage_gap": 0.01730457437411237
+        },
+        "Entropy": {
+          "family": "uncertainty",
+          "n_seeds": 1,
+          "aurc": 0.7667065732827855,
+          "aurc_sd": 0.0,
+          "e_aurc": 0.23067432864876436,
+          "auprc": 0.2736806552880787,
+          "conformal_empirical_coverage": 0.8129437679603726,
+          "conformal_retained_fraction": 0.7990337411361335,
+          "conformal_nominal_coverage": 0.8,
+          "conformal_coverage_gap": 0.012943767960372554
+        },
+        "Margin": {
+          "family": "uncertainty",
+          "n_seeds": 1,
+          "aurc": 0.7676619498326799,
+          "aurc_sd": 0.0,
+          "e_aurc": 0.23162970519865878,
+          "auprc": 0.27228180179585737,
+          "conformal_empirical_coverage": 0.8188029027316539,
+          "conformal_retained_fraction": 0.8137613963999065,
+          "conformal_nominal_coverage": 0.8,
+          "conformal_coverage_gap": 0.01880290273165386
+        },
+        "TempScale(T=2.00)": {
+          "family": "calibration",
+          "n_seeds": 1,
+          "aurc": 0.6751272858898864,
+          "aurc_sd": 0.0,
+          "e_aurc": 0.13909504125586525,
+          "auprc": 0.4732820685930797,
+          "conformal_empirical_coverage": 0.9412632920733958,
+          "conformal_retained_fraction": 0.7294400967743132,
+          "conformal_nominal_coverage": 0.8,
+          "conformal_coverage_gap": 0.14126329207339572
+        },
+        "Evidence-LogReg": {
+          "family": "learned-linear",
+          "n_seeds": 5,
+          "aurc": 0.7501234019118874,
+          "aurc_sd": 0.0,
+          "e_aurc": 0.21409115727786632,
+          "auprc": 0.27557955814609053,
+          "conformal_empirical_coverage": 0.9009761497433834,
+          "conformal_retained_fraction": 0.7767381713068614,
+          "conformal_nominal_coverage": 0.8,
+          "conformal_coverage_gap": 0.10097614974338331
+        },
+        "Score-MLP": {
+          "family": "learned-score",
+          "n_seeds": 5,
+          "aurc": 0.6751272858938471,
+          "aurc_sd": 7.921574507743526e-12,
+          "e_aurc": 0.13909504125982602,
+          "auprc": 0.47328196449955967,
+          "conformal_empirical_coverage": 0.9412632920733957,
+          "conformal_retained_fraction": 0.7294400967743132,
+          "conformal_nominal_coverage": 0.8,
+          "conformal_coverage_gap": 0.1412632920733956
+        },
+        "KG-gate-MLP (ours)": {
+          "family": "governance",
+          "n_seeds": 5,
+          "aurc": 0.6698418011555141,
+          "aurc_sd": 0.0004427939910130855,
+          "e_aurc": 0.13380955652149298,
+          "auprc": 0.4784686182663648,
+          "conformal_empirical_coverage": 0.8856104569901492,
+          "conformal_retained_fraction": 0.5553750932306218,
+          "conformal_nominal_coverage": 0.8,
+          "conformal_coverage_gap": 0.08561045699014913
+        },
+        "KG-gate+SDS (B5)": {
+          "family": "governance",
+          "n_seeds": 5,
+          "aurc": 0.671384713060353,
+          "aurc_sd": 0.0007432668189529017,
+          "e_aurc": 0.13535246842633195,
+          "auprc": 0.4689671643688917,
+          "conformal_empirical_coverage": 0.8895240012076078,
+          "conformal_retained_fraction": 0.5563680689294341,
+          "conformal_nominal_coverage": 0.8,
+          "conformal_coverage_gap": 0.08952400120760773
+        },
+        "KG-gate+SDS+corrob (B6)": {
+          "family": "governance",
+          "n_seeds": 5,
+          "aurc": 0.6672160519133051,
+          "aurc_sd": 0.0012390257809651722,
+          "e_aurc": 0.13118380727928394,
+          "auprc": 0.4822476705942801,
+          "conformal_empirical_coverage": 0.8920197242628559,
+          "conformal_retained_fraction": 0.5514900201489464,
+          "conformal_nominal_coverage": 0.8,
+          "conformal_coverage_gap": 0.09201972426285587
+        }
+      },
+      "calibration": {
+        "raw score": {
+          "ece": 0.10167592816544736,
+          "brier": 0.1290382476907374,
+          "auprc": 0.4732820685930797
+        },
+        "temperature (T=2.00)": {
+          "ece": 0.12727881031922508,
+          "brier": 0.1313498610311639,
+          "auprc": 0.4732820685930797
+        },
+        "isotonic": {
+          "ece": 0.25077898501612145,
+          "brier": 0.1821233887625886,
+          "auprc": 0.4720762932851815
+        }
+      }
+    }
+  }
+}

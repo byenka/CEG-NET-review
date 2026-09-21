@@ -1,0 +1,64 @@
+# data.yaml — Dataset configuration for LGov-Net
+# AMBIGUITY: label names in XML not yet audited.
+# Run tools/audit_dataset.py first to confirm actual label strings.
+
+dataset:
+  name: "OIA-DDR" # update after confirming dataset source
+  root: "data/"
+  images_dir: "data/images/"
+  xml_dir: "data/xml/"
+  processed_dir: "data/processed/"
+
+# Expected C=4 lesion classes — must be verified against actual XML labels
+expected_classes:
+  - "MA"
+  - "HE"
+  - "Hard_EX"
+  - "Soft_EX"
+
+# Image input size (pixels)
+input_size: [512, 512]
+
+# ── Detector output contract (mirrors src/governance/contracts.py) ─────────────
+# This section documents the formal detector output schema.
+# SINGLE SOURCE OF TRUTH: src/governance/contracts.py (Python code).
+# This YAML block is for documentation / tooling reference only.
+#
+# DetectorBox schema (per bbox):
+#   bbox_id:           "<image_id>_<int>"        — unique within image
+#   image_id:          str                        — image stem (no extension)
+#   head_predictions:  list of HeadPrediction     — one per lesion class head
+#     head_name:       str                        — one of expected_classes
+#     bbox:            [x1, y1, x2, y2]           — absolute pixel coords
+#     class_probs:     {class_name: float}        — softmax over 4 classes
+#     score:           float in [0.0, 1.0]        — head confidence
+#   ensemble_probs:    {class_name: float}        — mean of head class_probs
+#   assigned_zone:     str | null                 — ETDRS zone or null
+#
+# Validation: src/governance/contracts.validate_detector_box(box) -> list[str]
+detector:
+  n_heads: 4 # one head per lesion class
+  output_format: "DetectorBox" # schema name in contracts.py
+  ensemble_method: "mean" # how class_probs are averaged across heads
+
+# ── PSS formal specification (mirrors src/governance/contracts.py) ────────────
+# PSS (Perturbation Stability Score) — formal definition
+#
+# PSS(b_j) = (count of majority-class predictions across N augmented views) / N
+# Range  : [1/N, 1.0]
+# Stable : PSS >= 0.7  → prediction consistent; supports high-confidence tier
+# Ambig  : PSS in [0.5, 0.7)
+# Unstable: PSS < 0.5  → prediction inconsistent; triggers escalation
+#
+# Implementation status levels:
+#   "implemented"  — computed from real perturbation loop
+#   "placeholder"  — uses FALLBACK_PSS = 0.5 (neutral, does not distort gate)
+#   "missing"      — not computed; value is null
+#
+# Validation: src/governance/contracts.validate_pss_result(pss) -> list[str]
+pss:
+  status: "placeholder" # current implementation status
+  fallback_value: 0.5 # neutral midpoint, used when status != "implemented"
+  stable_threshold: 0.7
+  unstable_threshold: 0.5
+  n_augmentations_target: 8 # target N once perturbation loop is implemented

@@ -1,0 +1,132 @@
+{
+  "tool": "eval_fp_reduction_benchmark",
+  "positive_label": "governance_retain",
+  "tp_ret_target": 0.8,
+  "n_test_boxes": 67254,
+  "n_test_pos": 18882,
+  "n_test_neg": 48372,
+  "results": [
+    {
+      "tp_ret": 0.8887300074144688,
+      "fp_supp": 0.28181592656908955,
+      "precision_after": 0.32571184565516975,
+      "threshold": 0.2673,
+      "auprc": 0.3919645016367317,
+      "method": "M0_score",
+      "family": "threshold"
+    },
+    {
+      "tp_ret": 0.8919605973943439,
+      "fp_supp": 0.21493839411229637,
+      "precision_after": 0.3072404546034989,
+      "threshold": 0.28404359999999995,
+      "auprc": 0.3896920924683216,
+      "method": "MSP",
+      "family": "confidence"
+    },
+    {
+      "tp_ret": 0.8741658722592945,
+      "fp_supp": 0.2065657818572728,
+      "precision_after": 0.30073242721276827,
+      "threshold": 0.0057731999999999966,
+      "auprc": 0.3789925306091807,
+      "method": "Entropy",
+      "family": "uncertainty"
+    },
+    {
+      "tp_ret": 0.8886770469229954,
+      "fp_supp": 0.2818572728024477,
+      "precision_after": 0.32571140184013353,
+      "threshold": 0.023058599999999988,
+      "auprc": 0.39147148862526093,
+      "method": "Margin",
+      "family": "uncertainty"
+    },
+    {
+      "tp_ret": 0.8887300074144688,
+      "fp_supp": 0.28181592656908955,
+      "precision_after": 0.32571184565516975,
+      "threshold": 0.2208954219831938,
+      "auprc": 0.3919645016367317,
+      "method": "TempScale(T=0.80)",
+      "family": "calibration"
+    },
+    {
+      "tp_ret": 0.8746954771740282,
+      "fp_supp": 0.29171834945836433,
+      "precision_after": 0.3252653760560884,
+      "threshold": 0.17314528851992333,
+      "auprc": 0.38760531327038844,
+      "method": "Evidence-LogReg",
+      "family": "learned-linear"
+    },
+    {
+      "tp_ret": 0.8887300074144688,
+      "fp_supp": 0.28181592656908955,
+      "precision_after": 0.32571184565516975,
+      "threshold": 0.17299601552150878,
+      "auprc": 0.3919642753425188,
+      "method": "Score-MLP",
+      "family": "learned-score"
+    },
+    {
+      "tp_ret": 0.8745365956996081,
+      "fp_supp": 0.3108203092698255,
+      "precision_after": 0.33125376128385153,
+      "threshold": 0.21266124801021746,
+      "auprc": 0.39677769887814485,
+      "method": "KG-gate-MLP (ours)",
+      "family": "governance"
+    }
+  ],
+  "bootstrap": {
+    "metric": "fp_supp_gain_kg_minus_m0",
+    "n_bootstrap": 2000,
+    "cluster": "image_id",
+    "n_clusters": 225,
+    "gain_point": 0.029004382700735964,
+    "gain_mean": 0.029026676051582857,
+    "gain_ci95": [
+      0.0193378143599348,
+      0.039518601831222126
+    ],
+    "p_gain_gt0": 1.0,
+    "sig": true,
+    "kg_fp_supp_ci95": [
+      0.26252865241985807,
+      0.3595668586998986
+    ],
+    "m0_fp_supp_ci95": [
+      0.23137818363060128,
+      0.3332183108568325
+    ]
+  },
+  "bootstrap_auprc": {
+    "kg_minus_m0": {
+      "gain_mean": 0.004980374190413183,
+      "gain_ci95": [
+        -0.0022265366716471475,
+        0.01313499223784556
+      ],
+      "p_gain_gt0": 0.9015,
+      "sig": false,
+      "n_bootstrap": 2000,
+      "cluster": "image_id",
+      "n_clusters": 225,
+      "gain_point": 0.0048131972414131585
+    },
+    "kg_minus_scoremlp": {
+      "gain_mean": 0.004980373162210773,
+      "gain_ci95": [
+        -0.002226532595518979,
+        0.013134992292122878
+      ],
+      "p_gain_gt0": 0.9015,
+      "sig": false,
+      "n_bootstrap": 2000,
+      "cluster": "image_id",
+      "n_clusters": 225,
+      "gain_point": 0.004813423535626027
+    }
+  }
+}

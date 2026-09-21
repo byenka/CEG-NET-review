@@ -1,0 +1,71 @@
+# ── LGov-Net Integration Step Configuration (Phase 14) ───────────────────────
+#
+# Consumed by run_lgovnet_step() inside src/train_step.py.
+# Values here correspond to the `cfg` dict argument.
+# Frozen values (from kg.yaml frozen: block) are reproduced here for
+# quick reference; the authoritative source remains kg.yaml.
+
+# ── Gumbel annealing ─────────────────────────────────────────────────────────
+# Anneals Gumbel-Softmax temperature from tau_start → tau_end over
+# tau_anneal_steps gradient steps.  After that, tau is clamped at tau_end.
+# FROZEN (matches kg.yaml frozen.gumbel_* entries).
+gumbel_tau_start: 1.0 # soft routing at step 0
+gumbel_tau_end: 0.1 # near-hard routing after annealing
+gumbel_tau_anneal_steps: 10000
+
+# ── Loss weights ─────────────────────────────────────────────────────────────
+# L_total = L_SDGL + lambda_gate·L_gate + lambda_kg·L_KG
+lambda_gate: 1.0
+lambda_kg: 0.1
+
+# SDGL tier weights (inside SDGLLoss)
+# L_SDGL = lambda1·L_R1 + lambda2·L_R2 + lambda3·Σ_j w_j·L_R3
+lambda1: 1.0
+lambda2: 1.0
+lambda3: 0.5
+
+# Efficiency / auxiliary loss hooks (currently inactive — set 0 until Phase 15).
+lambda_eff: 0.0
+lambda_aux: 0.0
+
+# ── Gate input ────────────────────────────────────────────────────────────────
+# FROZEN (matches kg.yaml frozen.use_kg_embedding_default).
+# Set false for the "gate without KG embedding" ablation experiment.
+use_kg_embedding: true
+gate_hard: false # straight-through hard routing; false during training
+
+# ── Label smoothing (GateLoss) ────────────────────────────────────────────────
+gate_label_smoothing: 0.05
+
+# ── SDM tau scaling (SDGLLoss) ────────────────────────────────────────────────
+sdgl_eta: 1.0
+
+# ── Routing thresholds ────────────────────────────────────────────────────────
+# Passed as routing_thresholds dict to route_bbox_batch().
+# Defaults (from routing.DEFAULT_ROUTING_THRESHOLDS) shown here for reference.
+# Override individual keys as needed; unset keys use module defaults.
+routing_thresholds:
+  iou_match: 0.5
+  min_heads_r1: 3
+  clinical_sim_max: 0.4
+  sdca_r3_lo: 0.3
+  sdca_r3_hi: 0.7
+
+# ── Refinement thresholds ─────────────────────────────────────────────────────
+# Passed as refine_thresholds dict to refine_r3_batch().
+# Defaults (from refine.DEFAULT_REFINE_THRESHOLDS) shown here for reference.
+refine_thresholds:
+  delta_merge: 0.4
+  aps_min: 0.5
+  nms_iou_thresh: 0.5
+  nms_iou_similar: 0.3
+  sdm_nms_similar_cap: 0.4
+
+# ── Phase 17R — Detector backend settings (GPU safety for RTX 4090 24GB) ──────
+# Change detector_mode to multi_head_sequential when Phase 15/19 checkpoints
+# are available.  stub and cached_predictions are safe at any time.
+detector_mode: stub # stub | single_head_real | multi_head_sequential | cached_predictions
+sequential_heads: true # one head on GPU at a time — safe default for RTX 4090
+use_amp: true # fp16 for all backbone operations
+micro_batch_size: 2 # per-head GPU batch size (keep ≤4 for 24GB VRAM)
+grad_accum_steps: 4 # accumulate gradients before optimizer step

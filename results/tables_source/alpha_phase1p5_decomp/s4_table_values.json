@@ -1,0 +1,203 @@
+{
+  "source": "outputs/_alpha_phase1p5_decomp/per_seed.csv",
+  "groups": {
+    "A_full": {
+      "seeds": [
+        42,
+        101,
+        202
+      ],
+      "run_dirs": [
+        "outputs/mode2_r4_mode2a_REAL_full_seed42_REV7C",
+        "outputs/mode2_r4_mode2a_REAL_full_seed101_REV7C",
+        "outputs/mode2_r4_mode2a_REAL_full_seed202_REV7C"
+      ],
+      "lambda_kg": 0.1,
+      "lambda_gate": 0.05,
+      "lambda_anchor": 0.05,
+      "epochs": 20,
+      "batch_size": 2,
+      "freeze_kg": false,
+      "kg_encoder_trainable": true,
+      "standard_roi_loss": true,
+      "data_root": "data/oiaddr",
+      "train_images": 383,
+      "valid_images": 149,
+      "clinical_metrics_split_thresh": [
+        [
+          "valid",
+          "None"
+        ]
+      ],
+      "mAP_50": [
+        0.24383,
+        0.244147,
+        0.247419
+      ],
+      "mAP_50_mean": 0.245132,
+      "mAP_50_sd": 0.0019869320572178627,
+      "ece": [
+        0.17832413560303498,
+        0.1918792938913969,
+        0.18258798123056785
+      ],
+      "ece_mean": 0.1842638035749999,
+      "ece_sd": 0.006931223878451056
+    },
+    "B_none": {
+      "seeds": [
+        42,
+        101,
+        202
+      ],
+      "run_dirs": [
+        "outputs/mode2_r4_mode2a_REAL_full_noKG_seed42_REV7C",
+        "outputs/mode2_r4_mode2a_REAL_full_noKG_seed101_REV7C",
+        "outputs/mode2_r4_mode2a_REAL_full_noKG_seed202_REV7C"
+      ],
+      "lambda_kg": 0.0,
+      "lambda_gate": 0.0,
+      "lambda_anchor": 0.0,
+      "epochs": 20,
+      "batch_size": 2,
+      "freeze_kg": false,
+      "kg_encoder_trainable": true,
+      "standard_roi_loss": true,
+      "data_root": "data/oiaddr",
+      "train_images": 383,
+      "valid_images": 149,
+      "clinical_metrics_split_thresh": [
+        [
+          "valid",
+          "None"
+        ]
+      ],
+      "mAP_50": [
+        0.237163,
+        0.24151,
+        0.242658
+      ],
+      "mAP_50_mean": 0.24044366666666667,
+      "mAP_50_sd": 0.002898543829810638,
+      "ece": [
+        0.21584734298921268,
+        0.2017770622708897,
+        0.20633689180957632
+      ],
+      "ece_mean": 0.20798709902322624,
+      "ece_sd": 0.00717882913566617
+    },
+    "C_anchor_only": {
+      "seeds": [
+        42,
+        101,
+        202
+      ],
+      "run_dirs": [
+        "outputs/mode2_r4_anchor_only_seed42_REV7D",
+        "outputs/mode2_r4_anchor_only_seed101_REV7D",
+        "outputs/mode2_r4_anchor_only_seed202_REV7D"
+      ],
+      "lambda_kg": 0.0,
+      "lambda_gate": 0.0,
+      "lambda_anchor": 0.05,
+      "epochs": 20,
+      "batch_size": 2,
+      "freeze_kg": false,
+      "kg_encoder_trainable": true,
+      "standard_roi_loss": true,
+      "data_root": "data/oiaddr",
+      "train_images": 383,
+      "valid_images": 149,
+      "clinical_metrics_split_thresh": [
+        [
+          "valid",
+          "None"
+        ]
+      ],
+      "mAP_50": [
+        0.241065,
+        0.244754,
+        0.24417
+      ],
+      "mAP_50_mean": 0.24332966666666667,
+      "mAP_50_sd": 0.0019828767821862578,
+      "ece": [
+        0.1991113133016708,
+        0.18463324844611562,
+        0.18364333879949876
+      ],
+      "ece_mean": 0.1891293001824284,
+      "ece_sd": 0.00865883477793993
+    },
+    "D_kg_only": {
+      "seeds": [
+        42,
+        101,
+        202
+      ],
+      "run_dirs": [
+        "outputs/mode2_r4_kg_only_seed42_REV7D",
+        "outputs/mode2_r4_kg_only_seed101_REV7D",
+        "outputs/mode2_r4_kg_only_seed202_REV7D"
+      ],
+      "lambda_kg": 0.1,
+      "lambda_gate": 0.05,
+      "lambda_anchor": 0.0,
+      "epochs": 20,
+      "batch_size": 2,
+      "freeze_kg": false,
+      "kg_encoder_trainable": true,
+      "standard_roi_loss": true,
+      "data_root": "data/oiaddr",
+      "train_images": 383,
+      "valid_images": 149,
+      "clinical_metrics_split_thresh": [
+        [
+          "valid",
+          "None"
+        ]
+      ],
+      "mAP_50": [
+        0.243896,
+        0.244973,
+        0.238901
+      ],
+      "mAP_50_mean": 0.24259,
+      "mAP_50_sd": 0.003239833792033163,
+      "ece": [
+        0.20023492206458507,
+        0.2088896725396476,
+        0.2190585064276211
+      ],
+      "ece_mean": 0.20939436701061792,
+      "ece_sd": 0.009421935546895584
+    }
+  },
+  "frozen": {
+    "mAP_50": 0.241129,
+    "split": "valid",
+    "n_images": 149,
+    "score_thresh": 0.02,
+    "ece": 0.20696545996229662,
+    "ece_json_path": "/metrics/macro/overall_ece",
+    "ece_split_thresh": [
+      "valid",
+      "None"
+    ]
+  },
+  "d_minus_b": {
+    "mAP_50": [
+      0.006732999999999989,
+      0.003462999999999994,
+      -0.0037570000000000103
+    ],
+    "ece": [
+      -0.015612420924627612,
+      0.007112610268757896,
+      0.012721614618044774
+    ],
+    "mAP_50_mean": 0.0021463333333333243,
+    "ece_mean": 0.001407267987391686
+  }
+}

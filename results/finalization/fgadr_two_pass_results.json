@@ -1,0 +1,107 @@
+{
+  "protocol": {
+    "fit": "OIA-DDR valid only",
+    "target": "FGADR train, held-out cohort",
+    "evidence": [
+      "ev_sas",
+      "ev_sdca",
+      "ev_aps",
+      "ev_pss",
+      "ev_sds",
+      "ev_sds_nsrc"
+    ],
+    "fusion": "(primary + matched flip)/2 on source and target",
+    "missing_match_score": 0,
+    "iou_min": 0.15,
+    "seeds": [
+      0,
+      1,
+      2,
+      3,
+      4
+    ],
+    "hidden": 16,
+    "iterations": 1500,
+    "learning_rate": 0.1,
+    "bootstrap_samples": 2000,
+    "bootstrap_seed": 0,
+    "cluster": "image_id",
+    "estimator": "average_precision",
+    "tuning": "none",
+    "interpretation": "Report all seeds and paired CIs regardless of sign; not pooled with the three-pass protocol and not clinical validation.",
+    "historical_secondary_evidence_retained": true
+  },
+  "n_valid": 39710,
+  "n_target": 538986,
+  "n_target_images": 1842,
+  "baseline_ap": 0.5344287785608696,
+  "prior_baseline_ap": 0.5344287785608696,
+  "control_passed": true,
+  "flip_coverage_valid": 0.5870309745656006,
+  "flip_coverage_target": 0.4912465258837892,
+  "per_seed": [
+    {
+      "seed": 0,
+      "ap": 0.5229803604966234,
+      "gain": -0.011448418064246124,
+      "ci95": [
+        -0.015212457838410066,
+        -0.007719491937157691
+      ],
+      "bootstrap_gain_mean": -0.011421298279918836
+    },
+    {
+      "seed": 1,
+      "ap": 0.507145696400425,
+      "gain": -0.027283082160444616,
+      "ci95": [
+        -0.03233761361281146,
+        -0.02235968828131875
+      ],
+      "bootstrap_gain_mean": -0.027261347972414415
+    },
+    {
+      "seed": 2,
+      "ap": 0.49942954628055936,
+      "gain": -0.03499923228031021,
+      "ci95": [
+        -0.03977156798454463,
+        -0.030022705241566746
+      ],
+      "bootstrap_gain_mean": -0.03496095164506731
+    },
+    {
+      "seed": 3,
+      "ap": 0.5253028634045075,
+      "gain": -0.009125915156362074,
+      "ci95": [
+        -0.012891289907531994,
+        -0.005478954797840203
+      ],
+      "bootstrap_gain_mean": -0.009109296558232696
+    },
+    {
+      "seed": 4,
+      "ap": 0.517201043646962,
+      "gain": -0.01722773491390761,
+      "ci95": [
+        -0.020970817885464482,
+        -0.013503236590075492
+      ],
+      "bootstrap_gain_mean": -0.01720259322655393
+    }
+  ],
+  "mean_ap": 0.5144119020458156,
+  "sd_ap": 0.01092107548697471,
+  "mean_gain": -0.020016876515054016,
+  "positive_seed_count": 0,
+  "ci_above_zero_count": 0,
+  "ci_below_zero_count": 5,
+  "bootstrap_validation": "Exact weighted image resampling checked against sklearn expanded samples, 4 draws per score",
+  "source_sha256": {
+    "E:/RISET/Junal2/lgovnetv3/lgovnetB/outputs/0506/evsds_v2sec/oiaddr/valid/governance_features_valid.csv": "035111dcade3947c32074e9dd4481265a90a9aedd2739063883fac9bd7ab1c08",
+    "E:/tmp/zerobox/feat/fgadr/train/governance_features_train.csv": "d533fd6f58d024b2e9dd99d48f149b211cae9c98c0de9a09e604dc16c01b6e75",
+    "E:/tmp/zerobox/scripts/fgadr_two_pass_merged.py": "2b76a584095effb24321c2302b6259df0b7f1f434f80f2701f6748eafcbfad65"
+  },
+  "elapsed_seconds": 262.8689003000036
+}

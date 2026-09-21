@@ -1,0 +1,61 @@
+{
+  "task": "governance_retain",
+  "cohort": "OIA-DDR test",
+  "alpha": 0.2,
+  "seeds": [
+    0,
+    1,
+    2,
+    3,
+    4
+  ],
+  "n_boot": 2000,
+  "methods": {
+    "Three-pass mean (F)": {
+      "aurc": 0.3816570394179688,
+      "aurc_sd": 0.0,
+      "e_aurc": 0.13125286143987652,
+      "auprc": 0.7223593935639829,
+      "conformal_empirical_coverage": 0.8456520852868034,
+      "conformal_coverage_gap": 0.04565208528680331,
+      "conformal_retained_fraction": 0.570296197090977,
+      "n_seeds": 1
+    },
+    "Full gate (S+E)": {
+      "aurc": 0.395999634288522,
+      "aurc_sd": 0.0007011475800473928,
+      "e_aurc": 0.14559545631042972,
+      "auprc": 0.6985390354239819,
+      "conformal_empirical_coverage": 0.8189245383016022,
+      "conformal_coverage_gap": 0.018924538301602123,
+      "conformal_retained_fraction": 0.5734170118665711,
+      "n_seeds": 5
+    },
+    "Fusion-input gate (F+E)": {
+      "aurc": 0.37662828531961756,
+      "aurc_sd": 0.0008928031713880438,
+      "e_aurc": 0.12622410734152528,
+      "auprc": 0.7328765021518616,
+      "conformal_empirical_coverage": 0.8104447796485792,
+      "conformal_coverage_gap": 0.01044477964857915,
+      "conformal_retained_fraction": 0.5213349113900396,
+      "n_seeds": 5
+    }
+  },
+  "paired_vs_fusion": {
+    "Full gate (S+E)": {
+      "delta": 0.014520721281510721,
+      "ci95": [
+        0.009526238790581992,
+        0.019279453611384514
+      ]
+    },
+    "Fusion-input gate (F+E)": {
+      "delta": -0.004161823300767738,
+      "ci95": [
+        -0.008557731017261047,
+        -0.00010769027726795338
+      ]
+    }
+  }
+}

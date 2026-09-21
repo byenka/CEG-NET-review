@@ -1,0 +1,73 @@
+{
+  "tool": "eval_fp_reduction_benchmark",
+  "positive_label": "near_lesion",
+  "tp_ret_target": 0.8,
+  "n_test_boxes": 64214,
+  "n_test_pos": 24529,
+  "n_test_neg": 39685,
+  "results": [
+    {
+      "tp_ret": 0.8879285743405765,
+      "fp_supp": 0.3524505480660199,
+      "precision_after": 0.4587387842790345,
+      "threshold": 0.10349999999999995,
+      "auprc": 0.6486142184091839,
+      "method": "M0_score",
+      "family": "threshold"
+    },
+    {
+      "tp_ret": 0.8485466182885564,
+      "fp_supp": 0.1307798916467179,
+      "precision_after": 0.37632211755772116,
+      "threshold": 0.8420809999999999,
+      "auprc": 0.47356637428744586,
+      "method": "MSP",
+      "family": "confidence"
+    },
+    {
+      "tp_ret": 0.8485058502181092,
+      "fp_supp": 0.13377850573264458,
+      "precision_after": 0.37712225262280524,
+      "threshold": 0.6789249999999999,
+      "auprc": 0.47448808701684836,
+      "method": "Entropy",
+      "family": "uncertainty"
+    },
+    {
+      "tp_ret": 0.8481797056545314,
+      "fp_supp": 0.12944437444878418,
+      "precision_after": 0.3758603869708959,
+      "threshold": 0.688034,
+      "auprc": 0.471645156375854,
+      "method": "Margin",
+      "family": "uncertainty"
+    },
+    {
+      "tp_ret": 0.8879285743405765,
+      "fp_supp": 0.3524505480660199,
+      "precision_after": 0.4587387842790345,
+      "threshold": 0.2536075879866978,
+      "auprc": 0.6486142184091839,
+      "method": "TempScale(T=2.00)",
+      "family": "calibration"
+    },
+    {
+      "tp_ret": 0.7742264258632638,
+      "fp_supp": 0.5643190122212423,
+      "precision_after": 0.5234420219949836,
+      "threshold": 0.3257208466456177,
+      "auprc": 0.5245792444436786,
+      "method": "Evidence-LogReg",
+      "family": "learned-linear"
+    },
+    {
+      "tp_ret": 0.7891883077173958,
+      "fp_supp": 0.5923396749401537,
+      "precision_after": 0.544743358847366,
+      "threshold": 0.30858858181192367,
+      "auprc": 0.6782419559433663,
+      "method": "KG-gate-MLP (ours)",
+      "family": "governance"
+    }
+  ]
+}

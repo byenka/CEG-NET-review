@@ -1,0 +1,654 @@
+{
+  "tool": "tools/make_tier_routing.py",
+  "rule": "R1 RETAIN&SDCA<delta, R2 RETAIN&SDCA>=delta, R3 SUPPRESS&SDCA>=delta, R4 SUPPRESS&SDCA<delta",
+  "delta": 0.3,
+  "tp_ret_target": 0.8,
+  "gate": "fit_mlp([ev_sas, ev_sdca, ev_aps, ev_pss, pred_score]), hidden 16, 1500 iters, lr 0.1, seed 0",
+  "fused": "rata-rata skor primer + flip + detektor kedua, kotak tanpa pasangan = 0; keputusan retain memakai tau-nya sendiri dari valid pada retensi TP 0.80",
+  "valid_csv": "outputs/0506/evsds_v2sec/oiaddr/valid/governance_features_valid.csv",
+  "tau_gate": 0.30613959568784477,
+  "tau_m0": 0.10349999999999995,
+  "tau_fused": 0.10292099999999998,
+  "cohorts": {
+    "oiaddr": {
+      "csv": "outputs/0506/evsds_v2sec/oiaddr/test/governance_features_test.csv",
+      "n": 64214,
+      "n_images": 225,
+      "sdca_levels": [
+        0.0,
+        0.5,
+        0.75,
+        1.0
+      ],
+      "sdca_levels_within_expected": true,
+      "delta_invariance": {
+        "1e-06": true,
+        "0.25": true,
+        "0.5": true
+      },
+      "gate": {
+        "auprc": 0.6755501896639984,
+        "tp_ret": 0.8043540299237637,
+        "fp_supp": 0.5755323169963462,
+        "precision_after": 0.5394395078605605,
+        "threshold": 0.30613959568784477,
+        "tiers": {
+          "R1": {
+            "name": "accepted",
+            "n": 19541,
+            "share": 0.3043105864764693,
+            "retain_target_share": 0.5448544086791873,
+            "tp_exact_share": 0.11079269228800982,
+            "categories": {
+              "BACKGROUND_FP": 5356,
+              "CLINICALLY_CLOSE_MISMATCH": 1111,
+              "LOCALIZATION_WEAK": 7371,
+              "LOW_CONF_CANDIDATE": 3537,
+              "TP_EXACT": 2165,
+              "UNSAFE_MISMATCH": 1
+            }
+          },
+          "R2": {
+            "name": "provisional",
+            "n": 17034,
+            "share": 0.2652692559254991,
+            "retain_target_share": 0.533227662322414,
+            "tp_exact_share": 0.17306563343900436,
+            "categories": {
+              "BACKGROUND_FP": 7820,
+              "LOCALIZATION_WEAK": 6135,
+              "LOW_CONF_CANDIDATE": 74,
+              "TP_EXACT": 2948,
+              "UNSAFE_MISMATCH": 57
+            }
+          },
+          "R3": {
+            "name": "contested",
+            "n": 15986,
+            "share": 0.24894882735851995,
+            "retain_target_share": 0.19210559239334418,
+            "tp_exact_share": 0.016451895408482423,
+            "categories": {
+              "BACKGROUND_FP": 5693,
+              "LOCALIZATION_WEAK": 2808,
+              "LOW_CONF_CANDIDATE": 7189,
+              "TP_EXACT": 263,
+              "UNSAFE_MISMATCH": 33
+            }
+          },
+          "R4": {
+            "name": "rejected",
+            "n": 11653,
+            "share": 0.18147133023951165,
+            "retain_target_share": 0.14828799450785204,
+            "tp_exact_share": 0.009611258903286707,
+            "categories": {
+              "BACKGROUND_FP": 1720,
+              "CLINICALLY_CLOSE_MISMATCH": 106,
+              "LOCALIZATION_WEAK": 1510,
+              "LOW_CONF_CANDIDATE": 8205,
+              "TP_EXACT": 112
+            }
+          }
+        },
+        "retain_targets_by_tier": {
+          "R1": 0.4340576460516124,
+          "R2": 0.37029638387215136,
+          "R3": 0.12519874434343023,
+          "R4": 0.07044722573280607
+        },
+        "suppress_targets_by_tier": {
+          "R1": 0.2241149048758977,
+          "R2": 0.2003527781277561,
+          "R3": 0.325437822854983,
+          "R4": 0.25009449414136325
+        },
+        "flagged_share_R2_R3": 0.5142180832840191,
+        "grade_shifting": {
+          "n": 91,
+          "R1": 1,
+          "R2": 57,
+          "R3": 33,
+          "R4": 0
+        },
+        "within_grade": {
+          "n": 1217,
+          "R1": 1111,
+          "R2": 0,
+          "R3": 0,
+          "R4": 106
+        }
+      },
+      "m0": {
+        "auprc": 0.6486111952890347,
+        "tp_ret": 0.8879285743405765,
+        "fp_supp": 0.3524505480660199,
+        "precision_after": 0.4587387842790345,
+        "threshold": 0.10349999999999995,
+        "tiers": {
+          "R1": {
+            "name": "accepted",
+            "n": 20030,
+            "share": 0.31192574827919145,
+            "retain_target_share": 0.5237144283574638,
+            "tp_exact_share": 0.10748876684972541,
+            "categories": {
+              "BACKGROUND_FP": 7076,
+              "CLINICALLY_CLOSE_MISMATCH": 1100,
+              "LOCALIZATION_WEAK": 7237,
+              "LOW_CONF_CANDIDATE": 2463,
+              "TP_EXACT": 2153,
+              "UNSAFE_MISMATCH": 1
+            }
+          },
+          "R2": {
+            "name": "provisional",
+            "n": 27448,
+            "share": 0.4274457283458436,
+            "retain_target_share": 0.41132322937918975,
+            "tp_exact_share": 0.11443456718157971,
+            "categories": {
+              "BACKGROUND_FP": 13513,
+              "LOCALIZATION_WEAK": 8149,
+              "LOW_CONF_CANDIDATE": 2571,
+              "TP_EXACT": 3141,
+              "UNSAFE_MISMATCH": 74
+            }
+          },
+          "R3": {
+            "name": "contested",
+            "n": 5572,
+            "share": 0.08677235493817548,
+            "retain_target_share": 0.15506101938262742,
+            "tp_exact_share": 0.01256281407035176,
+            "categories": {
+              "LOCALIZATION_WEAK": 794,
+              "LOW_CONF_CANDIDATE": 4692,
+              "TP_EXACT": 70,
+              "UNSAFE_MISMATCH": 16
+            }
+          },
+          "R4": {
+            "name": "rejected",
+            "n": 11164,
+            "share": 0.1738561684367895,
+            "retain_target_share": 0.16884629165173773,
+            "tp_exact_share": 0.011107130060910068,
+            "categories": {
+              "CLINICALLY_CLOSE_MISMATCH": 117,
+              "LOCALIZATION_WEAK": 1644,
+              "LOW_CONF_CANDIDATE": 9279,
+              "TP_EXACT": 124
+            }
+          }
+        },
+        "retain_targets_by_tier": {
+          "R1": 0.42765705899139794,
+          "R2": 0.46027151534917854,
+          "R3": 0.035223612866403034,
+          "R4": 0.07684781279302051
+        },
+        "suppress_targets_by_tier": {
+          "R1": 0.24039309562807107,
+          "R2": 0.407156356305909,
+          "R3": 0.11863424467683004,
+          "R4": 0.23381630338918988
+        },
+        "flagged_share_R2_R3": 0.5142180832840191,
+        "grade_shifting": {
+          "n": 91,
+          "R1": 1,
+          "R2": 74,
+          "R3": 16,
+          "R4": 0
+        },
+        "within_grade": {
+          "n": 1217,
+          "R1": 1100,
+          "R2": 0,
+          "R3": 0,
+          "R4": 117
+        }
+      },
+      "fused": {
+        "auprc": 0.7223593935639829,
+        "tp_ret": 0.8455705491459089,
+        "fp_supp": 0.6,
+        "precision_after": 0.566461832582275,
+        "threshold": 0.10292099999999998,
+        "tiers": {
+          "R1": {
+            "name": "accepted",
+            "n": 15855,
+            "share": 0.24690877378764756,
+            "retain_target_share": 0.6438978240302744,
+            "tp_exact_share": 0.13497319457584359,
+            "categories": {
+              "BACKGROUND_FP": 4412,
+              "CLINICALLY_CLOSE_MISMATCH": 1127,
+              "LOCALIZATION_WEAK": 6942,
+              "LOW_CONF_CANDIDATE": 1233,
+              "TP_EXACT": 2140,
+              "UNSAFE_MISMATCH": 1
+            }
+          },
+          "R2": {
+            "name": "provisional",
+            "n": 20760,
+            "share": 0.3232939857351979,
+            "retain_target_share": 0.5073217726396917,
+            "tp_exact_share": 0.14816955684007707,
+            "categories": {
+              "BACKGROUND_FP": 8797,
+              "LOCALIZATION_WEAK": 7456,
+              "LOW_CONF_CANDIDATE": 1354,
+              "TP_EXACT": 3076,
+              "UNSAFE_MISMATCH": 77
+            }
+          },
+          "R3": {
+            "name": "contested",
+            "n": 12260,
+            "share": 0.19092409754882114,
+            "retain_target_share": 0.13230016313213702,
+            "tp_exact_share": 0.01101141924959217,
+            "categories": {
+              "BACKGROUND_FP": 4716,
+              "LOCALIZATION_WEAK": 1487,
+              "LOW_CONF_CANDIDATE": 5909,
+              "TP_EXACT": 135,
+              "UNSAFE_MISMATCH": 13
+            }
+          },
+          "R4": {
+            "name": "rejected",
+            "n": 15339,
+            "share": 0.2388731429283334,
+            "retain_target_share": 0.14120868374731077,
+            "tp_exact_share": 0.008931481843666472,
+            "categories": {
+              "BACKGROUND_FP": 2664,
+              "CLINICALLY_CLOSE_MISMATCH": 90,
+              "LOCALIZATION_WEAK": 1939,
+              "LOW_CONF_CANDIDATE": 10509,
+              "TP_EXACT": 137
+            }
+          }
+        },
+        "retain_targets_by_tier": {
+          "R1": 0.4162012311957275,
+          "R2": 0.4293693179501814,
+          "R3": 0.06612581026540014,
+          "R4": 0.08830364058869093
+        },
+        "suppress_targets_by_tier": {
+          "R1": 0.14227037923648733,
+          "R2": 0.25772962076351263,
+          "R3": 0.2680609802192264,
+          "R4": 0.3319390197807736
+        },
+        "flagged_share_R2_R3": 0.5142180832840191,
+        "grade_shifting": {
+          "n": 91,
+          "R1": 1,
+          "R2": 77,
+          "R3": 13,
+          "R4": 0
+        },
+        "within_grade": {
+          "n": 1217,
+          "R1": 1127,
+          "R2": 0,
+          "R3": 0,
+          "R4": 90
+        }
+      },
+      "per_image_R1": {
+        "min": 6,
+        "max": 264
+      }
+    },
+    "idrid": {
+      "csv": "outputs/0506/evsds_pss/idrid/test/governance_features_test.csv",
+      "n": 8042,
+      "n_images": 27,
+      "sdca_levels": [
+        0.0,
+        0.5,
+        0.75,
+        1.0
+      ],
+      "sdca_levels_within_expected": true,
+      "delta_invariance": {
+        "1e-06": true,
+        "0.25": true,
+        "0.5": true
+      },
+      "gate": {
+        "auprc": 0.7729988598538152,
+        "tp_ret": 0.8805362700502753,
+        "fp_supp": 0.41293661060802067,
+        "precision_after": 0.6184630906339331,
+        "threshold": 0.30613959568784477,
+        "tiers": {
+          "R1": {
+            "name": "accepted",
+            "n": 2195,
+            "share": 0.2729420542153693,
+            "retain_target_share": 0.5635535307517084,
+            "tp_exact_share": 0.1020501138952164,
+            "categories": {
+              "BACKGROUND_FP": 850,
+              "CLINICALLY_CLOSE_MISMATCH": 90,
+              "LOCALIZATION_WEAK": 923,
+              "LOW_CONF_CANDIDATE": 108,
+              "TP_EXACT": 224
+            }
+          },
+          "R2": {
+            "name": "provisional",
+            "n": 3752,
+            "share": 0.4665506093011689,
+            "retain_target_share": 0.6505863539445629,
+            "tp_exact_share": 0.15165245202558636,
+            "categories": {
+              "BACKGROUND_FP": 1291,
+              "LOCALIZATION_WEAK": 1872,
+              "TP_EXACT": 569,
+              "UNSAFE_MISMATCH": 20
+            }
+          },
+          "R3": {
+            "name": "contested",
+            "n": 1702,
+            "share": 0.2116388957970654,
+            "retain_target_share": 0.25675675675675674,
+            "tp_exact_share": 0.01762632197414806,
+            "categories": {
+              "BACKGROUND_FP": 1023,
+              "LOCALIZATION_WEAK": 407,
+              "LOW_CONF_CANDIDATE": 237,
+              "TP_EXACT": 30,
+              "UNSAFE_MISMATCH": 5
+            }
+          },
+          "R4": {
+            "name": "rejected",
+            "n": 393,
+            "share": 0.04886844068639642,
+            "retain_target_share": 0.15776081424936386,
+            "tp_exact_share": 0.010178117048346057,
+            "categories": {
+              "BACKGROUND_FP": 117,
+              "CLINICALLY_CLOSE_MISMATCH": 3,
+              "LOCALIZATION_WEAK": 55,
+              "LOW_CONF_CANDIDATE": 214,
+              "TP_EXACT": 4
+            }
+          }
+        },
+        "retain_targets_by_tier": {
+          "R1": 0.29614555901364614,
+          "R2": 0.5843907110366292,
+          "R3": 0.10462054105817573,
+          "R4": 0.014843188891548958
+        },
+        "suppress_targets_by_tier": {
+          "R1": 0.2478654592496766,
+          "R2": 0.3391979301423027,
+          "R3": 0.32729624838292365,
+          "R4": 0.08564036222509702
+        },
+        "flagged_share_R2_R3": 0.6781895050982343,
+        "grade_shifting": {
+          "n": 25,
+          "R1": 0,
+          "R2": 20,
+          "R3": 5,
+          "R4": 0
+        },
+        "within_grade": {
+          "n": 93,
+          "R1": 90,
+          "R2": 0,
+          "R3": 0,
+          "R4": 3
+        }
+      },
+      "per_image_R1": {
+        "min": 16,
+        "max": 180
+      }
+    },
+    "tjdr": {
+      "csv": "outputs/0506/evsds_pss/tjdr/test/governance_features_test.csv",
+      "n": 23181,
+      "n_images": 113,
+      "sdca_levels": [
+        0.0,
+        0.5,
+        0.75,
+        1.0
+      ],
+      "sdca_levels_within_expected": true,
+      "delta_invariance": {
+        "1e-06": true,
+        "0.25": true,
+        "0.5": true
+      },
+      "gate": {
+        "auprc": 0.45461636566596386,
+        "tp_ret": 0.7466458658346334,
+        "fp_supp": 0.6586403684421306,
+        "precision_after": 0.2597698653929657,
+        "threshold": 0.30613959568784477,
+        "tiers": {
+          "R1": {
+            "name": "accepted",
+            "n": 6249,
+            "share": 0.26957422026659766,
+            "retain_target_share": 0.24099855976956314,
+            "tp_exact_share": 0.041766682669227076,
+            "categories": {
+              "BACKGROUND_FP": 2054,
+              "CLINICALLY_CLOSE_MISMATCH": 73,
+              "LOCALIZATION_WEAK": 1172,
+              "LOW_CONF_CANDIDATE": 2689,
+              "TP_EXACT": 261
+            }
+          },
+          "R2": {
+            "name": "provisional",
+            "n": 2963,
+            "share": 0.1278201975756007,
+            "retain_target_share": 0.2993587580155248,
+            "tp_exact_share": 0.059399257509281135,
+            "categories": {
+              "BACKGROUND_FP": 1971,
+              "LOCALIZATION_WEAK": 711,
+              "LOW_CONF_CANDIDATE": 82,
+              "TP_EXACT": 176,
+              "UNSAFE_MISMATCH": 23
+            }
+          },
+          "R3": {
+            "name": "contested",
+            "n": 5843,
+            "share": 0.2520598766230965,
+            "retain_target_share": 0.09943522163272292,
+            "tp_exact_share": 0.008214958069484853,
+            "categories": {
+              "BACKGROUND_FP": 1242,
+              "LOCALIZATION_WEAK": 533,
+              "LOW_CONF_CANDIDATE": 3998,
+              "TP_EXACT": 48,
+              "UNSAFE_MISMATCH": 22
+            }
+          },
+          "R4": {
+            "name": "rejected",
+            "n": 8126,
+            "share": 0.35054570553470515,
+            "retain_target_share": 0.028427270489785873,
+            "tp_exact_share": 0.0012306177701206006,
+            "categories": {
+              "BACKGROUND_FP": 497,
+              "CLINICALLY_CLOSE_MISMATCH": 8,
+              "LOCALIZATION_WEAK": 213,
+              "LOW_CONF_CANDIDATE": 7398,
+              "TP_EXACT": 10
+            }
+          }
+        },
+        "retain_targets_by_tier": {
+          "R1": 0.4698907956318253,
+          "R2": 0.2767550702028081,
+          "R3": 0.1812792511700468,
+          "R4": 0.07207488299531982
+        },
+        "suppress_targets_by_tier": {
+          "R1": 0.23743492190628754,
+          "R2": 0.1039247096515819,
+          "R3": 0.26341609931918303,
+          "R4": 0.39522426912294756
+        },
+        "flagged_share_R2_R3": 0.3798800741986972,
+        "grade_shifting": {
+          "n": 45,
+          "R1": 0,
+          "R2": 23,
+          "R3": 22,
+          "R4": 0
+        },
+        "within_grade": {
+          "n": 81,
+          "R1": 73,
+          "R2": 0,
+          "R3": 0,
+          "R4": 8
+        }
+      },
+      "per_image_R1": {
+        "min": 1,
+        "max": 294
+      }
+    },
+    "fgadr": {
+      "csv": "outputs/0506/evsds_pss/fgadr/train/governance_features_train.csv",
+      "n": 538986,
+      "n_images": 1842,
+      "sdca_levels": [
+        0.0,
+        0.5,
+        0.75,
+        1.0
+      ],
+      "sdca_levels_within_expected": true,
+      "delta_invariance": {
+        "1e-06": true,
+        "0.25": true,
+        "0.5": true
+      },
+      "gate": {
+        "auprc": 0.48042815150207563,
+        "tp_ret": 0.8846846242438473,
+        "fp_supp": 0.5102490696313894,
+        "precision_after": 0.2643598662162659,
+        "threshold": 0.30613959568784477,
+        "tiers": {
+          "R1": {
+            "name": "accepted",
+            "n": 193961,
+            "share": 0.3598627793671821,
+            "retain_target_share": 0.240342130634509,
+            "tp_exact_share": 0.036177375864220124,
+            "categories": {
+              "BACKGROUND_FP": 109998,
+              "CLINICALLY_CLOSE_MISMATCH": 1477,
+              "LOCALIZATION_WEAK": 38123,
+              "LOW_CONF_CANDIDATE": 37328,
+              "TP_EXACT": 7017,
+              "UNSAFE_MISMATCH": 18
+            }
+          },
+          "R2": {
+            "name": "provisional",
+            "n": 105328,
+            "share": 0.1954188049411302,
+            "retain_target_share": 0.30858840953972355,
+            "tp_exact_share": 0.052198845511165125,
+            "categories": {
+              "BACKGROUND_FP": 71676,
+              "CLINICALLY_CLOSE_MISMATCH": 2,
+              "LOCALIZATION_WEAK": 27003,
+              "LOW_CONF_CANDIDATE": 910,
+              "TP_EXACT": 5498,
+              "UNSAFE_MISMATCH": 239
+            }
+          },
+          "R3": {
+            "name": "contested",
+            "n": 114587,
+            "share": 0.2125973587440119,
+            "retain_target_share": 0.057057083264244635,
+            "tp_exact_share": 0.0037526071892972153,
+            "categories": {
+              "BACKGROUND_FP": 53754,
+              "CLINICALLY_CLOSE_MISMATCH": 5,
+              "LOCALIZATION_WEAK": 6103,
+              "LOW_CONF_CANDIDATE": 54198,
+              "TP_EXACT": 430,
+              "UNSAFE_MISMATCH": 97
+            }
+          },
+          "R4": {
+            "name": "rejected",
+            "n": 125110,
+            "share": 0.23212105694767582,
+            "retain_target_share": 0.030173447366317642,
+            "tp_exact_share": 0.0012389097594117176,
+            "categories": {
+              "BACKGROUND_FP": 26863,
+              "CLINICALLY_CLOSE_MISMATCH": 97,
+              "LOCALIZATION_WEAK": 3523,
+              "LOW_CONF_CANDIDATE": 94466,
+              "TP_EXACT": 155,
+              "UNSAFE_MISMATCH": 6
+            }
+          }
+        },
+        "retain_targets_by_tier": {
+          "R1": 0.5212505451008017,
+          "R2": 0.36343407914304565,
+          "R3": 0.07310500598213188,
+          "R4": 0.042210369774020776
+        },
+        "suppress_targets_by_tier": {
+          "R1": 0.32775668274930875,
+          "R2": 0.16199424761930184,
+          "R3": 0.24034763420553304,
+          "R4": 0.2699014354258564
+        },
+        "flagged_share_R2_R3": 0.4080161636851421,
+        "grade_shifting": {
+          "n": 360,
+          "R1": 18,
+          "R2": 239,
+          "R3": 97,
+          "R4": 6
+        },
+        "within_grade": {
+          "n": 1581,
+          "R1": 1477,
+          "R2": 2,
+          "R3": 5,
+          "R4": 97
+        }
+      },
+      "per_image_R1": {
+        "min": 0,
+        "max": 297
+      }
+    }
+  }
+}

@@ -1,0 +1,18 @@
+# Versions recorded from the interpreter that produced the reported numbers.
+# Python 3.12.7
+#
+# The detector was trained with the CUDA 11.8 build of PyTorch (torch 2.5.1+cu118)
+# on a single RTX 4090. Install the matching CUDA wheel from the official index if
+# GPU training is required; the post-hoc gate and every table in the paper run on CPU.
+
+numpy==1.26.4
+scipy==1.13.1
+scikit-learn==1.5.1
+pandas==2.2.2
+matplotlib==3.9.2
+networkx==3.3
+Pillow==10.4.0
+PyYAML==6.0.1
+tqdm==4.66.5
+torch==2.5.1
+torchvision==0.20.1

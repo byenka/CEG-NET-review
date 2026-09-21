@@ -1,0 +1,102 @@
+{
+  "tool": "tools/emit_certificates.py",
+  "schema": [
+    "cohort",
+    "bbox_id",
+    "image_id",
+    "emitted_class",
+    "detector_score",
+    "argmax_class",
+    "runnerup_class",
+    "argmax_prob",
+    "runnerup_prob",
+    "emitted_equals_argmax",
+    "ev_sas",
+    "ev_sdca",
+    "ev_aps",
+    "ev_pss",
+    "ev_sds",
+    "ev_sds_nsrc",
+    "ev_pss_status",
+    "retain_probability",
+    "tau_star",
+    "decision",
+    "delta",
+    "tier",
+    "tier_name"
+  ],
+  "tau_star": 0.30613959568784477,
+  "delta": 0.3,
+  "gate_recipe": "fit_mlp([ev_sas, ev_sdca, ev_aps, ev_pss, pred_score]), hidden 16, 1500 iters, lr 0.1, seed 0",
+  "tier_rule": "R1 RETAIN&SDCA<delta, R2 RETAIN&SDCA>=delta, R3 SUPPRESS&SDCA>=delta, R4 SUPPRESS&SDCA<delta",
+  "sdm_norm_off_diagonal": [
+    0.0,
+    0.5,
+    1.0,
+    0.5,
+    1.0,
+    0.75
+  ],
+  "lesion_order": [
+    "MA",
+    "HE",
+    "Hard_EX",
+    "Soft_EX"
+  ],
+  "sources": {
+    "oiaddr": {
+      "features": "outputs/0506/evsds_v2sec/oiaddr/test/governance_features_test.csv",
+      "features_sha256": "b2036fd01ee53e84c82b674e66ac974aa307642e03e3726829bdb8c8237d4eb2",
+      "tiers": "outputs/0506/tier_routing/oiaddr_gate_tiers.csv",
+      "tiers_sha256": "1d91b3a02c78ea5cbaa97d774c8690034f0aac4831e71aa407642ab552b9d3a9"
+    },
+    "idrid": {
+      "features": "outputs/0506/evsds_pss/idrid/test/governance_features_test.csv",
+      "features_sha256": "5719f97eafffc94ab16d8aab0cfe242c7543e980ddcf887969ca20ac86ed9af8",
+      "tiers": "outputs/0506/tier_routing/idrid_gate_tiers.csv",
+      "tiers_sha256": "55f4f27d1fc4514d83b8f92486170e9df78f8f61b3723b6c369f00e2a8657a8d"
+    },
+    "tjdr": {
+      "features": "outputs/0506/evsds_pss/tjdr/test/governance_features_test.csv",
+      "features_sha256": "7d10caf33bb508e388572e49e460aca07d2d016aa0a696b6db578db216bd5451",
+      "tiers": "outputs/0506/tier_routing/tjdr_gate_tiers.csv",
+      "tiers_sha256": "7e042b934c5a831c2817b5c8b9653b6942813b64e30acb2f652e1602b120dba2"
+    },
+    "fgadr": {
+      "features": "outputs/0506/evsds_pss/fgadr/train/governance_features_train.csv",
+      "features_sha256": "d533fd6f58d024b2e9dd99d48f149b211cae9c98c0de9a09e604dc16c01b6e75",
+      "tiers": "outputs/0506/tier_routing/fgadr_gate_tiers.csv",
+      "tiers_sha256": "db2aa5edf016e3d307923114b753d30ec6cbf922cd71cb64d09e68a52f6a8d21"
+    },
+    "_graph": {
+      "file": "outputs/stage3_audit/kg_graph.json",
+      "sha256": "9707a74593ad564bb85362aaec596038687ad6802cceb694152c96df59b6f904"
+    },
+    "_summary": {
+      "file": "outputs/0506/tier_routing/tier_routing_summary.json",
+      "sha256": "9ad1542bb38629dbd04b3b70429785e56380968c58096eb45fbe950467a04150"
+    }
+  },
+  "outputs": {
+    "oiaddr": {
+      "file": "oiaddr_certificates.csv",
+      "rows": 64214,
+      "sha256": "333e4a34a30bac222e9164ab3950a3c9184aa3db1653eacdfc878ffb960326ee"
+    },
+    "idrid": {
+      "file": "idrid_certificates.csv",
+      "rows": 8042,
+      "sha256": "83635af5c72b71a1caad7f700560d676936f668e7b5a688aba71a4f139d1f48a"
+    },
+    "tjdr": {
+      "file": "tjdr_certificates.csv",
+      "rows": 23181,
+      "sha256": "c760185ebf573b820cea0768b24249edb2af39c4c659d60bc065913e30e0ffa3"
+    },
+    "fgadr": {
+      "file": "fgadr_certificates.csv",
+      "rows": 538986,
+      "sha256": "2a3ecbded6b8265021a2acb5d7461a3791a3d98401c8df19f4a30aba04bdb947"
+    }
+  }
+}
