@@ -63,7 +63,7 @@ tex = "\n".join([
     r"\begin{table}[htbp]",
     r"\centering",
     (r"\caption{Sensitivity of the gating result to the cohort the gate is fitted on: every row fits the gate on a different source cohort and evaluates it on the same fixed "
-     rf"target, OIA-DDR test, where the detector score reaches an AUPRC of {q(m0, 4)}. $\Delta$AUPRC is the mean gain over that score across {n_seeds} seeds; the seed "
+     rf"target, OIA-DDR test, where the detector score reaches an AUPRC of {q(m0, 4)}. $\Delta$AUPRC is the mean gain over that score across {n_seeds} seeds, and the seed "
      r"columns count seeds with a positive gain and seeds whose 95\% image-clustered bootstrap interval excludes zero.}"),
     r"\label{tab:source_domain_sensitivity}",
     r"\footnotesize",

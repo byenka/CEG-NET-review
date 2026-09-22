@@ -75,7 +75,7 @@ tex = "\n".join([
     r"\begin{table}[htbp]",
     r"\centering",
     (r"\caption{Net benefit on OIA-DDR test across threshold probabilities, where a detection is retained when its calibrated probability reaches $p_t$ and net benefit is "
-     r"$\mathrm{TP}/n-(\mathrm{FP}/n)\,p_t/(1-p_t)$. Every system is calibrated by isotonic regression fitted on OIA-DDR validation; the last column is the difference "
+     r"$\mathrm{TP}/n-(\mathrm{FP}/n)\,p_t/(1-p_t)$. Every system is calibrated by isotonic regression fitted on OIA-DDR validation, and the last column is the difference "
      r"between the gate on fusion and score fusion, with a 95\% image-clustered bootstrap interval over 2{,}000 resamples.}"),
     r"\label{tab:net_benefit}",
     r"\footnotesize",

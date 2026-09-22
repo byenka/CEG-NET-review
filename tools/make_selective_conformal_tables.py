@@ -86,10 +86,10 @@ def main() -> None:
     caption = (
         "Selective prediction and conformal operating point on the retain-versus-suppress task. "
         "AURC is the area under the risk-coverage curve, where risk is the share of detections "
-        "that should have been suppressed among those retained; lower is better. "
+        "that should have been suppressed among those retained, and lower is better. "
         "The coverage gap is the empirical minus the nominal coverage of a split-conformal "
         f"threshold calibrated on the OIA-DDR validation split at a nominal {nominal:.2f}. "
-        "Learned rows average five gate seeds; maximum-softmax probability and predictive "
+        "Learned rows average five gate seeds, and maximum-softmax probability and predictive "
         "entropy are omitted."
     )
 
@@ -129,7 +129,7 @@ def main() -> None:
     ccap = (
         "Calibration of the detector score, fitted on the OIA-DDR validation split and applied "
         "unchanged. Temperature scaling uses the single parameter fitted in "
-        "the benchmark table of the main article; isotonic regression is the nonparametric alternative. "
+        "the benchmark table of the main article, and isotonic regression is the nonparametric alternative. "
         "Lower is better for both metrics."
     )
     s16 = (

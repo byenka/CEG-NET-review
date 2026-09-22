@@ -1,0 +1,239 @@
+{
+  "task": "governance_retain",
+  "alpha": 0.2,
+  "iou_match": 0.15,
+  "members": [
+    "fasterrcnn",
+    "fasterrcnn_v2",
+    "fcos",
+    "retinanet",
+    "retinanet_v2"
+  ],
+  "seeds": [
+    0,
+    1,
+    2,
+    3,
+    4
+  ],
+  "protocol": "nol-tembak, gate dipasang pada OIA-DDR validasi",
+  "cohorts": {
+    "OIA-DDR test": {
+      "n": 64214,
+      "n_positive": 24529,
+      "prevalence": 0.3819883514498396,
+      "methods": {
+        "S (detector score)": {
+          "auprc": 0.6486111952890347,
+          "aurc": 0.42630564507773006,
+          "conformal_coverage": 0.8880508785519181,
+          "conformal_gap": 0.08805087855191807,
+          "n_seeds": 1
+        },
+        "E5 (five detectors)": {
+          "auprc": 0.7565807602461516,
+          "aurc": 0.36405822131500776,
+          "conformal_coverage": 0.8003179909494884,
+          "conformal_gap": 0.00031799094948836704,
+          "n_seeds": 1
+        },
+        "E6 (six detectors)": {
+          "auprc": 0.7723976331944927,
+          "aurc": 0.354457318313101,
+          "conformal_coverage": 0.8100207917159281,
+          "conformal_gap": 0.010020791715928068,
+          "n_seeds": 1
+        },
+        "S+E (full gate)": {
+          "auprc": 0.6985390354239819,
+          "aurc": 0.395999634288522,
+          "conformal_coverage": 0.8189245383016022,
+          "conformal_gap": 0.018924538301602123,
+          "n_seeds": 5
+        },
+        "E6+E (E6-input gate)": {
+          "auprc": 0.7782442574299474,
+          "aurc": 0.35194544040359527,
+          "conformal_coverage": 0.7966977862937747,
+          "conformal_gap": -0.0033022137062252988,
+          "n_seeds": 5
+        }
+      },
+      "paired_vs_E6": {
+        "S+E (full gate)": {
+          "delta": -0.07459835334196968,
+          "ci95": [
+            -0.08645822453115427,
+            -0.06258359677925816
+          ]
+        },
+        "E6+E (E6-input gate)": {
+          "delta": 0.00523585348342022,
+          "ci95": [
+            -0.0006445844135439388,
+            0.011734534863779188
+          ]
+        }
+      }
+    },
+    "IDRiD": {
+      "n": 8042,
+      "n_positive": 4177,
+      "prevalence": 0.5193981596617757,
+      "methods": {
+        "S (detector score)": {
+          "auprc": 0.7515709470051943,
+          "aurc": 0.2952990476058333,
+          "conformal_coverage": 0.9918601867368925,
+          "conformal_gap": 0.19186018673689242,
+          "n_seeds": 1
+        },
+        "E5 (five detectors)": {
+          "auprc": 0.7977923479673268,
+          "aurc": 0.2659671571049214,
+          "conformal_coverage": 0.7321043811347857,
+          "conformal_gap": -0.06789561886521434,
+          "n_seeds": 1
+        },
+        "E6 (six detectors)": {
+          "auprc": 0.8135594855100272,
+          "aurc": 0.2522871555968897,
+          "conformal_coverage": 0.7842949485276515,
+          "conformal_gap": -0.015705051472348575,
+          "n_seeds": 1
+        },
+        "S+E (full gate)": {
+          "auprc": 0.7706729412555859,
+          "aurc": 0.28119062030357284,
+          "conformal_coverage": 0.888245152022983,
+          "conformal_gap": 0.088245152022983,
+          "n_seeds": 5
+        },
+        "E6+E (E6-input gate)": {
+          "auprc": 0.8014798824484887,
+          "aurc": 0.2594372747530399,
+          "conformal_coverage": 0.7592530524299737,
+          "conformal_gap": -0.04074694757002639,
+          "n_seeds": 5
+        }
+      },
+      "paired_vs_E6": {
+        "S+E (full gate)": {
+          "delta": -0.04433407250469998,
+          "ci95": [
+            -0.0611952028335694,
+            -0.028992228679743694
+          ]
+        },
+        "E6+E (E6-input gate)": {
+          "delta": -0.01389093628865474,
+          "ci95": [
+            -0.020445171418629143,
+            -0.00766051681417498
+          ]
+        }
+      }
+    },
+    "TJDR": {
+      "n": 23181,
+      "n_positive": 3205,
+      "prevalence": 0.1382597817177861,
+      "methods": {
+        "S (detector score)": {
+          "auprc": 0.44072584026065,
+          "aurc": 0.7219182880499405,
+          "conformal_coverage": 0.7438377535101404,
+          "conformal_gap": -0.05616224648985968,
+          "n_seeds": 1
+        },
+        "E5 (five detectors)": {
+          "auprc": 0.5818757373381103,
+          "aurc": 0.6726407575194993,
+          "conformal_coverage": 0.8386895475819033,
+          "conformal_gap": 0.03868954758190324,
+          "n_seeds": 1
+        },
+        "E6 (six detectors)": {
+          "auprc": 0.6037486331814758,
+          "aurc": 0.6667680048800854,
+          "conformal_coverage": 0.831201248049922,
+          "conformal_gap": 0.03120124804992197,
+          "n_seeds": 1
+        },
+        "S+E (full gate)": {
+          "auprc": 0.47084809888607937,
+          "aurc": 0.7063723924503827,
+          "conformal_coverage": 0.7795943837753511,
+          "conformal_gap": -0.02040561622464898,
+          "n_seeds": 5
+        },
+        "E6+E (E6-input gate)": {
+          "auprc": 0.5892077920096501,
+          "aurc": 0.6700916856277177,
+          "conformal_coverage": 0.8156630265210609,
+          "conformal_gap": 0.015663026521060885,
+          "n_seeds": 5
+        }
+      },
+      "paired_vs_E6": {
+        "S+E (full gate)": {
+          "delta": -0.13773470429614074,
+          "ci95": [
+            -0.1720575488566657,
+            -0.10210962696077808
+          ]
+        },
+        "E6+E (E6-input gate)": {
+          "delta": -0.018285212790909767,
+          "ci95": [
+            -0.03328523372306143,
+            -0.002873516132645797
+          ]
+        }
+      }
+    },
+    "FGADR": {
+      "n": 538986,
+      "n_positive": 89433,
+      "prevalence": 0.1659282430341419,
+      "methods": {
+        "S (detector score)": {
+          "auprc": 0.4732820685930797,
+          "aurc": 0.6751272858898864,
+          "conformal_coverage": 0.9412632920733958,
+          "conformal_gap": 0.14126329207339572,
+          "n_seeds": 1
+        },
+        "E5 (five detectors)": {
+          "auprc": 0.5027866375440484,
+          "aurc": 0.6596707003156064,
+          "conformal_coverage": 0.7254592823678061,
+          "conformal_gap": -0.07454071763219394,
+          "n_seeds": 1
+        },
+        "E6 (six detectors)": {
+          "auprc": 0.5472265926812279,
+          "aurc": 0.6434202456577364,
+          "conformal_coverage": 0.7821274026366106,
+          "conformal_gap": -0.01787259736338942,
+          "n_seeds": 1
+        },
+        "S+E (full gate)": {
+          "auprc": 0.4822476705942801,
+          "aurc": 0.6672160519133051,
+          "conformal_coverage": 0.8920197242628559,
+          "conformal_gap": 0.09201972426285587,
+          "n_seeds": 5
+        },
+        "E6+E (E6-input gate)": {
+          "auprc": 0.5439684559464701,
+          "aurc": 0.6444043132669612,
+          "conformal_coverage": 0.7723032884952982,
+          "conformal_gap": -0.027696711504701876,
+          "n_seeds": 5
+        }
+      },
+      "paired_vs_E6": "dilewati, n melebihi batas bootstrap"
+    }
+  }
+}

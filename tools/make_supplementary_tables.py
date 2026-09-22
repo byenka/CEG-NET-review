@@ -104,7 +104,7 @@ def build_s1() -> str:
     caption = (
         f"Edge list of the fixed clinical knowledge graph: {n_total} edges over four "
         "lesion and five ETDRS zone nodes. An arrow marks a directed edge, a dash an "
-        f"undirected one; for the spatial-distribution relation the {n_raised} pairs "
+        f"undirected one. For the spatial-distribution relation the {n_raised} pairs "
         f"with a raised weight are listed and the remaining {n_base} summarized. Weight "
         "is the untrained message-passing weight, floored at a small epsilon, so the "
         "microaneurysm-hemorrhage entry reads 0.05 although its SDCA cost is zero."

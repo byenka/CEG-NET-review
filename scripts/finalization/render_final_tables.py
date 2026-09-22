@@ -45,8 +45,8 @@ def main():
     table('T15_fusion_evidence.tex',
           'Four-way ranking comparison: raw score $S$, original full gate $S+E$, score fusion $F$, and fusion-input gate $F+E$. '
           'All gates use five fixed seeds and source-validation fitting. The fusion input replaces the raw-score input. '
-          'Intervals use 2,000 paired image resamples per seed; the last column counts intervals wholly above and below zero for $(F+E)-F$. '
-          'FGADR is a separate follow-up using two-pass fusion at both fitting and evaluation, with historical secondary evidence retained.',
+          'Intervals use 2,000 paired image resamples per seed, and the last column counts intervals wholly above and below zero for $(F+E)-F$. '
+          'FGADR is a separate follow-up using two-pass fusion at both fitting and evaluation, with the stored secondary evidence retained.',
           'tab:fusion_evidence', 'lccccccc',
           r'Cohort & Fusion passes & $S$ & $S+E$ & $F$ & $F+E$ (mean$\pm$SD) & $\Delta$ & CI $>0$; $<0$', rows,
           'For TJDR, one negative interval and four containing zero accompany five negative point estimates. '
@@ -63,33 +63,35 @@ def main():
     assert all(abs(b['gain_point']-d)<1e-12 for b,d in zip(boots,diffs))
     positive = sum(b['gain_ci95'][0] > 0 for b in boots)
     table('S10_native_gate_control.tex',
-          'Archived graph-attention control on OIA-DDR test. Values are means and sample standard deviations over five seeds. '
-          'G0+ and the graph variants share the additional class-distribution and top-two indicator inputs; G0 does not. '
+          'Graph-attention control on OIA-DDR test. Values are means and sample standard deviations over five seeds. '
+          'G0+ and the graph variants share the additional class-distribution and top-two indicator inputs, which G0 does not. '
           'The original detector and primary gate results are unchanged.',
           'tab:native_gate_control','lc',r'Gate & AUPRC',rows,
-          f'The mean G1 minus G2 difference is {statistics.mean(diffs):+.5f}; {positive}/5 paired intervals exclude zero in the positive direction. '
+          f'The mean G1 minus G2 difference is {statistics.mean(diffs):+.5f}, and {positive}/5 paired intervals exclude zero in the positive direction. '
           'This does not establish a ranking benefit from the specified topology and is not an equivalence test.')
     rows = [f"{r['seed']} & {r['ap']:.4f} & ${r['gain']:+.4f}$ & "
             f"$[{r['ci95'][0]:+.4f}, {r['ci95'][1]:+.4f}]$ " + r'\\' for r in follow['per_seed']]
     table('S11_fgadr_fusion_followup.tex',
           'Separate FGADR follow-up with a two-pass fusion input defined identically on source validation and the target cohort. '
-          'The six evidence columns, including historical secondary evidence, are retained. '
-          'No target labels enter fitting. The baseline two-pass fusion reproduces the archived AUPRC of ' + f"{follow['baseline_ap']:.4f}" + '.',
+          'The six evidence columns, including the stored secondary evidence, are retained. '
+          'No target labels enter fitting. The baseline two-pass fusion reproduces the AUPRC of ' + f"{follow['baseline_ap']:.4f}" + ' reported in the main article.',
           'tab:fgadr_fusion_followup','cccc',r'Seed & Fusion-input gate & Gain over fusion & Paired 95\% CI',rows,
-          f"Mean gate AUPRC is {follow['mean_ap']:.4f} with sample SD {follow['sd_ap']:.4f}; mean gain is {follow['mean_gain']:+.4f}. "
-          f"Positive point estimates: {follow['positive_seed_count']}/5; intervals above zero: {follow['ci_above_zero_count']}/5. "
+          f"Mean gate AUPRC is {follow['mean_ap']:.4f} with sample SD {follow['sd_ap']:.4f}, and the mean gain is ${follow['mean_gain']:+.4f}$. "
+          f"Positive point estimates: {follow['positive_seed_count']}/5. Intervals above zero: {follow['ci_above_zero_count']}/5. "
           f"Resampling is paired by image over {follow['n_target_images']:,} images, with 2,000 draws. All results are reported without tuning.")
     # Editorial overlay leaves the historical experiment generator frozen.
     p = OUT / 'T8_fp_reduction_benchmark.tex'
     if p.exists():
         s = p.read_text(encoding='utf-8').replace('as one additional input','in place of the raw-score input')
+        s = s.replace('average precision; the remaining columns', 'average precision, and the remaining columns')
         s = s.replace('The last row gives that three-pass mean',
-                      'The Audit column marks the native output of each evaluated implementation; the same prior-based certificate can also be attached to score fusion without changing its ranking. The last row gives that three-pass mean') if 'native output' not in s else s
+                      'The Audit column marks the native output of each evaluated implementation, and the same prior-based certificate can also be attached to score fusion without changing its ranking. The last row gives that three-pass mean') if 'native output' not in s else s
         p.write_text(s,encoding='utf-8')
     p = OUT / 'S6_clinical_cost_external.tex'
     if p.exists():
         s=p.read_text(encoding='utf-8').replace('0.5 means no information in either direction','0.5 indicates no net rank discrimination')
         s=s.replace('the information they carry,', 'their absolute rank deviation,')
+        s=s.replace('cache is no longer available', 'cache is not available')
         p.write_text(s,encoding='utf-8')
     print('Rendered T15, S10, S11 and applicable editorial overlays.')
 

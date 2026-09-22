@@ -54,7 +54,7 @@ for name in ORDER:
 
 two_pass = [n for n in ORDER if npass_note[n] == 2]
 star_note = ("" if not two_pass else
-             rf"$^{{\ast}}$" + f"The {', '.join(two_pass)} secondary-detector cache is no longer "
+             rf"$^{{\ast}}$" + f"The {', '.join(two_pass)} secondary-detector cache is not "
              "available, so only a two-pass mean can be recomputed there. ")
 
 tex = "\n".join([

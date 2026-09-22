@@ -6,10 +6,10 @@ __pycache__/
 venv/
 .DS_Store
 
-# Large intermediate artifacts are deliberately NOT part of this repository.
-# Per-detection evidence CSVs, detector caches, routing manifests and model
-# checkpoints run to several hundred megabytes and exceed the per-file limit of
-# common git hosts. See README.md, section "What is not in this repository".
+# Model checkpoints and the uncompressed working copies of the evidence CSVs,
+# detector caches and routing manifests are not tracked. The evidence vectors and
+# the cached detections are included compressed under results/evidence/ and
+# results/detector_outputs/. See README.md, section "What is not in this repository".
 *.pt
 *.pth
 *.onnx

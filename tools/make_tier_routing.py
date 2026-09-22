@@ -188,7 +188,7 @@ def build_table(oia: dict) -> str:
         r"\begin{tabular}{@{}llcccccc@{}}",
         r"\toprule",
         (r" & & \multicolumn{2}{c}{$M_0$ (score)} & \multicolumn{2}{c}{Score fusion} & "
-         r"\multicolumn{2}{c}{CEG gate} \\"),
+         r"\multicolumn{2}{c}{KG gate (B4)} \\"),
         r"\cmidrule(lr){3-4}\cmidrule(lr){5-6}\cmidrule(lr){7-8}",
         (r"Tier & Rule & Share & RETAIN target & Share & RETAIN target & Share & "
          r"RETAIN target \\"),

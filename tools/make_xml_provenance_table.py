@@ -30,8 +30,6 @@ _TABLES = ROOT / "_FINAL_Latex/tables" if (ROOT / "_FINAL_Latex/tables").is_dir(
 OUT = _TABLES / "S14_xml_provenance.tex"
 
 ORDER = [("oiaddr", "OIA-DDR"), ("idrid", "IDRiD"), ("tjdr", "TJDR"), ("fgadr", "FGADR")]
-SCHEMA = {"oiaddr": "plain", "idrid": "path", "tjdr": "path", "fgadr": "plain"}
-LOG = {"oiaddr": "none", "idrid": "none", "tjdr": "none", "fgadr": "retained"}
 
 
 def th(n: int) -> str:
@@ -49,26 +47,18 @@ def main() -> None:
         rows.append(" & ".join([
             label,
             th(v["files_total"]),
-            th(v["source_mask_files"]),
             th(v["objects_total"]),
             th(v["distinct_boxes_total"]),
             th(deg),
             "none" if not v["split_id_overlap"] else str(v["split_id_overlap"]),
-            SCHEMA[key],
-            LOG[key],
         ]) + r" \\")
-
-    oia = d["cohorts"]["oiaddr"]["splits"]
-    fg = d.get("fgadr_conversion_report", {})
 
     caption = (
         "Provenance of the annotation files, audited from the files themselves. Images "
-        "counts the annotation files and source masks the pixel-level files retained "
-        "beside them; boxes counts annotated objects and distinct counts them after "
-        "removing exact repeats within a file. Degenerate boxes have zero width or "
-        "height, schema separates files that carry a local \\texttt{path} and "
-        "\\texttt{segmented} element from those that do not, and conversion log "
-        "records whether a per-image mask-to-box record was retained."
+        "counts the annotation files, boxes counts annotated objects, and distinct counts "
+        "them after removing exact repeats within a file. Degenerate boxes have zero width "
+        "or height, and split overlap counts image identifiers that appear in more than "
+        "one split."
     )
 
     text = (
@@ -76,24 +66,20 @@ def main() -> None:
         "% Source: outputs/0506/xml_provenance/audit.json\n"
         f"% sha256[:16] = {digest}\n"
         "% Auditor: tools/audit_xml_provenance.py\n"
-        f"% FGADR conversion log reconciles: {fg.get('components_kept')} kept components vs "
-        f"{fg.get('xml_objects_in_repo')} XML objects -> {fg.get('reconciles')}\n"
         "\\begin{table}[htbp]\n"
         "\\centering\n"
         "\\caption{" + caption + "}\n"
         "\\label{tab:xml_provenance}\n"
         "\\footnotesize\n"
         "\\setlength{\\tabcolsep}{4pt}\n"
-        "\\resizebox{\\textwidth}{!}{%\n"
-        "\\begin{tabular}{lrrrrrccc}\n"
+        "\\begin{tabular}{lrrrrc}\n"
         "\\toprule\n"
-        "Cohort & Images & Source & Boxes & Distinct & Degenerate & Split & Schema "
-        "& Conversion \\\\\n"
-        " & & masks & & boxes & boxes & overlap & & log \\\\\n"
+        "Cohort & Images & Boxes & Distinct & Degenerate & Split \\\\\n"
+        " & & & boxes & boxes & overlap \\\\\n"
         "\\midrule\n"
         + "\n".join(rows) + "\n"
         "\\bottomrule\n"
-        "\\end{tabular}}\n"
+        "\\end{tabular}\n"
         "\\end{table}\n"
     )
     OUT.parent.mkdir(parents=True, exist_ok=True)

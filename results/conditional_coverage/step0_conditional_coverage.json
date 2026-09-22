@@ -1,0 +1,205 @@
+{
+  "alpha": 0.2,
+  "nominal": 0.8,
+  "task": "governance_retain",
+  "min_positive": 200,
+  "kill_threshold": 0.05,
+  "proceed_threshold": 0.15,
+  "protocol": "_LGOVNET_NEW_SEP/PROTOCOL_LOCK_step0_conditional_coverage.md",
+  "strata_definition": "k = jumlah dari 5 detektor detcmp yang cocok pada IoU>=0.15",
+  "strata_test": {
+    "0": {
+      "n": 21719,
+      "n_positive": 1874,
+      "positive_rate": 0.08628389889037248
+    },
+    "1": {
+      "n": 15416,
+      "n_positive": 5251,
+      "positive_rate": 0.3406201349247535
+    },
+    "2": {
+      "n": 8206,
+      "n_positive": 3954,
+      "positive_rate": 0.4818425542286132
+    },
+    "3": {
+      "n": 6234,
+      "n_positive": 3714,
+      "positive_rate": 0.5957651588065448
+    },
+    "4": {
+      "n": 5842,
+      "n_positive": 4000,
+      "positive_rate": 0.6846970215679562
+    },
+    "5": {
+      "n": 6797,
+      "n_positive": 5736,
+      "positive_rate": 0.8439017213476534
+    }
+  },
+  "methods": {
+    "S (detector score)": {
+      "marginal_coverage": 0.8880508785519181,
+      "marginal_gap": 0.08805087855191807,
+      "per_stratum": {
+        "0": {
+          "gap": 0.09861259338313766,
+          "n_positive": 1874,
+          "eligible": true
+        },
+        "1": {
+          "gap": 0.1371548276518758,
+          "n_positive": 5251,
+          "eligible": true
+        },
+        "2": {
+          "gap": 0.11249367728882143,
+          "n_positive": 3954,
+          "eligible": true
+        },
+        "3": {
+          "gap": 0.10495422724824988,
+          "n_positive": 3714,
+          "eligible": true
+        },
+        "4": {
+          "gap": 0.06999999999999995,
+          "n_positive": 4000,
+          "eligible": true
+        },
+        "5": {
+          "gap": 0.02444211994421197,
+          "n_positive": 5736,
+          "eligible": true
+        }
+      }
+    },
+    "S+E (full gate)": {
+      "marginal_coverage": 0.8189245383016022,
+      "marginal_gap": 0.018924538301602123,
+      "per_stratum": {
+        "0": {
+          "gap": -0.19274279615795092,
+          "n_positive": 1874,
+          "eligible": true
+        },
+        "1": {
+          "gap": -0.056294039230622796,
+          "n_positive": 5251,
+          "eligible": true
+        },
+        "2": {
+          "gap": 0.022862923621648924,
+          "n_positive": 3954,
+          "eligible": true
+        },
+        "3": {
+          "gap": 0.05508885298869139,
+          "n_positive": 3714,
+          "eligible": true
+        },
+        "4": {
+          "gap": 0.07034999999999995,
+          "n_positive": 4000,
+          "eligible": true
+        },
+        "5": {
+          "gap": 0.09494421199442116,
+          "n_positive": 5736,
+          "eligible": true
+        }
+      }
+    },
+    "E5 (five detectors)": {
+      "marginal_coverage": 0.8003179909494884,
+      "marginal_gap": 0.00031799094948836704,
+      "per_stratum": {
+        "0": {
+          "gap": -0.8,
+          "n_positive": 1874,
+          "eligible": true
+        },
+        "1": {
+          "gap": -0.2745762711864407,
+          "n_positive": 5251,
+          "eligible": true
+        },
+        "2": {
+          "gap": 0.07809812847749109,
+          "n_positive": 3954,
+          "eligible": true
+        },
+        "3": {
+          "gap": 0.1881529348411416,
+          "n_positive": 3714,
+          "eligible": true
+        },
+        "4": {
+          "gap": 0.19874999999999998,
+          "n_positive": 4000,
+          "eligible": true
+        },
+        "5": {
+          "gap": 0.19982566248256617,
+          "n_positive": 5736,
+          "eligible": true
+        }
+      }
+    },
+    "E6 (six detectors)": {
+      "marginal_coverage": 0.8100207917159281,
+      "marginal_gap": 0.010020791715928068,
+      "per_stratum": {
+        "0": {
+          "gap": -0.7818569903948773,
+          "n_positive": 1874,
+          "eligible": true
+        },
+        "1": {
+          "gap": -0.18792610931251197,
+          "n_positive": 5251,
+          "eligible": true
+        },
+        "2": {
+          "gap": 0.05078401618614059,
+          "n_positive": 3954,
+          "eligible": true
+        },
+        "3": {
+          "gap": 0.16042003231017765,
+          "n_positive": 3714,
+          "eligible": true
+        },
+        "4": {
+          "gap": 0.19199999999999995,
+          "n_positive": 4000,
+          "eligible": true
+        },
+        "5": {
+          "gap": 0.19755927475592738,
+          "n_positive": 5736,
+          "eligible": true
+        }
+      }
+    }
+  },
+  "mondrian_preview": {
+    "S (detector score)": {
+      "max_abs_gap": 0.09956919763058691
+    },
+    "S+E (full gate)": {
+      "max_abs_gap": 0.052196652719665226
+    },
+    "E5 (five detectors)": {
+      "max_abs_gap": 0.19999999999999996
+    },
+    "E6 (six detectors)": {
+      "max_abs_gap": 0.09074355083459784
+    }
+  },
+  "max_abs_gap_eligible_strata": 0.8,
+  "max_abs_gap_any_stratum": 0.8,
+  "verdict": "LANJUT"
+}

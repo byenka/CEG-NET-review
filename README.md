@@ -9,9 +9,8 @@ generators retain research-workspace paths; see the reproduction boundaries belo
 The gate is **post-hoc**: it scores the outputs of a frozen detector and never
 changes detection. The tables and figures in the paper are regenerated from the
 JSON files in `results/` without a GPU and without re-running the detector. The
-JSON files themselves are produced from per-detection evidence and detector
-caches that this package does not carry, so the generators reproduce the
-reported tables rather than the full pipeline that produced the evidence.
+JSON files themselves are produced from the per-detection evidence vectors and the
+cached detections in `results/evidence/` and `results/detector_outputs/`.
 
 ## Layout
 
@@ -27,6 +26,11 @@ reported tables rather than the full pipeline that produced the evidence.
 | `results/tables_source/` | Seed-level JSON behind the main and supplementary tables |
 | `results/experiments/` | JSON behind the added baselines and the robustness checks |
 | `results/certificates/` | Certificate manifest, the five verification checks, one sample record per cohort, and the full certificates for all four cohorts, compressed |
+| `results/evidence/` | Per-detection evidence vectors for OIA-DDR validation and test, IDRiD, TJDR and FGADR (gzipped CSV, local path columns removed), and the scores of the five comparison detectors on the OIA-DDR candidates |
+| `results/detector_outputs/` | Cached detections per cohort: the primary detector, its horizontally flipped pass, and the secondary detector (zip) |
+| `results/conditional_coverage/` | Results of the conditional-coverage, image-disjoint calibration and ensemble analyses |
+| `scripts/conditional_coverage/` | Scripts of those analyses and of their tables |
+| `PROTOCOL_LOCK_*.md` | Protocols written before each locked analysis was run |
 
 ## Reproducing the tables
 
@@ -49,8 +53,9 @@ verification regenerates the supplementary table from `results/certificates/veri
 python tools/make_certificate_verification_table.py
 ```
 
-`tools/emit_certificates.py` and `tools/verify_certificates.py` produce that JSON, but
-they need the per-detection evidence CSVs, which are excluded for size. The emitted
+`tools/emit_certificates.py` and `tools/verify_certificates.py` produce that JSON from
+the per-detection evidence vectors in `results/evidence/`, read at the workspace paths
+in their source. The emitted
 certificates for all four cohorts (OIA-DDR, IDRiD, TJDR, FGADR; 634,423 records in total)
 are bundled compressed (gzip) so the records themselves can be inspected without
 regenerating them, and `manifest.json` records the SHA-256 of every source file.
@@ -70,7 +75,8 @@ OIA-DDR validation split only (one hidden layer of 16 tanh units, full-batch
 gradient descent, 1500 iterations, learning rate 0.1), over five initialization
 seeds; AUPRC is average precision; confidence intervals are image-clustered
 paired bootstrap with 2000 resamples; the operating point is the threshold that
-gives a true-positive retention of 0.80 on validation.
+retains 0.80 of the RETAIN targets (exact true positives, clinically close
+confusions and localization-weak detections) on validation.
 
 The eight-detector panel is the one exception to that protocol. It uses a
 lighter per-detector configuration at a single seed: single-source agreement,
@@ -118,11 +124,11 @@ two-pass compute-budget comparison. No detector was retrained.
 
 `results/finalization/` contains the archived JSON used by the new tables.
 `scripts/finalization/fgadr_two_pass.py` preserves the exact executed follow-up;
-it requires the excluded CSV evidence and detector caches at the paths in its
+it reads the CSV evidence and detector caches at the workspace paths in its
 source, writes beside itself, and refuses to overwrite a completed result. This
 is an experiment runner, not needed for table regeneration. The original graph
 control source is retained at `_NATIVE/scripts/native_gate_experiment.py`; it also
-requires the excluded evidence and graph artifacts. Its archived snapshot does
+reads the evidence and graph artifacts at workspace paths. Its archived snapshot does
 not establish a topology-specific gain over rewiring. The primary system uses a
 direct fixed prior lookup; anatomy remains exploratory.
 
@@ -132,18 +138,7 @@ mean only the gate can provide certificates.
 
 ## What is not in this repository
 
-Three classes of artifact are deliberately excluded because they exceed the
-per-file and per-repository limits of common git hosts:
-
-- **Per-detection evidence vectors** (`governance_features_*.csv`). About 417 MB
-  for the deployed configuration alone; the FGADR cohort file is 344 MB on its own.
-- **Detector caches and routing manifests.** Roughly 27 MB of manifests plus the
-  cached per-image detections for four cohorts and seven detectors.
-- **Model checkpoints.** The frozen primary detector and the secondary detector.
-
-These are the artifacts the manuscript commits to releasing on acceptance, and
-they will be deposited in a public archive with a DOI at that point. Reviewers
-who need any of them during review can request them through the editor.
+Model checkpoints of the primary and the secondary detector are not included because of their size.
 
 ## Data
 

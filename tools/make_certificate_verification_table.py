@@ -58,7 +58,7 @@ def main() -> None:
 
     caption = (
         "Technical verification of the per-detection audit certificate. Re-emission "
-        "compares the SHA-256 of every re-generated file; decision and tier "
+        "compares the SHA-256 of every re-generated file, and decision and tier "
         "reconstruction, prior consistency and ranker-free fields are recomputed from "
         "the certificate fields alone. The last column reports how often the emitted "
         "label differs from the per-ROI argmax, which the certificate discloses."

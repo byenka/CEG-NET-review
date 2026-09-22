@@ -1,0 +1,1054 @@
+{
+  "alpha": 0.2,
+  "nominal": 0.8,
+  "task": "governance_retain",
+  "delta": 0.3,
+  "min_positive": 200,
+  "proceed_threshold": 0.15,
+  "seeds": [
+    0,
+    1,
+    2,
+    3,
+    4
+  ],
+  "protocol": "_LGOVNET_NEW_SEP/PROTOCOL_LOCK_step1_conditional_coverage_cohorts.md",
+  "cohorts": {
+    "OIA-DDR test": {
+      "n": 64214,
+      "n_positive": 24529,
+      "taxonomies": {
+        "A_corroboration": {
+          "strata": {
+            "no secondary": {
+              "n": 54064,
+              "n_positive": 17186,
+              "positive_rate": 0.3178825096182302,
+              "eligible": true
+            },
+            "corroborated": {
+              "n": 10150,
+              "n_positive": 7343,
+              "positive_rate": 0.723448275862069,
+              "eligible": true
+            }
+          },
+          "methods": {
+            "S (detector score)": {
+              "marginal_gap": 0.08805087855191807,
+              "per_stratum": {
+                "no secondary": {
+                  "gap": 0.07251251018270677,
+                  "eligible": true
+                },
+                "corroborated": {
+                  "gap": 0.12441781288301779,
+                  "eligible": true
+                }
+              },
+              "worst_eligible_abs_gap": 0.12441781288301779
+            },
+            "M (top1-top2 margin)": {
+              "marginal_gap": 0.04822047372497851,
+              "per_stratum": {
+                "no secondary": {
+                  "gap": 0.055405562667287245,
+                  "eligible": true
+                },
+                "corroborated": {
+                  "gap": 0.031404058286803704,
+                  "eligible": true
+                }
+              },
+              "worst_eligible_abs_gap": 0.055405562667287245
+            },
+            "KG gate": {
+              "marginal_gap": 0.008137306861266125,
+              "per_stratum": {
+                "no secondary": {
+                  "gap": -0.041114860933317884,
+                  "eligible": true
+                },
+                "corroborated": {
+                  "gap": 0.12341005038812469,
+                  "eligible": true
+                }
+              },
+              "worst_eligible_abs_gap": 0.12341005038812469
+            },
+            "S+E (full gate)": {
+              "marginal_gap": 0.018924538301602123,
+              "per_stratum": {
+                "no secondary": {
+                  "gap": -0.057314092866286546,
+                  "eligible": true
+                },
+                "corroborated": {
+                  "gap": 0.19735802805392888,
+                  "eligible": true
+                }
+              },
+              "worst_eligible_abs_gap": 0.19735802805392888
+            }
+          }
+        },
+        "B_prior_conflict": {
+          "strata": {
+            "low conflict": {
+              "n": 31194,
+              "n_positive": 12375,
+              "positive_rate": 0.39671090594345065,
+              "eligible": true
+            },
+            "high conflict": {
+              "n": 33020,
+              "n_positive": 12154,
+              "positive_rate": 0.36807995154451845,
+              "eligible": true
+            }
+          },
+          "methods": {
+            "S (detector score)": {
+              "marginal_gap": 0.08805087855191807,
+              "per_stratum": {
+                "low conflict": {
+                  "gap": 0.047757575757575665,
+                  "eligible": true
+                },
+                "high conflict": {
+                  "gap": 0.1290768471285173,
+                  "eligible": true
+                }
+              },
+              "worst_eligible_abs_gap": 0.1290768471285173
+            },
+            "M (top1-top2 margin)": {
+              "marginal_gap": 0.04822047372497851,
+              "per_stratum": {
+                "low conflict": {
+                  "gap": -0.08937373737373744,
+                  "eligible": true
+                },
+                "high conflict": {
+                  "gap": 0.1883166035872963,
+                  "eligible": true
+                }
+              },
+              "worst_eligible_abs_gap": 0.1883166035872963
+            },
+            "KG gate": {
+              "marginal_gap": 0.008137306861266125,
+              "per_stratum": {
+                "low conflict": {
+                  "gap": 0.060040404040403984,
+                  "eligible": true
+                },
+                "high conflict": {
+                  "gap": -0.04470956063847296,
+                  "eligible": true
+                }
+              },
+              "worst_eligible_abs_gap": 0.060040404040403984
+            },
+            "S+E (full gate)": {
+              "marginal_gap": 0.018924538301602123,
+              "per_stratum": {
+                "low conflict": {
+                  "gap": 0.06136565656565653,
+                  "eligible": true
+                },
+                "high conflict": {
+                  "gap": -0.024288300148099417,
+                  "eligible": true
+                }
+              },
+              "worst_eligible_abs_gap": 0.06136565656565653
+            }
+          }
+        },
+        "C_pss_availability": {
+          "strata": {
+            "PSS measured": {
+              "n": 37559,
+              "n_positive": 19665,
+              "positive_rate": 0.5235762400489896,
+              "eligible": true
+            },
+            "PSS placeholder": {
+              "n": 26655,
+              "n_positive": 4864,
+              "positive_rate": 0.18247983492778092,
+              "eligible": true
+            }
+          },
+          "methods": {
+            "S (detector score)": {
+              "marginal_gap": 0.08805087855191807,
+              "per_stratum": {
+                "PSS measured": {
+                  "gap": 0.08705822527332818,
+                  "eligible": true
+                },
+                "PSS placeholder": {
+                  "gap": 0.0920641447368421,
+                  "eligible": true
+                }
+              },
+              "worst_eligible_abs_gap": 0.0920641447368421
+            },
+            "M (top1-top2 margin)": {
+              "marginal_gap": 0.04822047372497851,
+              "per_stratum": {
+                "PSS measured": {
+                  "gap": 0.03579964403763025,
+                  "eligible": true
+                },
+                "PSS placeholder": {
+                  "gap": 0.09843749999999996,
+                  "eligible": true
+                }
+              },
+              "worst_eligible_abs_gap": 0.09843749999999996
+            },
+            "KG gate": {
+              "marginal_gap": 0.008137306861266125,
+              "per_stratum": {
+                "PSS measured": {
+                  "gap": 0.09667937960844135,
+                  "eligible": true
+                },
+                "PSS placeholder": {
+                  "gap": -0.34983552631578957,
+                  "eligible": true
+                }
+              },
+              "worst_eligible_abs_gap": 0.34983552631578957
+            },
+            "S+E (full gate)": {
+              "marginal_gap": 0.018924538301602123,
+              "per_stratum": {
+                "PSS measured": {
+                  "gap": 0.09881515382659542,
+                  "eligible": true
+                },
+                "PSS placeholder": {
+                  "gap": -0.30407072368421056,
+                  "eligible": true
+                }
+              },
+              "worst_eligible_abs_gap": 0.30407072368421056
+            }
+          }
+        }
+      }
+    },
+    "IDRiD": {
+      "n": 8042,
+      "n_positive": 4177,
+      "taxonomies": {
+        "A_corroboration": {
+          "strata": {
+            "no secondary": {
+              "n": 6938,
+              "n_positive": 3244,
+              "positive_rate": 0.46756990487172095,
+              "eligible": true
+            },
+            "corroborated": {
+              "n": 1104,
+              "n_positive": 933,
+              "positive_rate": 0.845108695652174,
+              "eligible": true
+            }
+          },
+          "methods": {
+            "S (detector score)": {
+              "marginal_gap": 0.19186018673689242,
+              "per_stratum": {
+                "no secondary": {
+                  "gap": 0.1904438964241677,
+                  "eligible": true
+                },
+                "corroborated": {
+                  "gap": 0.1967845659163987,
+                  "eligible": true
+                }
+              },
+              "worst_eligible_abs_gap": 0.1967845659163987
+            },
+            "M (top1-top2 margin)": {
+              "marginal_gap": 0.09226717740004786,
+              "per_stratum": {
+                "no secondary": {
+                  "gap": 0.10721331689272495,
+                  "eligible": true
+                },
+                "corroborated": {
+                  "gap": 0.04030010718113608,
+                  "eligible": true
+                }
+              },
+              "worst_eligible_abs_gap": 0.10721331689272495
+            },
+            "KG gate": {
+              "marginal_gap": 0.08307397653818527,
+              "per_stratum": {
+                "no secondary": {
+                  "gap": 0.05517879161528971,
+                  "eligible": true
+                },
+                "corroborated": {
+                  "gap": 0.18006430868167198,
+                  "eligible": true
+                }
+              },
+              "worst_eligible_abs_gap": 0.18006430868167198
+            },
+            "S+E (full gate)": {
+              "marginal_gap": 0.088245152022983,
+              "per_stratum": {
+                "no secondary": {
+                  "gap": 0.056411837237977734,
+                  "eligible": true
+                },
+                "corroborated": {
+                  "gap": 0.19892818863879952,
+                  "eligible": true
+                }
+              },
+              "worst_eligible_abs_gap": 0.19892818863879952
+            }
+          }
+        },
+        "B_prior_conflict": {
+          "strata": {
+            "low conflict": {
+              "n": 2588,
+              "n_positive": 1299,
+              "positive_rate": 0.5019319938176198,
+              "eligible": true
+            },
+            "high conflict": {
+              "n": 5454,
+              "n_positive": 2878,
+              "positive_rate": 0.5276861019435277,
+              "eligible": true
+            }
+          },
+          "methods": {
+            "S (detector score)": {
+              "marginal_gap": 0.19186018673689242,
+              "per_stratum": {
+                "low conflict": {
+                  "gap": 0.1876828329484218,
+                  "eligible": true
+                },
+                "high conflict": {
+                  "gap": 0.19374565670604582,
+                  "eligible": true
+                }
+              },
+              "worst_eligible_abs_gap": 0.19374565670604582
+            },
+            "M (top1-top2 margin)": {
+              "marginal_gap": 0.09226717740004786,
+              "per_stratum": {
+                "low conflict": {
+                  "gap": -0.11254811393379527,
+                  "eligible": true
+                },
+                "high conflict": {
+                  "gap": 0.18471160528144537,
+                  "eligible": true
+                }
+              },
+              "worst_eligible_abs_gap": 0.18471160528144537
+            },
+            "KG gate": {
+              "marginal_gap": 0.08307397653818527,
+              "per_stratum": {
+                "low conflict": {
+                  "gap": 0.15535026943802918,
+                  "eligible": true
+                },
+                "high conflict": {
+                  "gap": 0.050451702571229974,
+                  "eligible": true
+                }
+              },
+              "worst_eligible_abs_gap": 0.15535026943802918
+            },
+            "S+E (full gate)": {
+              "marginal_gap": 0.088245152022983,
+              "per_stratum": {
+                "low conflict": {
+                  "gap": 0.1516551193225558,
+                  "eligible": true
+                },
+                "high conflict": {
+                  "gap": 0.0596247394023627,
+                  "eligible": true
+                }
+              },
+              "worst_eligible_abs_gap": 0.1516551193225558
+            }
+          }
+        },
+        "C_pss_availability": {
+          "strata": {
+            "PSS measured": {
+              "n": 5154,
+              "n_positive": 3314,
+              "positive_rate": 0.6429957314707023,
+              "eligible": true
+            },
+            "PSS placeholder": {
+              "n": 2888,
+              "n_positive": 863,
+              "positive_rate": 0.29882271468144045,
+              "eligible": true
+            }
+          },
+          "methods": {
+            "S (detector score)": {
+              "marginal_gap": 0.19186018673689242,
+              "per_stratum": {
+                "PSS measured": {
+                  "gap": 0.192154496077248,
+                  "eligible": true
+                },
+                "PSS placeholder": {
+                  "gap": 0.19073001158748548,
+                  "eligible": true
+                }
+              },
+              "worst_eligible_abs_gap": 0.192154496077248
+            },
+            "M (top1-top2 margin)": {
+              "marginal_gap": 0.09226717740004786,
+              "per_stratum": {
+                "PSS measured": {
+                  "gap": 0.08020519010259497,
+                  "eligible": true
+                },
+                "PSS placeholder": {
+                  "gap": 0.13858632676709148,
+                  "eligible": true
+                }
+              },
+              "worst_eligible_abs_gap": 0.13858632676709148
+            },
+            "KG gate": {
+              "marginal_gap": 0.08307397653818527,
+              "per_stratum": {
+                "PSS measured": {
+                  "gap": 0.17284248642124314,
+                  "eligible": true
+                },
+                "PSS placeholder": {
+                  "gap": -0.26164542294322135,
+                  "eligible": true
+                }
+              },
+              "worst_eligible_abs_gap": 0.26164542294322135
+            },
+            "S+E (full gate)": {
+              "marginal_gap": 0.088245152022983,
+              "per_stratum": {
+                "PSS measured": {
+                  "gap": 0.17085093542546767,
+                  "eligible": true
+                },
+                "PSS placeholder": {
+                  "gap": -0.2289687137891078,
+                  "eligible": true
+                }
+              },
+              "worst_eligible_abs_gap": 0.2289687137891078
+            }
+          }
+        }
+      }
+    },
+    "TJDR": {
+      "n": 22397,
+      "n_positive": 3205,
+      "taxonomies": {
+        "A_corroboration": {
+          "strata": {
+            "no secondary": {
+              "n": 19234,
+              "n_positive": 1880,
+              "positive_rate": 0.09774357907871478,
+              "eligible": true
+            },
+            "corroborated": {
+              "n": 3163,
+              "n_positive": 1325,
+              "positive_rate": 0.41890610180208665,
+              "eligible": true
+            }
+          },
+          "methods": {
+            "S (detector score)": {
+              "marginal_gap": -0.05616224648985968,
+              "per_stratum": {
+                "no secondary": {
+                  "gap": -0.10000000000000009,
+                  "eligible": true
+                },
+                "corroborated": {
+                  "gap": 0.006037735849056536,
+                  "eligible": true
+                }
+              },
+              "worst_eligible_abs_gap": 0.10000000000000009
+            },
+            "M (top1-top2 margin)": {
+              "marginal_gap": 0.0065522620904835405,
+              "per_stratum": {
+                "no secondary": {
+                  "gap": 0.01010638297872335,
+                  "eligible": true
+                },
+                "corroborated": {
+                  "gap": 0.0015094339622641062,
+                  "eligible": true
+                }
+              },
+              "worst_eligible_abs_gap": 0.01010638297872335
+            },
+            "KG gate": {
+              "marginal_gap": -0.050234009360374365,
+              "per_stratum": {
+                "no secondary": {
+                  "gap": -0.11712765957446813,
+                  "eligible": true
+                },
+                "corroborated": {
+                  "gap": 0.04467924528301883,
+                  "eligible": true
+                }
+              },
+              "worst_eligible_abs_gap": 0.11712765957446813
+            },
+            "S+E (full gate)": {
+              "marginal_gap": -0.02040561622464898,
+              "per_stratum": {
+                "no secondary": {
+                  "gap": -0.16478723404255324,
+                  "eligible": true
+                },
+                "corroborated": {
+                  "gap": 0.18445283018867922,
+                  "eligible": true
+                }
+              },
+              "worst_eligible_abs_gap": 0.18445283018867922
+            }
+          }
+        },
+        "B_prior_conflict": {
+          "strata": {
+            "low conflict": {
+              "n": 13796,
+              "n_positive": 1737,
+              "positive_rate": 0.12590605972745722,
+              "eligible": true
+            },
+            "high conflict": {
+              "n": 8601,
+              "n_positive": 1468,
+              "positive_rate": 0.17067782815951635,
+              "eligible": true
+            }
+          },
+          "methods": {
+            "S (detector score)": {
+              "marginal_gap": -0.05616224648985968,
+              "per_stratum": {
+                "low conflict": {
+                  "gap": -0.030282095567069733,
+                  "eligible": true
+                },
+                "high conflict": {
+                  "gap": -0.08678474114441426,
+                  "eligible": true
+                }
+              },
+              "worst_eligible_abs_gap": 0.08678474114441426
+            },
+            "M (top1-top2 margin)": {
+              "marginal_gap": 0.0065522620904835405,
+              "per_stratum": {
+                "low conflict": {
+                  "gap": -0.09879101899827292,
+                  "eligible": true
+                },
+                "high conflict": {
+                  "gap": 0.13119891008174378,
+                  "eligible": true
+                }
+              },
+              "worst_eligible_abs_gap": 0.13119891008174378
+            },
+            "KG gate": {
+              "marginal_gap": -0.050234009360374365,
+              "per_stratum": {
+                "low conflict": {
+                  "gap": 0.05641911341393202,
+                  "eligible": true
+                },
+                "high conflict": {
+                  "gap": -0.1764305177111717,
+                  "eligible": true
+                }
+              },
+              "worst_eligible_abs_gap": 0.1764305177111717
+            },
+            "S+E (full gate)": {
+              "marginal_gap": -0.02040561622464898,
+              "per_stratum": {
+                "low conflict": {
+                  "gap": 0.04444444444444438,
+                  "eligible": true
+                },
+                "high conflict": {
+                  "gap": -0.09713896457765672,
+                  "eligible": true
+                }
+              },
+              "worst_eligible_abs_gap": 0.09713896457765672
+            }
+          }
+        },
+        "C_pss_availability": {
+          "strata": {
+            "PSS measured": {
+              "n": 11467,
+              "n_positive": 2867,
+              "positive_rate": 0.25002180169181126,
+              "eligible": true
+            },
+            "PSS placeholder": {
+              "n": 10930,
+              "n_positive": 338,
+              "positive_rate": 0.03092406221408966,
+              "eligible": true
+            }
+          },
+          "methods": {
+            "S (detector score)": {
+              "marginal_gap": -0.05616224648985968,
+              "per_stratum": {
+                "PSS measured": {
+                  "gap": -0.045552842692710205,
+                  "eligible": true
+                },
+                "PSS placeholder": {
+                  "gap": -0.1461538461538462,
+                  "eligible": true
+                }
+              },
+              "worst_eligible_abs_gap": 0.1461538461538462
+            },
+            "M (top1-top2 margin)": {
+              "marginal_gap": 0.0065522620904835405,
+              "per_stratum": {
+                "PSS measured": {
+                  "gap": -0.0016044645971399207,
+                  "eligible": true
+                },
+                "PSS placeholder": {
+                  "gap": 0.07573964497041419,
+                  "eligible": true
+                }
+              },
+              "worst_eligible_abs_gap": 0.07573964497041419
+            },
+            "KG gate": {
+              "marginal_gap": -0.050234009360374365,
+              "per_stratum": {
+                "PSS measured": {
+                  "gap": -0.011928845483083395,
+                  "eligible": true
+                },
+                "PSS placeholder": {
+                  "gap": -0.3751479289940829,
+                  "eligible": true
+                }
+              },
+              "worst_eligible_abs_gap": 0.3751479289940829
+            },
+            "S+E (full gate)": {
+              "marginal_gap": -0.02040561622464898,
+              "per_stratum": {
+                "PSS measured": {
+                  "gap": 0.011719567492152017,
+                  "eligible": true
+                },
+                "PSS placeholder": {
+                  "gap": -0.2928994082840237,
+                  "eligible": true
+                }
+              },
+              "worst_eligible_abs_gap": 0.2928994082840237
+            }
+          }
+        }
+      }
+    },
+    "FGADR": {
+      "n": 510825,
+      "n_positive": 89433,
+      "taxonomies": {
+        "A_corroboration": {
+          "strata": {
+            "no secondary": {
+              "n": 449318,
+              "n_positive": 60622,
+              "positive_rate": 0.13492003436319044,
+              "eligible": true
+            },
+            "corroborated": {
+              "n": 61507,
+              "n_positive": 28811,
+              "positive_rate": 0.468418228819484,
+              "eligible": true
+            }
+          },
+          "methods": {
+            "S (detector score)": {
+              "marginal_gap": 0.14126329207339572,
+              "per_stratum": {
+                "no secondary": {
+                  "gap": 0.13207086536240964,
+                  "eligible": true
+                },
+                "corroborated": {
+                  "gap": 0.16060532435528097,
+                  "eligible": true
+                }
+              },
+              "worst_eligible_abs_gap": 0.16060532435528097
+            },
+            "M (top1-top2 margin)": {
+              "marginal_gap": 0.01880290273165386,
+              "per_stratum": {
+                "no secondary": {
+                  "gap": 0.03149681633730328,
+                  "eligible": true
+                },
+                "corroborated": {
+                  "gap": -0.007906702301204493,
+                  "eligible": true
+                }
+              },
+              "worst_eligible_abs_gap": 0.03149681633730328
+            },
+            "KG gate": {
+              "marginal_gap": 0.08561045699014913,
+              "per_stratum": {
+                "no secondary": {
+                  "gap": 0.05175348883243702,
+                  "eligible": true
+                },
+                "corroborated": {
+                  "gap": 0.15684981430703546,
+                  "eligible": true
+                }
+              },
+              "worst_eligible_abs_gap": 0.15684981430703546
+            },
+            "S+E (full gate)": {
+              "marginal_gap": 0.09201972426285587,
+              "per_stratum": {
+                "no secondary": {
+                  "gap": 0.04251261918115532,
+                  "eligible": true
+                },
+                "corroborated": {
+                  "gap": 0.19618895560723332,
+                  "eligible": true
+                }
+              },
+              "worst_eligible_abs_gap": 0.19618895560723332
+            }
+          }
+        },
+        "B_prior_conflict": {
+          "strata": {
+            "low conflict": {
+              "n": 300438,
+              "n_positive": 50392,
+              "positive_rate": 0.16772844979663026,
+              "eligible": true
+            },
+            "high conflict": {
+              "n": 210387,
+              "n_positive": 39041,
+              "positive_rate": 0.18556754932576633,
+              "eligible": true
+            }
+          },
+          "methods": {
+            "S (detector score)": {
+              "marginal_gap": 0.14126329207339572,
+              "per_stratum": {
+                "low conflict": {
+                  "gap": 0.12189236386728053,
+                  "eligible": true
+                },
+                "high conflict": {
+                  "gap": 0.16626623293460718,
+                  "eligible": true
+                }
+              },
+              "worst_eligible_abs_gap": 0.16626623293460718
+            },
+            "M (top1-top2 margin)": {
+              "marginal_gap": 0.01880290273165386,
+              "per_stratum": {
+                "low conflict": {
+                  "gap": -0.09419352278139392,
+                  "eligible": true
+                },
+                "high conflict": {
+                  "gap": 0.16465254476063618,
+                  "eligible": true
+                }
+              },
+              "worst_eligible_abs_gap": 0.16465254476063618
+            },
+            "KG gate": {
+              "marginal_gap": 0.08561045699014913,
+              "per_stratum": {
+                "low conflict": {
+                  "gap": 0.12638117161454193,
+                  "eligible": true
+                },
+                "high conflict": {
+                  "gap": 0.032985835403806216,
+                  "eligible": true
+                }
+              },
+              "worst_eligible_abs_gap": 0.12638117161454193
+            },
+            "S+E (full gate)": {
+              "marginal_gap": 0.09201972426285587,
+              "per_stratum": {
+                "low conflict": {
+                  "gap": 0.12288855373868864,
+                  "eligible": true
+                },
+                "high conflict": {
+                  "gap": 0.0521759176250608,
+                  "eligible": true
+                }
+              },
+              "worst_eligible_abs_gap": 0.12288855373868864
+            }
+          }
+        },
+        "C_pss_availability": {
+          "strata": {
+            "PSS measured": {
+              "n": 253765,
+              "n_positive": 74273,
+              "positive_rate": 0.292684176304849,
+              "eligible": true
+            },
+            "PSS placeholder": {
+              "n": 257060,
+              "n_positive": 15160,
+              "positive_rate": 0.058974558468839956,
+              "eligible": true
+            }
+          },
+          "methods": {
+            "S (detector score)": {
+              "marginal_gap": 0.14126329207339572,
+              "per_stratum": {
+                "PSS measured": {
+                  "gap": 0.14090719373123473,
+                  "eligible": true
+                },
+                "PSS placeholder": {
+                  "gap": 0.14300791556728232,
+                  "eligible": true
+                }
+              },
+              "worst_eligible_abs_gap": 0.14300791556728232
+            },
+            "M (top1-top2 margin)": {
+              "marginal_gap": 0.01880290273165386,
+              "per_stratum": {
+                "PSS measured": {
+                  "gap": 0.00799213711577551,
+                  "eligible": true
+                },
+                "PSS placeholder": {
+                  "gap": 0.07176781002638521,
+                  "eligible": true
+                }
+              },
+              "worst_eligible_abs_gap": 0.07176781002638521
+            },
+            "KG gate": {
+              "marginal_gap": 0.08561045699014913,
+              "per_stratum": {
+                "PSS measured": {
+                  "gap": 0.14731329015927722,
+                  "eligible": true
+                },
+                "PSS placeholder": {
+                  "gap": -0.21668865435356205,
+                  "eligible": true
+                }
+              },
+              "worst_eligible_abs_gap": 0.21668865435356205
+            },
+            "S+E (full gate)": {
+              "marginal_gap": 0.09201972426285587,
+              "per_stratum": {
+                "PSS measured": {
+                  "gap": 0.14717326619363694,
+                  "eligible": true
+                },
+                "PSS placeholder": {
+                  "gap": -0.1781926121372032,
+                  "eligible": true
+                }
+              },
+              "worst_eligible_abs_gap": 0.1781926121372032
+            }
+          }
+        }
+      }
+    }
+  },
+  "mondrian_preview": {
+    "OIA-DDR test": {
+      "A_corroboration": {
+        "S (detector score)": 0.09980216455254276,
+        "M (top1-top2 margin)": 0.06541370883277087,
+        "KG gate": 0.02042360060514368,
+        "S+E (full gate)": 0.023833352728965383
+      },
+      "B_prior_conflict": {
+        "S (detector score)": 0.07159595959595955,
+        "M (top1-top2 margin)": 0.10982392627941417,
+        "KG gate": 0.04026113629299406,
+        "S+E (full gate)": 0.04329696969696963
+      },
+      "C_pss_availability": {
+        "S (detector score)": 0.08792270531400959,
+        "M (top1-top2 margin)": 0.048684210526315774,
+        "KG gate": 0.045617173595219905,
+        "S+E (full gate)": 0.0472165411263666
+      }
+    },
+    "IDRiD": {
+      "A_corroboration": {
+        "S (detector score)": 0.19352651048088776,
+        "M (top1-top2 margin)": 0.11152897657213312,
+        "KG gate": 0.11382636655948548,
+        "S+E (full gate)": 0.1060000290750307
+      },
+      "B_prior_conflict": {
+        "S (detector score)": 0.19153194765203996,
+        "M (top1-top2 margin)": 0.10097289784572616,
+        "KG gate": 0.1490377213240954,
+        "S+E (full gate)": 0.1427251732101616
+      },
+      "C_pss_availability": {
+        "S (detector score)": 0.192154496077248,
+        "M (top1-top2 margin)": 0.1003476245654692,
+        "KG gate": 0.1588549858006099,
+        "S+E (full gate)": 0.1570420373275076
+      }
+    },
+    "TJDR": {
+      "A_corroboration": {
+        "S (detector score)": 0.073936170212766,
+        "M (top1-top2 margin)": 0.0271698113207548,
+        "KG gate": 0.08679245283018874,
+        "S+E (full gate)": 0.11426415094339629
+      },
+      "B_prior_conflict": {
+        "S (detector score)": 0.16103542234332424,
+        "M (top1-top2 margin)": 0.060899182561307996,
+        "KG gate": 0.07574931880108997,
+        "S+E (full gate)": 0.03705722070844693
+      },
+      "C_pss_availability": {
+        "S (detector score)": 0.15502958579881665,
+        "M (top1-top2 margin)": 0.021893491124260422,
+        "KG gate": 0.15917159763313615,
+        "S+E (full gate)": 0.08994082840236692
+      }
+    },
+    "FGADR": {
+      "A_corroboration": {
+        "S (detector score)": 0.14530038599848238,
+        "M (top1-top2 margin)": 0.04378608425983965,
+        "KG gate": 0.09175898833292899,
+        "S+E (full gate)": 0.09648972320279761
+      },
+      "B_prior_conflict": {
+        "S (detector score)": 0.1385773929971056,
+        "M (top1-top2 margin)": 0.04658692144156151,
+        "KG gate": 0.11383552944911887,
+        "S+E (full gate)": 0.11150976345451655
+      },
+      "C_pss_availability": {
+        "S (detector score)": 0.14136496438813562,
+        "M (top1-top2 margin)": 0.018682428338696377,
+        "KG gate": 0.11771658944732413,
+        "S+E (full gate)": 0.11939751736684742
+      }
+    }
+  },
+  "criteria": {
+    "C1_diagnostic": {
+      "met": true,
+      "hits": [
+        "OIA-DDR test/A_corroboration/S+E (full gate)=0.197",
+        "OIA-DDR test/B_prior_conflict/M (top1-top2 margin)=0.188",
+        "OIA-DDR test/C_pss_availability/KG gate=0.350",
+        "OIA-DDR test/C_pss_availability/S+E (full gate)=0.304",
+        "IDRiD/A_corroboration/S (detector score)=0.197",
+        "IDRiD/A_corroboration/KG gate=0.180",
+        "IDRiD/A_corroboration/S+E (full gate)=0.199",
+        "IDRiD/B_prior_conflict/S (detector score)=0.194",
+        "IDRiD/B_prior_conflict/M (top1-top2 margin)=0.185",
+        "IDRiD/B_prior_conflict/KG gate=0.155",
+        "IDRiD/B_prior_conflict/S+E (full gate)=0.152",
+        "IDRiD/C_pss_availability/S (detector score)=0.192",
+        "IDRiD/C_pss_availability/KG gate=0.262",
+        "IDRiD/C_pss_availability/S+E (full gate)=0.229",
+        "TJDR/A_corroboration/S+E (full gate)=0.184",
+        "TJDR/B_prior_conflict/KG gate=0.176",
+        "TJDR/C_pss_availability/KG gate=0.375",
+        "TJDR/C_pss_availability/S+E (full gate)=0.293",
+        "FGADR/A_corroboration/S (detector score)=0.161",
+        "FGADR/A_corroboration/KG gate=0.157",
+        "FGADR/A_corroboration/S+E (full gate)=0.196",
+        "FGADR/B_prior_conflict/S (detector score)=0.166",
+        "FGADR/B_prior_conflict/M (top1-top2 margin)=0.165",
+        "FGADR/C_pss_availability/KG gate=0.217",
+        "FGADR/C_pss_availability/S+E (full gate)=0.178"
+      ]
+    },
+    "C2_gate_beats_score_on_A": {
+      "met": false,
+      "cohorts_won": 0,
+      "of": 4
+    },
+    "C3_margin_survives_conditioning": {
+      "met": true,
+      "cohorts_won": 2,
+      "of": 2
+    }
+  }
+}
