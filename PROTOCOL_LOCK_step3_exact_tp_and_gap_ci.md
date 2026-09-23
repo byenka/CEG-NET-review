@@ -1,6 +1,6 @@
 # PROTOCOL LOCK - step 3: exact-TP sensitivity and paired coverage-gap intervals
 
-Locked 2026-09-22, before the run. Nothing in this file is changed after the results exist.
+Locked, before the run. Nothing in this file is changed after the results exist.
 
 ## Purpose
 
