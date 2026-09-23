@@ -1,6 +1,6 @@
 # Protocol lock — prior validation against the expert-annotation endpoint
 
-Written on 2026-09-18, **before** the experiment was run. The criteria, controls, and interpretation rules
+**before** the experiment was run. The criteria, controls, and interpretation rules
 below must not be changed after the results are seen. Results will be reported regardless of the outcome.
 
 ## Question
