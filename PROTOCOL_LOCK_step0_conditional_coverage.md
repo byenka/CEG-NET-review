@@ -1,6 +1,6 @@
 # Protocol lock — Step 0: conditional coverage by corroboration stratum
 
-Written 2026-09-18, before the experiment is run. The criteria below must not be changed after the results are seen. Results are reported regardless of the outcome.
+ before the experiment is run. The criteria below must not be changed after the results are seen. Results are reported regardless of the outcome.
 
 ## Background
 
