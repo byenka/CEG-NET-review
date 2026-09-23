@@ -28,7 +28,7 @@ cached detections in `results/evidence/` and `results/detector_outputs/`.
 | `results/certificates/` | Certificate manifest, the five verification checks, one sample record per cohort, and the full certificates for all four cohorts, compressed |
 | `results/evidence/` | Per-detection evidence vectors for OIA-DDR validation and test, IDRiD, TJDR and FGADR (gzipped CSV, local path columns removed), and the scores of the five comparison detectors on the OIA-DDR candidates |
 | `results/detector_outputs/` | Cached detections per cohort: the primary detector, its horizontally flipped pass, and the secondary detector (zip) |
-| `results/conditional_coverage/` | Results of the conditional-coverage, image-disjoint calibration and ensemble analyses |
+| `results/conditional_coverage/` | Results of the conditional-coverage, image-disjoint calibration, ensemble and gate-calibration analyses, with their run logs |
 | `scripts/conditional_coverage/` | Scripts of those analyses and of their tables |
 | `PROTOCOL_LOCK_*.md` | Protocols written before each locked analysis was run |
 

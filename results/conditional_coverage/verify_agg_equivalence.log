@@ -1,0 +1,13 @@
+Evidence-LogReg            ece   per-seed max|diff|=0.000e+00  mean diff=0.000e+00
+Evidence-LogReg            brier per-seed max|diff|=0.000e+00  mean diff=0.000e+00
+Score-MLP                  ece   per-seed max|diff|=0.000e+00  mean diff=0.000e+00
+Score-MLP                  brier per-seed max|diff|=0.000e+00  mean diff=0.000e+00
+KG-gate-MLP (ours)         ece   per-seed max|diff|=0.000e+00  mean diff=0.000e+00
+KG-gate-MLP (ours)         brier per-seed max|diff|=0.000e+00  mean diff=0.000e+00
+KG-gate+SDS (B5)           ece   per-seed max|diff|=0.000e+00  mean diff=0.000e+00
+KG-gate+SDS (B5)           brier per-seed max|diff|=0.000e+00  mean diff=0.000e+00
+KG-gate+SDS+corrob (B6)    ece   per-seed max|diff|=0.000e+00  mean diff=0.000e+00
+KG-gate+SDS+corrob (B6)    brier per-seed max|diff|=0.000e+00  mean diff=0.000e+00
+
+largest difference over all methods, seeds and metrics: 0.000e+00
+IDENTICAL

@@ -1,0 +1,896 @@
+{
+  "step": "step4_gate_calibration",
+  "protocol": "_LGOVNET_NEW_SEP/PROTOCOL_LOCK_step4_gate_calibration.md",
+  "task": "governance_retain",
+  "seeds": [
+    0,
+    1,
+    2,
+    3,
+    4
+  ],
+  "ece_bins": 15,
+  "note": "Raw and temperature variants are min-max rescaled by to_unit, as published. Gate and other learned outputs are read directly as probabilities. The raw score is not fitted to the RETAIN target.",
+  "validation_in_sample": {
+    "n": 39710,
+    "n_positive": 14136,
+    "prevalence": 0.3559808612440191,
+    "published_variants": {
+      "raw score": {
+        "ece": 0.14569862662109956,
+        "brier": 0.20509093555739955,
+        "mean_predicted": 0.21075562528269332,
+        "observed_rate": 0.3559808612440191,
+        "mean_minus_observed": -0.1452252359613258,
+        "outside_unit_interval": 0
+      },
+      "temperature (T=2.00)": {
+        "ece": 0.10845082183125256,
+        "brier": 0.1961886909913812,
+        "mean_predicted": 0.24755413104797283,
+        "observed_rate": 0.3559808612440191,
+        "mean_minus_observed": -0.10842673019604629,
+        "outside_unit_interval": 0
+      },
+      "isotonic": {
+        "ece": 2.4105623063002014e-17,
+        "brier": 0.1820975587139562,
+        "mean_predicted": 0.3559808612440191,
+        "observed_rate": 0.3559808612440191,
+        "mean_minus_observed": 0.0,
+        "outside_unit_interval": 0
+      }
+    },
+    "methods": {
+      "Evidence-LogReg": {
+        "n_seeds": 5,
+        "ece_mean": 0.006361808322837519,
+        "ece_sd": 8.673617379884035e-19,
+        "brier_mean": 0.20133809766352515,
+        "brier_sd": 0.0,
+        "mean_predicted_mean": 0.3559808612440197,
+        "mean_predicted_sd": 0.0,
+        "mean_minus_observed_mean": 5.551115123125783e-16,
+        "mean_minus_observed_sd": 0.0,
+        "observed_rate": 0.3559808612440191,
+        "per_seed_ece": [
+          0.006361808322837518,
+          0.006361808322837518,
+          0.006361808322837518,
+          0.006361808322837518,
+          0.006361808322837518
+        ],
+        "per_seed_brier": [
+          0.20133809766352515,
+          0.20133809766352515,
+          0.20133809766352515,
+          0.20133809766352515,
+          0.20133809766352515
+        ],
+        "outside_unit_interval": 0
+      },
+      "Score-MLP": {
+        "n_seeds": 5,
+        "ece_mean": 0.025920790340695103,
+        "ece_sd": 0.0021663913124471837,
+        "brier_mean": 0.183554623397636,
+        "brier_sd": 0.0001213250967003247,
+        "mean_predicted_mean": 0.3563570998137357,
+        "mean_predicted_sd": 0.00011410236487819978,
+        "mean_minus_observed_mean": 0.00037623856971660265,
+        "mean_minus_observed_sd": 0.00011410236487819978,
+        "observed_rate": 0.3559808612440191,
+        "per_seed_ece": [
+          0.02743059523771406,
+          0.027928731487719013,
+          0.02687856369047364,
+          0.02544689733439304,
+          0.02191916395317577
+        ],
+        "per_seed_brier": [
+          0.18363402445446161,
+          0.18366020589533533,
+          0.18361873819187255,
+          0.183532570572662,
+          0.1833275778738485
+        ],
+        "outside_unit_interval": 0
+      },
+      "KG-gate-MLP (ours)": {
+        "n_seeds": 5,
+        "ece_mean": 0.018835021688860663,
+        "ece_sd": 0.0038136337220692415,
+        "brier_mean": 0.16944734342989273,
+        "brier_sd": 0.00032786154917997204,
+        "mean_predicted_mean": 0.35630995544161065,
+        "mean_predicted_sd": 0.00021778408147745518,
+        "mean_minus_observed_mean": 0.0003290941975915396,
+        "mean_minus_observed_sd": 0.00021778408147745518,
+        "observed_rate": 0.3559808612440191,
+        "per_seed_ece": [
+          0.020158456875757052,
+          0.02244621022902898,
+          0.019956821082729597,
+          0.011429123349169826,
+          0.020184496907617873
+        ],
+        "per_seed_brier": [
+          0.1699189922093032,
+          0.16925409545773257,
+          0.16944445240610356,
+          0.1689633895716125,
+          0.1696557875047118
+        ],
+        "outside_unit_interval": 0
+      },
+      "KG-gate+SDS (B5)": {
+        "n_seeds": 5,
+        "ece_mean": 0.021546920124969803,
+        "ece_sd": 0.0031333476707615317,
+        "brier_mean": 0.16754750412370378,
+        "brier_sd": 0.00032798754629945366,
+        "mean_predicted_mean": 0.35655267387347156,
+        "mean_predicted_sd": 0.00032999457650771956,
+        "mean_minus_observed_mean": 0.0005718126294524395,
+        "mean_minus_observed_sd": 0.00032999457650771956,
+        "observed_rate": 0.3559808612440191,
+        "per_seed_ece": [
+          0.02266971385965664,
+          0.025446444792768412,
+          0.016316157202963144,
+          0.023269748948848576,
+          0.02003253582061223
+        ],
+        "per_seed_brier": [
+          0.1680064244184887,
+          0.16725402310577495,
+          0.167143824502327,
+          0.1678244275598627,
+          0.16750882103206552
+        ],
+        "outside_unit_interval": 0
+      },
+      "KG-gate+SDS+corrob (B6)": {
+        "n_seeds": 5,
+        "ece_mean": 0.01605836718698644,
+        "ece_sd": 0.003612843106075224,
+        "brier_mean": 0.1642517749577197,
+        "brier_sd": 0.0003754364848087291,
+        "mean_predicted_mean": 0.3563977607618083,
+        "mean_predicted_sd": 0.0002995476743393971,
+        "mean_minus_observed_mean": 0.00041689951778919323,
+        "mean_minus_observed_sd": 0.0002995476743393971,
+        "observed_rate": 0.3559808612440191,
+        "per_seed_ece": [
+          0.017939919297913994,
+          0.019906571471629133,
+          0.012339614057982342,
+          0.011111858697609969,
+          0.01899387240979678
+        ],
+        "per_seed_brier": [
+          0.1646486064039382,
+          0.1639540379397843,
+          0.16416521277004079,
+          0.16377060426742082,
+          0.16472041340741445
+        ],
+        "outside_unit_interval": 0
+      }
+    }
+  },
+  "cohorts": {
+    "OIA-DDR test": {
+      "n": 64214,
+      "n_positive": 24529,
+      "prevalence": 0.3819883514498396,
+      "published_variants": {
+        "raw score": {
+          "ece": 0.11816554350023789,
+          "brier": 0.2107045509539468,
+          "mean_predicted": 0.26963613682986526,
+          "observed_rate": 0.3819883514498396,
+          "mean_minus_observed": -0.11235221461997436,
+          "outside_unit_interval": 0
+        },
+        "temperature (T=2.00)": {
+          "ece": 0.08363336845343428,
+          "brier": 0.20386312547687546,
+          "mean_predicted": 0.29835498299640534,
+          "observed_rate": 0.3819883514498396,
+          "mean_minus_observed": -0.08363336845343428,
+          "outside_unit_interval": 0
+        },
+        "isotonic": {
+          "ece": 0.036708276011632034,
+          "brier": 0.1973991779581289,
+          "mean_predicted": 0.41860967539790006,
+          "observed_rate": 0.3819883514498396,
+          "mean_minus_observed": 0.03662132394806045,
+          "outside_unit_interval": 0
+        }
+      },
+      "methods": {
+        "Evidence-LogReg": {
+          "n_seeds": 5,
+          "ece_mean": 0.03620023217830694,
+          "ece_sd": 0.0,
+          "brier_mean": 0.2123998724589129,
+          "brier_sd": 0.0,
+          "mean_predicted_mean": 0.34833670718916937,
+          "mean_predicted_sd": 0.0,
+          "mean_minus_observed_mean": -0.033651644260670244,
+          "mean_minus_observed_sd": 0.0,
+          "observed_rate": 0.3819883514498396,
+          "per_seed_ece": [
+            0.03620023217830694,
+            0.03620023217830694,
+            0.03620023217830694,
+            0.03620023217830694,
+            0.03620023217830694
+          ],
+          "per_seed_brier": [
+            0.2123998724589129,
+            0.2123998724589129,
+            0.2123998724589129,
+            0.2123998724589129,
+            0.2123998724589129
+          ],
+          "outside_unit_interval": 0,
+          "family": "learned-linear",
+          "ece_minus_isotonic": -0.0005080438333250961
+        },
+        "Score-MLP": {
+          "n_seeds": 5,
+          "ece_mean": 0.041275252010394656,
+          "ece_sd": 0.0006606035983479103,
+          "brier_mean": 0.19816441488358338,
+          "brier_sd": 9.290031180269406e-05,
+          "mean_predicted_mean": 0.41585793708616475,
+          "mean_predicted_sd": 0.0004975512601279152,
+          "mean_minus_observed_mean": 0.033869585636325195,
+          "mean_minus_observed_sd": 0.0004975512601279152,
+          "observed_rate": 0.3819883514498396,
+          "per_seed_ece": [
+            0.041716908206365366,
+            0.04090252509468959,
+            0.04199040854677227,
+            0.041600549978562905,
+            0.04016586822558316
+          ],
+          "per_seed_brier": [
+            0.19825711618096656,
+            0.19818273886909488,
+            0.19824402080771117,
+            0.19813879794929182,
+            0.1979994006108525
+          ],
+          "outside_unit_interval": 0,
+          "family": "learned-score",
+          "ece_minus_isotonic": 0.004566975998762622
+        },
+        "KG-gate-MLP (ours)": {
+          "n_seeds": 5,
+          "ece_mean": 0.026611385868741295,
+          "ece_sd": 0.004751509523097991,
+          "brier_mean": 0.18419056025654856,
+          "brier_sd": 0.0004059354592205078,
+          "mean_predicted_mean": 0.3879455827218068,
+          "mean_predicted_sd": 0.0013718804401095606,
+          "mean_minus_observed_mean": 0.005957231271967178,
+          "mean_minus_observed_sd": 0.0013718804401095606,
+          "observed_rate": 0.3819883514498396,
+          "per_seed_ece": [
+            0.026174483685198695,
+            0.03162946567893938,
+            0.029651452612040517,
+            0.017839487811372068,
+            0.027762039556155808
+          ],
+          "per_seed_brier": [
+            0.18482101431847867,
+            0.18410489757615814,
+            0.18427120888975732,
+            0.18354843490754774,
+            0.1842072455908011
+          ],
+          "outside_unit_interval": 0,
+          "family": "governance",
+          "ece_minus_isotonic": -0.010096890142890738
+        },
+        "KG-gate+SDS (B5)": {
+          "n_seeds": 5,
+          "ece_mean": 0.027593904451723945,
+          "ece_sd": 0.003967970159749443,
+          "brier_mean": 0.18310894959403137,
+          "brier_sd": 0.00044984507127323036,
+          "mean_predicted_mean": 0.3875421169823571,
+          "mean_predicted_sd": 0.001591797610120745,
+          "mean_minus_observed_mean": 0.005553765532517496,
+          "mean_minus_observed_sd": 0.001591797610120745,
+          "observed_rate": 0.3819883514498396,
+          "per_seed_ece": [
+            0.02760180496431576,
+            0.03425776098645323,
+            0.021868740020747037,
+            0.02638190554528415,
+            0.02785931074181954
+          ],
+          "per_seed_brier": [
+            0.18397037215078255,
+            0.18296469503157892,
+            0.18264682285318326,
+            0.18301924824538138,
+            0.18294360968923074
+          ],
+          "outside_unit_interval": 0,
+          "family": "governance",
+          "ece_minus_isotonic": -0.009114371559908088
+        },
+        "KG-gate+SDS+corrob (B6)": {
+          "n_seeds": 5,
+          "ece_mean": 0.022274258426408292,
+          "ece_sd": 0.005691749710914049,
+          "brier_mean": 0.1798095018710576,
+          "brier_sd": 0.0004822267185650283,
+          "mean_predicted_mean": 0.3871201107462932,
+          "mean_predicted_sd": 0.0011524378293123797,
+          "mean_minus_observed_mean": 0.005131759296453553,
+          "mean_minus_observed_sd": 0.0011524378293123797,
+          "observed_rate": 0.3819883514498396,
+          "per_seed_ece": [
+            0.022663962605389613,
+            0.03199193129141168,
+            0.018956278300148118,
+            0.014796785712909174,
+            0.02296233422218287
+          ],
+          "per_seed_brier": [
+            0.1796070164595185,
+            0.18057923142164986,
+            0.1793462648737775,
+            0.17936428597894377,
+            0.18015071062139829
+          ],
+          "outside_unit_interval": 0,
+          "family": "governance",
+          "ece_minus_isotonic": -0.014434017585223741
+        }
+      }
+    },
+    "IDRiD": {
+      "n": 8042,
+      "n_positive": 4177,
+      "prevalence": 0.5193981596617757,
+      "published_variants": {
+        "raw score": {
+          "ece": 0.1108477737959593,
+          "brier": 0.22074833660335627,
+          "mean_predicted": 0.41821558596046854,
+          "observed_rate": 0.5193981596617757,
+          "mean_minus_observed": -0.10118257370130718,
+          "outside_unit_interval": 0
+        },
+        "temperature (T=2.00)": {
+          "ece": 0.10346558608265688,
+          "brier": 0.22049850981151115,
+          "mean_predicted": 0.4177753715481193,
+          "observed_rate": 0.5193981596617757,
+          "mean_minus_observed": -0.10162278811365644,
+          "outside_unit_interval": 0
+        },
+        "isotonic": {
+          "ece": 0.03966284494810559,
+          "brier": 0.2090294827595538,
+          "mean_predicted": 0.5589859067315227,
+          "observed_rate": 0.5193981596617757,
+          "mean_minus_observed": 0.03958774706974699,
+          "outside_unit_interval": 0
+        }
+      },
+      "methods": {
+        "Evidence-LogReg": {
+          "n_seeds": 5,
+          "ece_mean": 0.16473229776979678,
+          "ece_sd": 0.0,
+          "brier_mean": 0.2551950677778513,
+          "brier_sd": 0.0,
+          "mean_predicted_mean": 0.3546658618919789,
+          "mean_predicted_sd": 0.0,
+          "mean_minus_observed_mean": -0.1647322977697968,
+          "mean_minus_observed_sd": 0.0,
+          "observed_rate": 0.5193981596617757,
+          "per_seed_ece": [
+            0.16473229776979678,
+            0.16473229776979678,
+            0.16473229776979678,
+            0.16473229776979678,
+            0.16473229776979678
+          ],
+          "per_seed_brier": [
+            0.2551950677778513,
+            0.2551950677778513,
+            0.2551950677778513,
+            0.2551950677778513,
+            0.2551950677778513
+          ],
+          "outside_unit_interval": 0,
+          "family": "learned-linear",
+          "ece_minus_isotonic": 0.12506945282169118
+        },
+        "Score-MLP": {
+          "n_seeds": 5,
+          "ece_mean": 0.03970244560407654,
+          "ece_sd": 0.0007266728361637048,
+          "brier_mean": 0.2092010268396149,
+          "brier_sd": 8.605304117518221e-05,
+          "mean_predicted_mean": 0.5591006052658523,
+          "mean_predicted_sd": 0.0007266728361636927,
+          "mean_minus_observed_mean": 0.0397024456040765,
+          "mean_minus_observed_sd": 0.0007266728361636928,
+          "observed_rate": 0.5193981596617757,
+          "per_seed_ece": [
+            0.039851515503898705,
+            0.038307731750707785,
+            0.04014039630662721,
+            0.03982805359587809,
+            0.040384530863270915
+          ],
+          "per_seed_brier": [
+            0.2093116489649662,
+            0.20915607046321755,
+            0.20929286635025462,
+            0.2091533294023557,
+            0.20909121901728048
+          ],
+          "outside_unit_interval": 0,
+          "family": "learned-score",
+          "ece_minus_isotonic": 3.9600655970951915e-05
+        },
+        "KG-gate-MLP (ours)": {
+          "n_seeds": 5,
+          "ece_mean": 0.04551745272675687,
+          "ece_sd": 0.006612087152864121,
+          "brier_mean": 0.20372404598848134,
+          "brier_sd": 0.0009547100491520038,
+          "mean_predicted_mean": 0.501382981642444,
+          "mean_predicted_sd": 0.0035910467145904242,
+          "mean_minus_observed_mean": -0.0180151780193318,
+          "mean_minus_observed_sd": 0.0035910467145904242,
+          "observed_rate": 0.5193981596617757,
+          "per_seed_ece": [
+            0.0435961886952423,
+            0.046101451065669694,
+            0.04909609658983969,
+            0.03441559153859239,
+            0.054377935744440276
+          ],
+          "per_seed_brier": [
+            0.20311127561647566,
+            0.20320659861916837,
+            0.20439538429949003,
+            0.20265769698873468,
+            0.20524927441853813
+          ],
+          "outside_unit_interval": 0,
+          "family": "governance",
+          "ece_minus_isotonic": 0.00585460777865128
+        },
+        "KG-gate+SDS (B5)": {
+          "n_seeds": 5,
+          "ece_mean": 0.03972806918271696,
+          "ece_sd": 0.003526299718747319,
+          "brier_mean": 0.2020900912535278,
+          "brier_sd": 0.0005834124994479603,
+          "mean_predicted_mean": 0.5000841468028516,
+          "mean_predicted_sd": 0.004395308099040031,
+          "mean_minus_observed_mean": -0.0193140128589241,
+          "mean_minus_observed_sd": 0.00439530809904003,
+          "observed_rate": 0.5193981596617757,
+          "per_seed_ece": [
+            0.04108412954655004,
+            0.04483629336503419,
+            0.03389357814021993,
+            0.03938588808173721,
+            0.039440456780043424
+          ],
+          "per_seed_brier": [
+            0.20184378440554693,
+            0.20250049561000102,
+            0.20104779915851342,
+            0.20250961501672507,
+            0.2025487620768526
+          ],
+          "outside_unit_interval": 0,
+          "family": "governance",
+          "ece_minus_isotonic": 6.522423461136767e-05
+        },
+        "KG-gate+SDS+corrob (B6)": {
+          "n_seeds": 5,
+          "ece_mean": 0.042228996641411165,
+          "ece_sd": 0.0051260437436702454,
+          "brier_mean": 0.19928774180434933,
+          "brier_sd": 0.0008244130894661006,
+          "mean_predicted_mean": 0.49029562487112904,
+          "mean_predicted_sd": 0.002793446533278958,
+          "mean_minus_observed_mean": -0.029102534790646693,
+          "mean_minus_observed_sd": 0.0027934465332789577,
+          "observed_rate": 0.5193981596617757,
+          "per_seed_ece": [
+            0.04530054270943053,
+            0.04996896471509055,
+            0.035071814475156886,
+            0.03896346463173263,
+            0.04184019667564527
+          ],
+          "per_seed_brier": [
+            0.19988538380482768,
+            0.1985722692159472,
+            0.19889889759907126,
+            0.19848050194400157,
+            0.2006016564578988
+          ],
+          "outside_unit_interval": 0,
+          "family": "governance",
+          "ece_minus_isotonic": 0.0025661516933055753
+        }
+      }
+    },
+    "TJDR": {
+      "n": 23181,
+      "n_positive": 3205,
+      "prevalence": 0.1382597817177861,
+      "published_variants": {
+        "raw score": {
+          "ece": 0.05373415552286031,
+          "brier": 0.10364573913683355,
+          "mean_predicted": 0.1529727159961551,
+          "observed_rate": 0.1382597817177861,
+          "mean_minus_observed": 0.014712934278369005,
+          "outside_unit_interval": 0
+        },
+        "temperature (T=2.00)": {
+          "ece": 0.06217096972862736,
+          "brier": 0.1048355914621163,
+          "mean_predicted": 0.1920910457774732,
+          "observed_rate": 0.1382597817177861,
+          "mean_minus_observed": 0.053831264059687106,
+          "outside_unit_interval": 0
+        },
+        "isotonic": {
+          "ece": 0.15071857177866885,
+          "brier": 0.12868401248206127,
+          "mean_predicted": 0.2889783534964549,
+          "observed_rate": 0.1382597817177861,
+          "mean_minus_observed": 0.1507185717786688,
+          "outside_unit_interval": 0
+        }
+      },
+      "methods": {
+        "Evidence-LogReg": {
+          "n_seeds": 5,
+          "ece_mean": 0.18980726148081922,
+          "ece_sd": 0.0,
+          "brier_mean": 0.1515771906041508,
+          "brier_sd": 0.0,
+          "mean_predicted_mean": 0.3280670431986053,
+          "mean_predicted_sd": 0.0,
+          "mean_minus_observed_mean": 0.1898072614808192,
+          "mean_minus_observed_sd": 0.0,
+          "observed_rate": 0.1382597817177861,
+          "per_seed_ece": [
+            0.18980726148081922,
+            0.18980726148081922,
+            0.18980726148081922,
+            0.18980726148081922,
+            0.18980726148081922
+          ],
+          "per_seed_brier": [
+            0.1515771906041508,
+            0.1515771906041508,
+            0.1515771906041508,
+            0.1515771906041508,
+            0.1515771906041508
+          ],
+          "outside_unit_interval": 0,
+          "family": "learned-linear",
+          "ece_minus_isotonic": 0.039088689702150375
+        },
+        "Score-MLP": {
+          "n_seeds": 5,
+          "ece_mean": 0.16174562629819764,
+          "ece_sd": 0.00041502767141142683,
+          "brier_mean": 0.1306889069828025,
+          "brier_sd": 0.00014321112822962749,
+          "mean_predicted_mean": 0.3000054080159838,
+          "mean_predicted_sd": 0.00041502767141142114,
+          "mean_minus_observed_mean": 0.16174562629819764,
+          "mean_minus_observed_sd": 0.0004150276714114212,
+          "observed_rate": 0.1382597817177861,
+          "per_seed_ece": [
+            0.16188459532855412,
+            0.1622692675586787,
+            0.1616426769051565,
+            0.16191329922432637,
+            0.1610182924742726
+          ],
+          "per_seed_brier": [
+            0.13086795175948673,
+            0.13067474088037054,
+            0.13078293565849225,
+            0.13067763013709388,
+            0.1304412764785691
+          ],
+          "outside_unit_interval": 0,
+          "family": "learned-score",
+          "ece_minus_isotonic": 0.01102705451952879
+        },
+        "KG-gate-MLP (ours)": {
+          "n_seeds": 5,
+          "ece_mean": 0.14722604140516116,
+          "ece_sd": 0.0006770416193294891,
+          "brier_mean": 0.12623025245241457,
+          "brier_sd": 0.0005392471423359974,
+          "mean_predicted_mean": 0.2854858231229473,
+          "mean_predicted_sd": 0.0006770416193294697,
+          "mean_minus_observed_mean": 0.1472260414051612,
+          "mean_minus_observed_sd": 0.0006770416193294697,
+          "observed_rate": 0.1382597817177861,
+          "per_seed_ece": [
+            0.1480736468773574,
+            0.14793125269885793,
+            0.14644786006329394,
+            0.1465466855574888,
+            0.14713076182880785
+          ],
+          "per_seed_brier": [
+            0.12713452092118158,
+            0.12611095823880997,
+            0.125986654014915,
+            0.1264157008953765,
+            0.12550342819178983
+          ],
+          "outside_unit_interval": 0,
+          "family": "governance",
+          "ece_minus_isotonic": -0.0034925303735076907
+        },
+        "KG-gate+SDS (B5)": {
+          "n_seeds": 5,
+          "ece_mean": 0.15047792982523858,
+          "ece_sd": 0.0006545804254642442,
+          "brier_mean": 0.12777315149231516,
+          "brier_sd": 0.0007016228707356919,
+          "mean_predicted_mean": 0.28873771154302463,
+          "mean_predicted_sd": 0.0006545804254642261,
+          "mean_minus_observed_mean": 0.15047792982523853,
+          "mean_minus_observed_sd": 0.0006545804254642261,
+          "observed_rate": 0.1382597817177861,
+          "per_seed_ece": [
+            0.15123108352573023,
+            0.15046150155109816,
+            0.14958276300557014,
+            0.1511739940229798,
+            0.14994030702081448
+          ],
+          "per_seed_brier": [
+            0.12873179412260746,
+            0.12688852961139233,
+            0.12785645958298827,
+            0.12830297095825535,
+            0.12708600318633237
+          ],
+          "outside_unit_interval": 0,
+          "family": "governance",
+          "ece_minus_isotonic": -0.00024064195343026507
+        },
+        "KG-gate+SDS+corrob (B6)": {
+          "n_seeds": 5,
+          "ece_mean": 0.14989510757115673,
+          "ece_sd": 0.0007637275880152148,
+          "brier_mean": 0.1257803174542808,
+          "brier_sd": 0.0004200691144776662,
+          "mean_predicted_mean": 0.28815488928894284,
+          "mean_predicted_sd": 0.000763727588015187,
+          "mean_minus_observed_mean": 0.1498951075711567,
+          "mean_minus_observed_sd": 0.000763727588015187,
+          "observed_rate": 0.1382597817177861,
+          "per_seed_ece": [
+            0.1500608161508204,
+            0.150419936867073,
+            0.15086271399659654,
+            0.1486771199001305,
+            0.1494549509411632
+          ],
+          "per_seed_brier": [
+            0.12563536900713831,
+            0.12643128737174164,
+            0.1259144574017925,
+            0.12513265349414196,
+            0.12578781999658964
+          ],
+          "outside_unit_interval": 0,
+          "family": "governance",
+          "ece_minus_isotonic": -0.0008234642075121146
+        }
+      }
+    },
+    "FGADR": {
+      "n": 538986,
+      "n_positive": 89433,
+      "prevalence": 0.1659282430341419,
+      "published_variants": {
+        "raw score": {
+          "ece": 0.10167592816544736,
+          "brier": 0.1290382476907374,
+          "mean_predicted": 0.2670799638842965,
+          "observed_rate": 0.1659282430341419,
+          "mean_minus_observed": 0.10115172085015461,
+          "outside_unit_interval": 0
+        },
+        "temperature (T=2.00)": {
+          "ece": 0.12727881031922508,
+          "brier": 0.13134986103116383,
+          "mean_predicted": 0.293207053353367,
+          "observed_rate": 0.1659282430341419,
+          "mean_minus_observed": 0.1272788103192251,
+          "outside_unit_interval": 0
+        },
+        "isotonic": {
+          "ece": 0.25077898501612145,
+          "brier": 0.18212338876258866,
+          "mean_predicted": 0.41670722805026333,
+          "observed_rate": 0.1659282430341419,
+          "mean_minus_observed": 0.25077898501612145,
+          "outside_unit_interval": 0
+        }
+      },
+      "methods": {
+        "Evidence-LogReg": {
+          "n_seeds": 5,
+          "ece_mean": 0.15742974658614134,
+          "ece_sd": 0.0,
+          "brier_mean": 0.15582687204177412,
+          "brier_sd": 0.0,
+          "mean_predicted_mean": 0.3233579896202832,
+          "mean_predicted_sd": 0.0,
+          "mean_minus_observed_mean": 0.15742974658614134,
+          "mean_minus_observed_sd": 0.0,
+          "observed_rate": 0.1659282430341419,
+          "per_seed_ece": [
+            0.15742974658614134,
+            0.15742974658614134,
+            0.15742974658614134,
+            0.15742974658614134,
+            0.15742974658614134
+          ],
+          "per_seed_brier": [
+            0.15582687204177412,
+            0.15582687204177412,
+            0.15582687204177412,
+            0.15582687204177412,
+            0.15582687204177412
+          ],
+          "outside_unit_interval": 0,
+          "family": "learned-linear",
+          "ece_minus_isotonic": -0.09334923842998011
+        },
+        "Score-MLP": {
+          "n_seeds": 5,
+          "ece_mean": 0.24927135831898686,
+          "ece_sd": 0.0005506770182643209,
+          "brier_mean": 0.18233160101632623,
+          "brier_sd": 0.0003534540737421649,
+          "mean_predicted_mean": 0.4151996013531288,
+          "mean_predicted_sd": 0.0005506770182643167,
+          "mean_minus_observed_mean": 0.2492713583189869,
+          "mean_minus_observed_sd": 0.0005506770182643167,
+          "observed_rate": 0.1659282430341419,
+          "per_seed_ece": [
+            0.24946044926723085,
+            0.2482315742257512,
+            0.24942297226398946,
+            0.24936401575463296,
+            0.24987778008332992
+          ],
+          "per_seed_brier": [
+            0.18266329965436492,
+            0.18168475371037046,
+            0.18263298472382508,
+            0.18228707040816147,
+            0.18238989658490928
+          ],
+          "outside_unit_interval": 0,
+          "family": "learned-score",
+          "ece_minus_isotonic": -0.0015076266971345842
+        },
+        "KG-gate-MLP (ours)": {
+          "n_seeds": 5,
+          "ece_mean": 0.2135685083998587,
+          "ece_sd": 0.0013425605399825032,
+          "brier_mean": 0.16688714248114606,
+          "brier_sd": 0.0005108124439859884,
+          "mean_predicted_mean": 0.3794967514340005,
+          "mean_predicted_sd": 0.001342560539982485,
+          "mean_minus_observed_mean": 0.21356850839985864,
+          "mean_minus_observed_sd": 0.001342560539982485,
+          "observed_rate": 0.1659282430341419,
+          "per_seed_ece": [
+            0.2132105002272411,
+            0.21250522221546295,
+            0.21357903487082933,
+            0.21611214597544365,
+            0.2124356387103163
+          ],
+          "per_seed_brier": [
+            0.1666514061291229,
+            0.16610623677914002,
+            0.16682996849184348,
+            0.16759646295748518,
+            0.16725163804813864
+          ],
+          "outside_unit_interval": 0,
+          "family": "governance",
+          "ece_minus_isotonic": -0.037210476616262755
+        },
+        "KG-gate+SDS (B5)": {
+          "n_seeds": 5,
+          "ece_mean": 0.21161250866562736,
+          "ece_sd": 0.0016598969852254517,
+          "brier_mean": 0.165086595028792,
+          "brier_sd": 0.0009110558291884194,
+          "mean_predicted_mean": 0.3775407516997693,
+          "mean_predicted_sd": 0.0016598969852254471,
+          "mean_minus_observed_mean": 0.2116125086656274,
+          "mean_minus_observed_sd": 0.0016598969852254471,
+          "observed_rate": 0.1659282430341419,
+          "per_seed_ece": [
+            0.21181419466382026,
+            0.20845258984047552,
+            0.21328421601259331,
+            0.21250909572852936,
+            0.2120024470827184
+          ],
+          "per_seed_brier": [
+            0.16534755609517204,
+            0.16333866352253268,
+            0.16598525511241397,
+            0.16553257890515585,
+            0.16522892150868537
+          ],
+          "outside_unit_interval": 0,
+          "family": "governance",
+          "ece_minus_isotonic": -0.039166476350494084
+        },
+        "KG-gate+SDS+corrob (B6)": {
+          "n_seeds": 5,
+          "ece_mean": 0.20368378498257012,
+          "ece_sd": 0.0014226223235628112,
+          "brier_mean": 0.1598510015090735,
+          "brier_sd": 0.0006973430779276827,
+          "mean_predicted_mean": 0.369612028016712,
+          "mean_predicted_sd": 0.0014226223235628116,
+          "mean_minus_observed_mean": 0.20368378498257012,
+          "mean_minus_observed_sd": 0.0014226223235628116,
+          "observed_rate": 0.1659282430341419,
+          "per_seed_ece": [
+            0.20278417421490763,
+            0.20180807138987458,
+            0.20448159895893747,
+            0.2059374294112373,
+            0.2034076509378935
+          ],
+          "per_seed_brier": [
+            0.15945824110111403,
+            0.15872038606355002,
+            0.15997528803439737,
+            0.16050200648068316,
+            0.1605990858656229
+          ],
+          "outside_unit_interval": 0,
+          "family": "governance",
+          "ece_minus_isotonic": -0.04709520003355133
+        }
+      }
+    }
+  }
+}
