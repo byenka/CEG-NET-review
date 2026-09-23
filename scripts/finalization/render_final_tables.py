@@ -39,14 +39,19 @@ def main():
             g = c['gates']['gate_fused']
             gated, sd, gain = g['ap_mean'], g['ap_sd'], g['gain_vs_fused_mean']
             pos, neg = g['n_ci_above_0'], g['n_ci_below_0']
-        rows.append(f"{c['name']} & {c['n_pass_fusion']} & {c['m0_ap']:.3f} & "
-                    f"{c['gates']['full_gate']['ap_mean']:.3f} & {c['fused_ap']:.3f} & "
-                    f"${gated:.3f}\\pm{sd:.3f}$ & ${gain:+.3f}$ & {pos}/5; {neg}/5 " + r'\\')
+        vals = [c['m0_ap'], c['gates']['full_gate']['ap_mean'], c['fused_ap'], gated]
+        top = max(vals)  # bold marks the best AUPRC in the row, whichever method holds it
+        def b(v):
+            return (r'\textbf{' + f'{v:.3f}' + '}') if v == top else f'{v:.3f}'
+        fe = ('$\\mathbf{' + f'{gated:.3f}' + '}\\pm' + f'{sd:.3f}$') if gated == top else f"${gated:.3f}\\pm{sd:.3f}$"
+        rows.append(f"{c['name']} & {c['n_pass_fusion']} & {b(vals[0])} & "
+                    f"{b(vals[1])} & {b(vals[2])} & "
+                    f"{fe} & ${gain:+.3f}$ & {pos}/5; {neg}/5 " + r'\\')
     table('T15_fusion_evidence.tex',
           'Four-way ranking comparison: raw score $S$, original full gate $S+E$, score fusion $F$, and fusion-input gate $F+E$. '
           'All gates use five fixed seeds and source-validation fitting. The fusion input replaces the raw-score input. '
           'Intervals use 2,000 paired image resamples per seed, and the last column counts intervals wholly above and below zero for $(F+E)-F$. '
-          'FGADR is a separate follow-up using two-pass fusion at both fitting and evaluation, with the stored secondary evidence retained.',
+          'FGADR is a separate follow-up using two-pass fusion at both fitting and evaluation, with the stored secondary evidence retained. Best AUPRC per row in bold.',
           'tab:fusion_evidence', 'lccccccc',
           r'Cohort & Fusion passes & $S$ & $S+E$ & $F$ & $F+E$ (mean$\pm$SD) & $\Delta$ & CI $>0$; $<0$', rows,
           'For TJDR, one negative interval and four containing zero accompany five negative point estimates. '
@@ -83,6 +88,8 @@ def main():
     p = OUT / 'T8_fp_reduction_benchmark.tex'
     if p.exists():
         s = p.read_text(encoding='utf-8').replace('as one additional input','in place of the raw-score input')
+        s = s.replace('full gate in place of the raw-score input.}', 'full gate in place of the raw-score input. Best AUPRC in bold.}') if 'Best AUPRC in bold' not in s else s
+        s = s.replace(chr(38) + ' AUPRC ' + chr(38), chr(38) + ' AUPRC$\\uparrow$ ' + chr(38)) if 'AUPRC$' not in s else s
         s = s.replace('average precision; the remaining columns', 'average precision, and the remaining columns')
         s = s.replace('The last row gives that three-pass mean',
                       'The Audit column marks the native output of each evaluated implementation, and the same prior-based certificate can also be attached to score fusion without changing its ranking. The last row gives that three-pass mean') if 'native output' not in s else s

@@ -50,6 +50,13 @@ def main() -> int:
     h1p = rep["configs"]["H1p"]["methods"]
 
     body = []
+    # Bold marks the best AURC per cohort within each split direction. Coverage gaps are not bolded.
+    best_a = {coh: min(h1[k][coh]["aurc"] for k, _l, _m in ROWS) for coh in COHORTS}
+    best_b = {coh: min(h1p[k][coh]["aurc"] for k, _l, _m in ROWS) for coh in COHORTS}
+
+    def qb(v, ref):
+        return (r"\textbf{" + q(v) + "}") if v == ref else q(v)
+
     for key, label, mark in ROWS:
         for i, coh in enumerate(COHORTS):
             a, b = h1[key][coh], h1p[key][coh]
@@ -58,7 +65,8 @@ def main() -> int:
             head = label + mark if i == 0 else ""
             body.append(
                 f"{head} & {coh} & {signed(a['gap'])} & {signed(b['gap'])} & "
-                f"{q(mean_abs)} & {q(a['aurc'])} & {q(b['aurc'])} & {q(d_aurc)} " + chr(92) * 2)
+                f"{q(mean_abs)} & {qb(a['aurc'], best_a[coh])} & {qb(b['aurc'], best_b[coh])} & "
+                f"{q(d_aurc)} " + chr(92) * 2)
         if key != ROWS[-1][0]:
             body.append(r"\midrule")
 
@@ -86,7 +94,7 @@ def main() -> int:
          r"the mean of the two absolute gaps, not the absolute value of the mean. Learned rows "
          r"average five gate seeds. This is an image-disjoint split with a finite-sample quantile "
          r"correction, not an exact conformal guarantee: detections inside one image remain "
-         r"dependent.}"),
+         r"dependent. Best AURC per cohort in bold, within each split direction.}"),
         r"\label{tab:honest_calibration}",
         r"\footnotesize",
         r"\setlength{\tabcolsep}{3pt}",

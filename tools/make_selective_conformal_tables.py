@@ -66,9 +66,14 @@ def main() -> None:
 
     # ---------------- S15
     rows = []
+    # Bold marks the best AURC in each cohort column. The coverage gap is not bolded, because the
+    # text requires it to be read together with ranking.
+    best_aurc = {c: min(d["cohorts"][c]["methods"][k]["aurc"] for k, _ in ROWS) for c in COHORTS}
     for key, label in ROWS:
         cells = [label]
-        cells += [f4(d["cohorts"][c]["methods"][key]["aurc"]) for c in COHORTS]
+        for c in COHORTS:
+            v = d["cohorts"][c]["methods"][key]["aurc"]
+            cells.append(r"\textbf{" + f4(v) + "}" if v == best_aurc[c] else f4(v))
         cells += [sg(d["cohorts"][c]["methods"][key]["conformal_coverage_gap"]) for c in COHORTS]
         rows.append(" & ".join(cells) + r" \\")
 
@@ -76,19 +81,17 @@ def main() -> None:
     if fus:
         m = fus["methods"]
         p = fus["paired_vs_fusion"]
+        # The coverage gaps of these two rows are already in the body text, so the note keeps only
+        # the AURC values, which appear nowhere else.
         note = (
             "On OIA-DDR the three-pass mean reaches an AURC of "
-            f"{m['Three-pass mean (F)']['aurc']:.4f} and a coverage gap of "
-            f"{m['Three-pass mean (F)']['conformal_coverage_gap']:+.3f}. The full gate is worse "
-            f"on AURC by {p['Full gate (S+E)']['delta']:+.4f} "
+            f"{m['Three-pass mean (F)']['aurc']:.4f}. The full gate is worse by "
+            f"{p['Full gate (S+E)']['delta']:+.4f} "
             f"(95\\% CI [{p['Full gate (S+E)']['ci95'][0]:+.4f}, "
             f"{p['Full gate (S+E)']['ci95'][1]:+.4f}]), and the gate that reads the averaged score "
             f"is better by {p['Fusion-input gate (F+E)']['delta']:+.4f} "
             f"(95\\% CI [{p['Fusion-input gate (F+E)']['ci95'][0]:+.4f}, "
-            f"{p['Fusion-input gate (F+E)']['ci95'][1]:+.4f}]) at a coverage gap of "
-            f"{m['Fusion-input gate (F+E)']['conformal_coverage_gap']:+.3f}. The ranking order of "
-            "Table~\\ref{tab:fp_benchmark} therefore holds on the selective-prediction axis, while "
-            "the operating-point gap does not follow it."
+            f"{p['Fusion-input gate (F+E)']['ci95'][1]:+.4f}])."
         )
 
     caption = (
@@ -97,6 +100,7 @@ def main() -> None:
         "that should have been suppressed among those retained, and lower is better. "
         "The coverage gap is the empirical minus the nominal coverage of a split-conformal "
         f"threshold calibrated on the OIA-DDR validation split at a nominal {nominal:.2f}. "
+        "Best AURC per cohort in bold. "
         "Learned rows average five gate seeds, and maximum-softmax probability and predictive "
         "entropy are omitted."
     )

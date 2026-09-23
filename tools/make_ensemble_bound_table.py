@@ -65,10 +65,14 @@ def main() -> None:
         else:
             delta = f"$-{abs(m[KEY_G]['auprc'] - m[KEY_E6]['auprc']):.4f}$"
             ci = "not resampled"
+        aus = [m[KEY_S]["auprc"], m[KEY_E5]["auprc"], m[KEY_E6]["auprc"], m[KEY_G]["auprc"]]
+        top = max(aus)  # bold marks the best AUPRC in the row, whichever method holds it
+        def bb(v, _t=top):
+            return (r"\textbf{" + f4(v) + "}") if v == _t else f4(v)
         rows.append(" & ".join([
             c, th(e["n"]),
-            f4(m[KEY_S]["auprc"]), f4(m[KEY_E5]["auprc"]), f4(m[KEY_E6]["auprc"]),
-            f4(m[KEY_G]["auprc"]), delta, ci,
+            bb(aus[0]), bb(aus[1]), bb(aus[2]),
+            bb(aus[3]), delta, ci,
             sg3(m[KEY_G]["conformal_gap"]), sg3(m[KEY_E6]["conformal_gap"]),
         ]) + r" \\")
 
@@ -79,7 +83,7 @@ def main() -> None:
         "an unmatched member contributing zero. $\\Delta$ is the paired AUPRC difference "
         "between the full gate and E6 over 2,000 image-clustered resamples, and the last "
         "two columns repeat the conformal coverage gap of the operating-point table of "
-        "the main article."
+        "the main article. Best AUPRC per row in bold."
     )
 
     text = (
@@ -91,7 +95,7 @@ def main() -> None:
         "\\label{tab:ensemble_bound}\n\\footnotesize\n"
         "\\setlength{\\tabcolsep}{3pt}\n\\resizebox{\\textwidth}{!}{%\n"
         "\\begin{tabular}{lrrrrrrcrr}\n\\toprule\n"
-        "\\multirow{2}{*}{Cohort} & \\multirow{2}{*}{$n$} & \\multicolumn{4}{c}{AUPRC} "
+        "\\multirow{2}{*}{Cohort} & \\multirow{2}{*}{$n$} & \\multicolumn{4}{c}{AUPRC$\\uparrow$} "
         "& \\multicolumn{2}{c}{Gate $-$ E6} & \\multicolumn{2}{c}{Coverage gap} \\\\\n"
         "\\cmidrule(lr){3-6}\\cmidrule(lr){7-8}\\cmidrule(lr){9-10}\n"
         " & & $S$ & E5 & E6 & gate & $\\Delta$ & 95\\% CI & gate & E6 \\\\\n"

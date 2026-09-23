@@ -28,10 +28,6 @@ def g(x: float) -> str:
     return f"${x:+.3f}$".replace("+", r"+").replace("-", r"-")
 
 
-def bold(x: float) -> str:
-    return r"$\mathbf{" + f"{x:+.3f}".replace("-", "-") + "}$"
-
-
 def build_indomain() -> str:
     p = RES / "step0_conditional_coverage.json"
     d = json.loads(p.read_text(encoding="utf-8"))
@@ -79,7 +75,7 @@ def build_indomain() -> str:
         cells = []
         for k in range(6):
             v = rec["per_stratum"][str(k)]
-            cells.append(bold(v["gap"]) if abs(v["gap"]) >= 0.30 else g(v["gap"]))
+            cells.append(g(v["gap"]))
         A(f"{label[m]} & {g(rec['marginal_gap'])} & " + " & ".join(cells) + r" \\")
     A(r"\bottomrule")
     A(r"\end{tabular}}")
@@ -141,7 +137,7 @@ def build_cohorts() -> str:
                 rec = d["cohorts"][coh]["taxonomies"][tax]["methods"][m]
                 cells.append(g(rec["marginal_gap"]))
                 w = rec["worst_eligible_abs_gap"]
-                cells.append(r"$\mathbf{" + f"{w:.3f}" + "}$" if w >= 0.25 else f"{w:.3f}")
+                cells.append(f"{w:.3f}")
             A(f"{label[m]} & " + " & ".join(cells) + r" \\")
     A(r"\bottomrule")
     A(r"\end{tabular}}")
