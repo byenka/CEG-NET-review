@@ -1,6 +1,5 @@
 # Protocol lock — Step 2: honest calibration re-run of the operating-point result
-
-Written 2026-09-18, **before the experiment was run**. The criteria below must not be changed
+ **before the experiment was run**. The criteria below must not be changed
 once the numbers are visible. The outcome is reported whatever it is.
 
 ## Background
