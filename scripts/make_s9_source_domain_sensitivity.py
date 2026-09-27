@@ -62,9 +62,9 @@ tex = "\n".join([
     "% The OIA-DDR validation row is the positive control and must reproduce the in-domain table.",
     r"\begin{table}[htbp]",
     r"\centering",
-    (r"\caption{Sensitivity of the gating result to the cohort the gate is fitted on: every row fits the gate on a different source cohort and evaluates it on the same fixed "
-     rf"target, OIA-DDR test, where the detector score reaches an AUPRC of {q(m0, 4)}. $\Delta$AUPRC is the mean gain over that score across {n_seeds} seeds, and the seed "
-     r"columns count seeds with a positive gain and seeds whose 95\% image-clustered bootstrap interval excludes zero.}"),
+    (r"\caption{Gate fitted on each source cohort and evaluated on OIA-DDR test, where the detector score reaches "
+     rf"an AUPRC of {q(m0, 4)}. $\Delta$AUPRC is the mean gain over {n_seeds} seeds, and the seed columns count "
+     r"positive gains and 95\% image-clustered intervals that exclude zero.}"),
     r"\label{tab:source_domain_sensitivity}",
     r"\footnotesize",
     r"\setlength{\tabcolsep}{3pt}",

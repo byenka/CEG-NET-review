@@ -83,18 +83,15 @@ def main() -> int:
         "NOT an exact conformal guarantee, because detections within one image are dependent",
         "% NOT included by main.tex. To use it: "
         r"\input{T18_honest_calibration}",
-        r"\begin{table}[t]",
+        # [htbp] like every other supplementary table: with [t] alone this near-full-page table cannot take a float
+        # page and waits for the next section barrier, leaving the rest of the previous page empty.
+        r"\begin{table}[htbp]",
         r"\centering",
-        (r"\caption{Operating-point transfer under image-disjoint calibration. OIA-DDR validation is "
-         r"split by image into two folds. The gate is fitted on one and every method, fitted or "
-         r"not, has its threshold calibrated on the other, which is then frozen and applied "
-         r"unchanged to all four cohorts. Both split directions are reported separately: H1 fits "
-         r"on fold A and calibrates on fold B, H1$'$ swaps them. The coverage gap is the "
-         r"delivered minus the intended 0.80 true-positive retention, and $\overline{|g|}$ is "
-         r"the mean of the two absolute gaps, not the absolute value of the mean. Learned rows "
-         r"average five gate seeds. This is an image-disjoint split with a finite-sample quantile "
-         r"correction, not an exact conformal guarantee: detections inside one image remain "
-         r"dependent. Best AURC per cohort in bold, within each split direction.}"),
+        (r"\caption{Operating-point transfer under image-disjoint calibration. H1 fits the gate on "
+         r"fold A and calibrates every threshold on fold B, and H1$'$ swaps the folds. The coverage "
+         r"gap is the delivered minus the intended 0.80 true-positive retention, and "
+         r"$\overline{|g|}$ is the mean of the two absolute gaps. Learned rows average five gate "
+         r"seeds. Best AURC per cohort in bold, within each split direction.}"),
         r"\label{tab:honest_calibration}",
         r"\footnotesize",
         r"\setlength{\tabcolsep}{3pt}",

@@ -7,6 +7,9 @@ HERE = Path(__file__).resolve().parent
 ROOT = next(p for p in HERE.parents if (p / '_FINAL_Latex').exists() or (p / 'results').exists())
 DATA = HERE if (HERE / 'fusion_external.json').exists() else ROOT / 'results/finalization'
 OUT = ROOT / '_FINAL_Latex/tables'
+# FGADR row of T15: three-pass fusion from the locked step 6 (workspace path first, repository path second).
+STEP6 = next(p for p in (ROOT / '_LGOVNET_NEW_SEP/results/step6_fgadr_three_pass.json',
+                         ROOT / 'results/conditional_coverage/step6_fgadr_three_pass.json') if p.exists())
 
 
 def read(name):
@@ -29,33 +32,38 @@ def table(name, caption, label, columns, header, rows, note=''):
 def main():
     OUT.mkdir(parents=True, exist_ok=True)
     fusion = read('fusion_external.json')
-    follow = read('fgadr_two_pass_results.json')
+    step6 = json.loads(STEP6.read_text(encoding='utf-8'))
+    assert step6['verdict'].startswith('C1'), 'step 6 did not complete its controls'
+    three = step6['fgadr_three_pass']
     rows = []
     for c in fusion['cohorts']:
+        fused = c['fused_ap']
         if c['key'] == 'fgadr':
-            gated, sd, gain = follow['mean_ap'], follow['sd_ap'], follow['mean_gain']
-            pos, neg = follow['ci_above_zero_count'], follow['ci_below_zero_count']
+            g = three['B_fusion_input_gate']
+            assert abs(g['m0_ap'] - c['m0_ap']) < 1e-6 and abs(g['full_gate_ap'] - c['gates']['full_gate']['ap_mean']) < 1e-6
+            fused = three['A_fusion_auprc']
+            gated, sd, gain = g['ap_mean'], g['ap_sd'], g['gain_vs_fused_mean']
+            pos, neg = g['n_ci_above_0'], g['n_ci_below_0']
         else:
             g = c['gates']['gate_fused']
             gated, sd, gain = g['ap_mean'], g['ap_sd'], g['gain_vs_fused_mean']
             pos, neg = g['n_ci_above_0'], g['n_ci_below_0']
-        vals = [c['m0_ap'], c['gates']['full_gate']['ap_mean'], c['fused_ap'], gated]
+        vals = [c['m0_ap'], c['gates']['full_gate']['ap_mean'], fused, gated]
         top = max(vals)  # bold marks the best AUPRC in the row, whichever method holds it
         def b(v):
             return (r'\textbf{' + f'{v:.3f}' + '}') if v == top else f'{v:.3f}'
         fe = ('$\\mathbf{' + f'{gated:.3f}' + '}\\pm' + f'{sd:.3f}$') if gated == top else f"${gated:.3f}\\pm{sd:.3f}$"
-        rows.append(f"{c['name']} & {c['n_pass_fusion']} & {b(vals[0])} & "
+        rows.append(f"{c['name']} & {b(vals[0])} & "
                     f"{b(vals[1])} & {b(vals[2])} & "
                     f"{fe} & ${gain:+.3f}$ & {pos}/5; {neg}/5 " + r'\\')
     table('T15_fusion_evidence.tex',
-          'Four-way ranking comparison: raw score $S$, original full gate $S+E$, score fusion $F$, and fusion-input gate $F+E$. '
+          'Four-way ranking comparison: raw score $S$, original full gate $S+E$, three-pass score fusion $F$, and fusion-input gate $F+E$. '
           'All gates use five fixed seeds and source-validation fitting. The fusion input replaces the raw-score input. '
           'Intervals use 2,000 paired image resamples per seed, and the last column counts intervals wholly above and below zero for $(F+E)-F$. '
-          'FGADR is a separate follow-up using two-pass fusion at both fitting and evaluation, with the stored secondary evidence retained. Best AUPRC per row in bold.',
-          'tab:fusion_evidence', 'lccccccc',
-          r'Cohort & Fusion passes & $S$ & $S+E$ & $F$ & $F+E$ (mean$\pm$SD) & $\Delta$ & CI $>0$; $<0$', rows,
-          'For TJDR, one negative interval and four containing zero accompany five negative point estimates. '
-          'The FGADR row does not reconstruct the unavailable three-pass comparator or imply a two-pass compute budget.')
+          'Best AUPRC per row in bold.',
+          'tab:fusion_evidence', 'lcccccc',
+          r'Cohort & $S$ & $S+E$ & $F$ & $F+E$ (mean$\pm$SD) & $\Delta$ & CI $>0$; $<0$', rows,
+          'For TJDR, one negative interval and four containing zero accompany five negative point estimates.')
     native = read('native_gate_snapshot.json')
     rows = []
     for key, name in [('G0','G0: original full gate'),('G0+','G0+: non-graph input control'),
@@ -74,16 +82,7 @@ def main():
           'tab:native_gate_control','lc',r'Gate & AUPRC',rows,
           f'The mean G1 minus G2 difference is {statistics.mean(diffs):+.5f}, and {positive}/5 paired intervals exclude zero in the positive direction. '
           'This does not establish a ranking benefit from the specified topology and is not an equivalence test.')
-    rows = [f"{r['seed']} & {r['ap']:.4f} & ${r['gain']:+.4f}$ & "
-            f"$[{r['ci95'][0]:+.4f}, {r['ci95'][1]:+.4f}]$ " + r'\\' for r in follow['per_seed']]
-    table('S11_fgadr_fusion_followup.tex',
-          'Separate FGADR follow-up with a two-pass fusion input defined identically on source validation and the target cohort. '
-          'The six evidence columns, including the stored secondary evidence, are retained. '
-          'No target labels enter fitting. The baseline two-pass fusion reproduces the AUPRC of ' + f"{follow['baseline_ap']:.4f}" + ' reported in the main article.',
-          'tab:fgadr_fusion_followup','cccc',r'Seed & Fusion-input gate & Gain over fusion & Paired 95\% CI',rows,
-          f"Mean gate AUPRC is {follow['mean_ap']:.4f} with sample SD {follow['sd_ap']:.4f}, and the mean gain is ${follow['mean_gain']:+.4f}$. "
-          f"Positive point estimates: {follow['positive_seed_count']}/5. Intervals above zero: {follow['ci_above_zero_count']}/5. "
-          f"Resampling is paired by image over {follow['n_target_images']:,} images, with 2,000 draws. All results are reported without tuning.")
+    # The two-pass FGADR follow-up (S11) is retired: FGADR now uses the three-pass mean in T15 (step 6).
     # Editorial overlay leaves the historical experiment generator frozen.
     p = OUT / 'T8_fp_reduction_benchmark.tex'
     if p.exists():
@@ -91,6 +90,7 @@ def main():
         s = s.replace('full gate in place of the raw-score input.}', 'full gate in place of the raw-score input. Best AUPRC in bold.}') if 'Best AUPRC in bold' not in s else s
         s = s.replace(chr(38) + ' AUPRC ' + chr(38), chr(38) + ' AUPRC$\\uparrow$ ' + chr(38)) if 'AUPRC$' not in s else s
         s = s.replace('average precision; the remaining columns', 'average precision, and the remaining columns')
+        s = s.replace("the remaining columns are descriptive, at the threshold selected", "the remaining columns are taken at each method's own threshold, selected")
         s = s.replace('The last row gives that three-pass mean',
                       'The Audit column marks the native output of each evaluated implementation, and the same prior-based certificate can also be attached to score fusion without changing its ranking. The last row gives that three-pass mean') if 'native output' not in s else s
         p.write_text(s,encoding='utf-8')
@@ -98,9 +98,8 @@ def main():
     if p.exists():
         s=p.read_text(encoding='utf-8').replace('0.5 means no information in either direction','0.5 indicates no net rank discrimination')
         s=s.replace('the information they carry,', 'their absolute rank deviation,')
-        s=s.replace('cache is no longer available', 'cache is not available')
         p.write_text(s,encoding='utf-8')
-    print('Rendered T15, S10, S11 and applicable editorial overlays.')
+    print('Rendered T15, S10 and applicable editorial overlays.')
 
 
 if __name__ == '__main__':

@@ -27,8 +27,8 @@ cached detections in `results/evidence/` and `results/detector_outputs/`.
 | `results/experiments/` | JSON behind the added baselines and the robustness checks |
 | `results/certificates/` | Certificate manifest, the five verification checks, one sample record per cohort, and the full certificates for all four cohorts, compressed |
 | `results/evidence/` | Per-detection evidence vectors for OIA-DDR validation and test, IDRiD, TJDR and FGADR (gzipped CSV, local path columns removed), and the scores of the five comparison detectors on the OIA-DDR candidates |
-| `results/detector_outputs/` | Cached detections per cohort: the primary detector, its horizontally flipped pass, and the secondary detector (zip) |
-| `results/conditional_coverage/` | Results of the conditional-coverage, image-disjoint calibration, ensemble and gate-calibration analyses, with their run logs |
+| `results/detector_outputs/` | Cached detections per cohort: the primary detector, its horizontally flipped pass, and the secondary detector (zip). The TJDR and FGADR secondary exports include the lesion-free images (`merge_note.json` in each zip) |
+| `results/conditional_coverage/` | Results of the conditional-coverage, image-disjoint calibration, ensemble, gate-calibration and score-averaging operating-point analyses, with their run logs |
 | `scripts/conditional_coverage/` | Scripts of those analyses and of their tables |
 | `PROTOCOL_LOCK_*.md` | Protocols written before each locked analysis was run |
 
@@ -41,8 +41,9 @@ fitting a model or accessing detector caches:
 python scripts/finalization/render_final_tables.py
 ```
 
-This writes `T15_fusion_evidence.tex`, `S10_native_gate_control.tex`, and
-`S11_fgadr_fusion_followup.tex` under `_FINAL_Latex/tables/`. These are source
+This writes `T15_fusion_evidence.tex` and `S10_native_gate_control.tex` under
+`_FINAL_Latex/tables/`, with the FGADR row of T15 read from
+`results/conditional_coverage/step6_fgadr_three_pass.json`. These are source
 filenames; manuscript numbering is assigned by LaTeX. The generator also applies
 editorial caption corrections to T8/S6 if those files are present.
 
@@ -116,15 +117,30 @@ Analysis scripts read their inputs and write their own result files. Table gener
 
 Score averaging is the main ranking comparator. On OIA-DDR, three-pass averaging
 reaches AP 0.7224 and a gate whose raw-score input is replaced by fusion reaches
-0.7332. The additional gain does not transfer to IDRiD or TJDR. A separate FGADR
-follow-up uses primary-plus-flip averaging at both source fitting and target
-evaluation: AP 0.5344 for averaging versus 0.5144 for the gate, with all five paired
-intervals below zero. Historical secondary evidence is retained, so this is not a
-two-pass compute-budget comparison. No detector was retrained.
+0.7332. The additional gain does not transfer to IDRiD, TJDR or FGADR. On FGADR,
+three-pass averaging reaches AP 0.5348 against 0.5085 for the fusion-input gate,
+with all five paired intervals below zero (locked in
+`PROTOCOL_LOCK_step6_fgadr_three_pass.md`). No detector was retrained.
+
+On the operating point the order reverses. Under a protocol locked before the run
+(`PROTOCOL_LOCK_step5_fusion_external_coverage.md`), the split-conformal threshold
+calibrated on OIA-DDR validation at a nominal retention of 0.80 gives score averaging
+coverage gaps of +0.046, +0.116, +0.039 and +0.112 on OIA-DDR test, IDRiD, TJDR and
+FGADR, against +0.019, +0.088, -0.020 and +0.092 for the full gate. The gate is closer to nominal on all four cohorts, and the paired
+image-clustered interval of the difference in absolute gap lies below zero on three
+and includes zero on TJDR, while averaging keeps the lower risk-coverage area on all
+four. Script `scripts/conditional_coverage/step5_fusion_external_coverage.py`, result
+`results/conditional_coverage/step5_fusion_external_coverage.json`. The FGADR entry
+comes from step 6 (`scripts/conditional_coverage/step6_fgadr_three_pass.py`, result
+`results/conditional_coverage/step6_fgadr_three_pass.json`), which repeats every FGADR
+comparison with the three-pass mean; the step-5 file keeps its superseded two-pass FGADR
+row. Both runs read the merged detector caches that include the lesion-free images,
+which correspond to the zips in `results/detector_outputs/`; the script headers give
+the unpacking layout.
 
 `results/finalization/` contains the archived JSON used by the new tables.
-`scripts/finalization/fgadr_two_pass.py` preserves the exact executed follow-up;
-it reads the CSV evidence and detector caches at the workspace paths in its
+`scripts/finalization/fgadr_two_pass.py` preserves the superseded two-pass FGADR
+follow-up for provenance; it reads the CSV evidence and detector caches at the workspace paths in its
 source, writes beside itself, and refuses to overwrite a completed result. This
 is an experiment runner, not needed for table regeneration. The original graph
 control source is retained at `_NATIVE/scripts/native_gate_experiment.py`; it also

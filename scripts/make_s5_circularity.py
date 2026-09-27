@@ -41,12 +41,10 @@ tex = "\n".join([
     "% _septem/scripts_optionB/circularity_check.json. JANGAN diedit tangan.",
     r"\begin{table}[htbp]",
     r"\centering",
-    (r"\caption{Gating when the triage label does not use the semantic-distance matrix. The "
-     rf"clinically close and unsafe-mismatch categories, which are defined through "
-     rf"$\mathrm{{SDM}}_{{\mathrm{{norm}}}}$, are removed from the OIA-DDR test split, leaving "
-     rf"{n:,} of 64{{,}}214 detections and {npos:,} positives. The first block keeps the gates "
-     r"fitted as in the main results; the second refits them on the same label definition. AUPRC "
-     r"is average precision, mean $\pm$ SD over five initialization seeds.}").replace(",", "{,}", 0),
+    (r"\caption{Gating on a label that does not use $\mathrm{SDM}_{\mathrm{norm}}$. The clinically close "
+     rf"and unsafe-mismatch detections are removed from OIA-DDR test, leaving {n:,} of 64{{,}}214 detections "
+     rf"and {npos:,} positives. The first block keeps the gates of the main results and the second refits "
+     r"them on this label. AUPRC is mean $\pm$ SD over five seeds.}").replace(",", "{,}", 0),
     r"\label{tab:label_circularity}",
     r"\footnotesize",
     r"\setlength{\tabcolsep}{4pt}",

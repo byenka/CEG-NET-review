@@ -79,10 +79,10 @@ tex = "\n".join([
     "% average over 5 seeds x 2 halves. The pre-registered criterion is NOT met.",
     r"\begin{table}[htbp]",
     r"\centering",
-    (r"\caption{Recalibrating the operating point on the target domain: each cohort is split by image into halves, the threshold is selected on one half and evaluated on the "
-     rf"other, the roles are then swapped, and results average {n_seeds} seeds. Cells give true-positive retention / false-positive suppression at the target "
-     r"retention, where $\tau_{\mathrm{source}}$ is selected on OIA-DDR validation, $\tau_{\mathrm{target}}$ on the held-out half of the target cohort, and $\tau_{\mathrm{oracle}}$ "
-     r"on the evaluation half itself, an upper bound.}"),
+    (r"\caption{Recalibrating the operating point on the target domain. Cells give true-positive retention / "
+     r"false-positive suppression at the target retention. $\tau_{\mathrm{source}}$ is selected on OIA-DDR validation, "
+     r"$\tau_{\mathrm{target}}$ on the held-out half of the target cohort, and $\tau_{\mathrm{oracle}}$ on the "
+     r"evaluation half itself, an upper bound.}"),
     r"\label{tab:target_recalibration}",
     r"\footnotesize",
     r"\setlength{\tabcolsep}{3pt}",

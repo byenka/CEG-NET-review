@@ -72,17 +72,15 @@ def main() -> None:
 
     nval = t["n_valid"], t["n_valid_positive"]
     caption = (
-        "Exact-true-positive sensitivity. The composite RETAIN target of Section 4.4 of the main article is replaced "
-        "by the exact true positive alone, and every step is repeated under the unchanged protocol: the gate is "
-        f"fitted on the {nval[0]:,} OIA-DDR validation detections, of which {nval[1]:,} are exact true positives, "
-        "over five seeds, and the split-conformal threshold is recalibrated for the same 0.80 target on this label. "
-        "The coverage gap is the delivered minus the intended retention, "
-        "$|g_{\\mathrm{gate}}|-|g_{\\mathrm{raw}}|$ is the change in absolute gap with an image-clustered paired "
-        "interval over 2,000 resamples, and the last two columns give the AUPRC gain over the detector score and the "
-        "number of seed intervals above and below zero. Best AUPRC per cohort in bold."
+        "Exact-true-positive sensitivity: the RETAIN target is replaced by the exact true positive, and the gate "
+        "and its threshold are refitted on OIA-DDR validation. $|g_{\\mathrm{gate}}|-|g_{\\mathrm{raw}}|$ is the "
+        "change in absolute coverage gap with an image-clustered paired 95\\% interval, and the last two columns "
+        "give the AUPRC gain over $M_0$ and the number of seed intervals above and below zero. "
+        "Best AUPRC per cohort in bold."
     )
     note = (
-        "Positives per cohort: "
+        f"The gate is fitted on {nval[0]:,} OIA-DDR validation detections, {nval[1]:,} of them exact true "
+        "positives. Positives per cohort: "
         + ", ".join(f"{c} {t['cohorts'][c]['n_positive']:,}" for c in COHORTS)
         + ". The gain columns are reported as measured, including the negative values."
     )

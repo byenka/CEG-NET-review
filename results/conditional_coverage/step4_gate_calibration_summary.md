@@ -65,9 +65,13 @@ it makes the result a limitation.
    baseline of Supplementary S16.
 2. The external result is a limitation and reads naturally beside the coverage-gap result: the operating point transfers
    better with the gate than with raw confidence, while the probability scale itself does not transfer for any method.
-3. The decision-curve analysis is not affected. It is run on OIA-DDR test only, and `net_benefit_v2.py` applies
-   temperature scaling fitted on the validation split to every method before thresholding, so it never reads the raw
-   gate output as a probability. The script already discloses that the gate's validation scores are in-sample.
+3. The decision-curve analysis is not undermined, because it is run on OIA-DDR test only, where the full gate is
+   the best-calibrated method measured here. The published net-benefit table (`make_s8_net_benefit.py`, reading
+   `net_benefit_isotonic_check.json`) calibrates every system with isotonic regression fitted on the OIA-DDR
+   validation split. The bootstrap contrast for the deployed gate (`net_benefit_bootstrap.json`, contrast
+   `C_gate_terpasang`) reads the raw gate output, which is the case this step shows to be calibrated in domain.
+   Corrected 2026-09-24: an earlier version of this note wrongly said temperature scaling was applied and that the
+   raw gate output was never read.
 
 ## Files
 

@@ -211,7 +211,7 @@ def build_table(oia: dict) -> str:
         r"\end{tabular}}",
         r"\\[2pt]",
         r"{\footnotesize Each system uses its own validation threshold, so the three do not "
-        r"reach the same retention on test and the rows are descriptive.}",
+        r"reach the same retention on test.}",
         r"\end{table}",
         "",
     ]

@@ -89,12 +89,10 @@ def main() -> None:
         )
 
     caption = (
-        "Annotation-grounded validation of the lesion-pair prior on detections that "
-        "localize an annotated lesion at $\\mathrm{IoU}\\geq 0.5$, with a class "
-        "mismatch against the annotation as the outcome. MARGIN is the top-1 minus top-2 "
-        "margin, PERM the prior with its six off-diagonal values permuted, and EMP a "
-        "relation estimated from OIA-DDR. An asterisk marks a bootstrap interval that "
-        "excludes 0.5, over 2,000 image-clustered resamples."
+        "Annotation-grounded validation of the prior on detections that localize an annotated "
+        "lesion at $\\mathrm{IoU}\\geq 0.5$, with class mismatch as the outcome. MARGIN is the "
+        "top-1 minus top-2 margin, PERM the permuted prior and EMP a relation estimated from "
+        "OIA-DDR. An asterisk marks an image-clustered 95\\% interval that excludes 0.5."
     )
 
     header = (

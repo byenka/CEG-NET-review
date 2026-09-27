@@ -80,9 +80,8 @@ def build_indomain() -> str:
     A(r"\bottomrule")
     A(r"\end{tabular}}")
     A(r"\par\smallskip{\footnotesize $^{\dagger}$Mean over the five gate-initialization "
-      r"seeds. Bold marks a stratum whose coverage misses nominal by at least 0.30. The "
-      r"locked criterion to proceed was an absolute gap above 0.15 in a stratum holding at "
-      r"least 200 positive targets, and the largest observed is "
+      r"seeds. The locked criterion to proceed was an absolute gap above 0.15 in a stratum "
+      r"holding at least 200 positive targets, and the largest observed is "
       f"{d['max_abs_gap_eligible_strata']:.3f}" r".}")
     A(r"\end{table}")
     return "\r\n".join(L) + "\r\n"
@@ -142,7 +141,7 @@ def build_cohorts() -> str:
     A(r"\bottomrule")
     A(r"\end{tabular}}")
     A(r"\par\smallskip{\footnotesize $^{\dagger}$Mean over the five gate-initialization "
-      r"seeds. Bold marks a worst-stratum gap of at least 0.25. Of the three pre-registered "
+      r"seeds. Of the three pre-registered "
       r"criteria, the diagnostic one is met, the criterion that the full gate is more "
       r"uniform than raw confidence on the corroboration taxonomy is not met in any cohort, "
       r"and the criterion that the margin keeps its advantage under conditioning is met on "

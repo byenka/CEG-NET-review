@@ -77,13 +77,10 @@ def main() -> None:
         ]) + r" \\")
 
     caption = (
-        "Multi-detector ensembling. E5 averages five independently "
-        "trained comparison detectors and E6 adds the primary detector, each matched to "
-        "the primary candidate boxes at an intersection-over-union of at least 0.15 with "
-        "an unmatched member contributing zero. $\\Delta$ is the paired AUPRC difference "
-        "between the full gate and E6 over 2,000 image-clustered resamples, and the last "
-        "two columns repeat the conformal coverage gap of the operating-point table of "
-        "the main article. Best AUPRC per row in bold."
+        "Multi-detector ensembling. E5 averages the five comparison detectors and E6 adds the "
+        "primary detector. $\\Delta$ is the paired AUPRC difference between the full gate and E6 "
+        "with an image-clustered 95\\% interval, and the last two columns repeat the conformal "
+        "coverage gap. Best AUPRC per row in bold."
     )
 
     text = (
