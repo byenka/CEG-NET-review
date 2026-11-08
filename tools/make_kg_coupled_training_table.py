@@ -43,6 +43,7 @@ BASE_CLIN = (ROOT / "outputs/mode2_v2_1_2026-06-01_crossdataset/baseline_r5b"
              / "oiaddr_valid/clinical_metrics.json")
 TAB = ROOT / "_FINAL_Latex/tables/S4_kg_coupled_training.tex"
 OUT_JSON = DECOMP / "s4_table_values.json"
+VALUES_REPO = ROOT / "results/tables_source/alpha_phase1p5_decomp/s4_table_values.json"
 
 ORDER = [
     ("B_none", "Standard fine-tuning"),
@@ -80,7 +81,8 @@ def find_key(obj, key):
     return None, None
 
 
-def main() -> int:
+def collect() -> dict:
+    """Baca semua run dari workspace riset dan kembalikan nilai tabel."""
     rows = list(csv.DictReader(open(PER_SEED, newline="", encoding="utf-8")))
     groups: dict[str, list[dict]] = {}
     for r in rows:
@@ -143,8 +145,13 @@ def main() -> int:
     nva = {v["valid_images"] for v in values["groups"].values()}
     if len(epochs) != 1 or len(nva) != 1:
         raise SystemExit(f"[s4] epoch/valid tidak seragam: {epochs} {nva}")
-    n_ep, n_val = epochs.pop(), nva.pop()
-    seeds = gb["seeds"]
+    return values
+
+
+def render(values: dict) -> None:
+    d_map, d_ece = values["d_minus_b"]["mAP_50"], values["d_minus_b"]["ece"]
+    gb = values["groups"]["B_none"]
+    n_ep, n_val, seeds = gb["epochs"], gb["valid_images"], gb["seeds"]
     n_seed_txt = {2: "two", 3: "three", 4: "four", 5: "five"}.get(len(seeds), str(len(seeds)))
 
     body = [
@@ -166,14 +173,12 @@ def main() -> int:
          + " / ".join(signed(x) for x in d_ece) + r" \\"),
     ]
     tex = "\n".join([
-        "% S4 — DIBANGKITKAN tools/make_kg_coupled_training_table.py dari",
-        "% outputs/_alpha_phase1p5_decomp/per_seed.csv dan mode2_summary.json tiap run.",
-        "% JANGAN diedit tangan. SD = simpangan baku sampel atas seed.",
+        "% Source: outputs/_alpha_phase1p5_decomp/per_seed.csv and mode2_summary.json per run.",
         r"\begin{table}[htbp]",
         r"\centering",
         (r"\caption{Knowledge graph inside detector training, on OIA-DDR validation "
          rf"({n_val} images). Each configuration fine-tunes the frozen detector for {n_ep} "
-         rf"further epochs with {n_seed_txt} seeds; values are mean $\pm$ SD over seeds. ECE "
+         rf"further epochs with {n_seed_txt} seeds, and values are mean $\pm$ SD over seeds. ECE "
          r"is the expected calibration error of detection scores against IoU $\geq 0.5$ "
          r"matches, with ten bins. Lower ECE is better.}"),
         r"\label{tab:kg_coupled}",
@@ -192,7 +197,6 @@ def main() -> int:
         "",
     ])
     TAB.write_text(tex, encoding="utf-8")
-    OUT_JSON.write_text(json.dumps(values, indent=2), encoding="utf-8")
     print(json.dumps({k: v for k, v in values.items() if k != "groups"}, indent=1))
     for g, _ in ORDER:
         v = values["groups"][g]
@@ -202,6 +206,17 @@ def main() -> int:
               f"mAP={v['mAP_50_mean']:.4f}+-{v['mAP_50_sd']:.4f} "
               f"ECE={v['ece_mean']:.4f}+-{v['ece_sd']:.4f}")
     print(f"[s4] ditulis {TAB.relative_to(ROOT).as_posix()}")
+
+
+def main() -> int:
+    if PER_SEED.is_file() and BASE_MAP.is_file():
+        values = collect()
+        OUT_JSON.write_text(json.dumps(values, indent=2), encoding="utf-8")
+    else:
+        # Repositori kode tidak membawa ringkasan per-run; ia membawa nilai yang ditulis
+        # collect() di workspace, sehingga tabel dirender dari berkas itu.
+        values = json.loads(VALUES_REPO.read_text(encoding="utf-8"))
+    render(values)
     return 0
 
 

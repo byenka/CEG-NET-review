@@ -62,7 +62,7 @@ def main():
           'Intervals use 2,000 paired image resamples per seed, and the last column counts intervals wholly above and below zero for $(F+E)-F$. '
           'Best AUPRC per row in bold.',
           'tab:fusion_evidence', 'lcccccc',
-          r'Cohort & $S$ & $S+E$ & $F$ & $F+E$ (mean$\pm$SD) & $\Delta$ & CI $>0$; $<0$', rows,
+          r'Dataset & $S$ & $S+E$ & $F$ & $F+E$ (mean$\pm$SD) & $\Delta$ & CI $>0$; $<0$', rows,
           'For TJDR, one negative interval and four containing zero accompany five negative point estimates.')
     native = read('native_gate_snapshot.json')
     rows = []

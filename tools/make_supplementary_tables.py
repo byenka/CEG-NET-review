@@ -22,9 +22,18 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 TAB = ROOT / "_FINAL_Latex/tables"
-EDGES = ROOT / "outputs/stage3_audit/edges.json"
-SDM_SENS = ROOT / "outputs/0506/sdm_prior_sensitivity.json"
-DOMAIN = ROOT / "outputs/0506/evsds_pss/domain_shift_5seed.json"
+
+
+def _first(*rels):
+    """Research-workspace path first, repository path (results/tables_source) second."""
+    return next((ROOT / r for r in rels if (ROOT / r).exists()), ROOT / rels[0])
+
+
+EDGES = _first("outputs/stage3_audit/edges.json", "results/tables_source/edges.json")
+SDM_SENS = _first("outputs/0506/sdm_prior_sensitivity.json",
+                  "results/tables_source/sdm_prior_sensitivity.json")
+DOMAIN = _first("outputs/0506/evsds_pss/domain_shift_5seed.json",
+                "results/tables_source/domain_shift_5seed.json")
 
 # Pembulatan setengah-ke-atas, sama dengan tabel lain dan dengan _style.fmt().
 def q(v, nd=3):

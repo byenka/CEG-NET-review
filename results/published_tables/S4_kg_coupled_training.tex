@@ -1,0 +1,23 @@
+% Source: outputs/_alpha_phase1p5_decomp/per_seed.csv and mode2_summary.json per run.
+\begin{table}[htbp]
+\centering
+\caption{Knowledge graph inside detector training, on OIA-DDR validation (149 images). Each configuration fine-tunes the frozen detector for 20 further epochs with three seeds, and values are mean $\pm$ SD over seeds. ECE is the expected calibration error of detection scores against IoU $\geq 0.5$ matches, with ten bins. Lower ECE is better.}
+\label{tab:kg_coupled}
+\footnotesize
+\setlength{\tabcolsep}{4pt}
+\resizebox{\textwidth}{!}{%
+\begin{tabular}{@{}lccccc@{}}
+\toprule
+Configuration & $\lambda_{\mathrm{KG}}$ & $\lambda_{\mathrm{gate}}$ & $\lambda_{\mathrm{anchor}}$ & $\mathrm{mAP}_{50}$ & ECE \\
+\midrule
+Frozen detector (no fine-tuning) & -- & -- & -- & 0.241 & 0.207 \\
+\midrule
+Standard fine-tuning & 0 & 0 & 0 & 0.240 $\pm$ 0.003 & 0.208 $\pm$ 0.007 \\
+$+$ knowledge-graph losses & 0.1 & 0.05 & 0 & 0.243 $\pm$ 0.003 & 0.209 $\pm$ 0.009 \\
+$+$ distillation anchor & 0 & 0 & 0.05 & 0.243 $\pm$ 0.002 & 0.189 $\pm$ 0.009 \\
+$+$ knowledge-graph losses and anchor & 0.1 & 0.05 & 0.05 & 0.245 $\pm$ 0.002 & 0.184 $\pm$ 0.007 \\
+\midrule
+\multicolumn{4}{@{}l}{Knowledge-graph losses $-$ standard, seed 42 / 101 / 202} & $+$0.007 / $+$0.003 / $-$0.004 & $-$0.016 / $+$0.007 / $+$0.013 \\
+\bottomrule
+\end{tabular}}
+\end{table}

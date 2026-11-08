@@ -96,7 +96,7 @@ def main() -> None:
     )
 
     header = (
-        r"Cohort & $n$ & Mismatch & \multicolumn{2}{c}{By conflict group} & "
+        r"Dataset & $n$ & Mismatch & \multicolumn{2}{c}{By conflict group} & "
         r"\multicolumn{2}{c}{SDCA AUROC} & PERM & EMP & MARGIN & "
         r"\multicolumn{2}{c}{$\Delta$ over MARGIN} \\"
         "\n"

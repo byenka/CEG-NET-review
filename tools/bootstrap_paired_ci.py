@@ -4,8 +4,7 @@
 Compute paired bootstrap confidence intervals for KG-on vs no-KG matched
 ablation outcomes across multiple seeds. This is the architecture §C3 gate
 (vi) attribution test under the α-prime reframed primary metric family
-(ECE + AUROC + mAP_50 non-regression), per
-``start29/1juni/CLAUDE/12_ALPHA_PRIME_STRATEGY_AND_SOTA_2026-06-02.md``.
+(ECE + AUROC + mAP_50 non-regression), per the locked alpha-prime protocol.
 
 Input:
   - --kg_dir   path containing per-seed clinical_metrics.json files of KG-on

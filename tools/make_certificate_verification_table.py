@@ -78,7 +78,7 @@ def main() -> None:
         "\\resizebox{\\textwidth}{!}{%\n"
         "\\begin{tabular}{lrcrrrr}\n"
         "\\toprule\n"
-        "Cohort & $n$ & Re-emission & Decision and tier & Prior value & Ranker-free "
+        "Dataset & $n$ & Re-emission & Decision and tier & Prior value & Ranker-free "
         "& Emitted label \\\\\n"
         " & & identical & reconstructed (\\%) & consistent (\\%) & fields (\\%) "
         "& $\\neq$ argmax (\\%) \\\\\n"

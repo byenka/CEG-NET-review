@@ -47,7 +47,7 @@ import numpy as np
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 from tools.eval_fp_reduction_benchmark import (  # noqa: E402
-    apply_mlp, auprc, eval_at_threshold, fit_mlp, load_csv, threshold_for_tp_ret,
+    apply_mlp, auprc, eval_at_threshold, fit_mlp, load_csv, open_csv, threshold_for_tp_ret,
 )
 
 DELTA = 0.30
@@ -59,14 +59,29 @@ TIER_NAME = {"R1": "accepted", "R2": "provisional", "R3": "contested", "R4": "re
 SDM_LEVELS = {0.0, 0.5, 0.75, 1.0}
 
 BASE = ROOT / "outputs/0506"
-VALID = BASE / "evsds_v2sec/oiaddr/valid/governance_features_valid.csv"
+EVIDENCE = ROOT / "results/evidence"
+
+
+def _first(workspace: Path, repo_name: str) -> Path:
+    """Research-workspace CSV first, the repository's gzipped copy second."""
+    return workspace if workspace.exists() else EVIDENCE / repo_name
+
+
+VALID = _first(BASE / "evsds_v2sec/oiaddr/valid/governance_features_valid.csv",
+               "oiaddr_valid_evidence.csv.gz")
 COHORTS = {
-    "oiaddr": BASE / "evsds_v2sec/oiaddr/test/governance_features_test.csv",
-    "idrid": BASE / "evsds_pss/idrid/test/governance_features_test.csv",
-    "tjdr": BASE / "evsds_pss/tjdr/test/governance_features_test.csv",
-    "fgadr": BASE / "evsds_pss/fgadr/train/governance_features_train.csv",
+    "oiaddr": _first(BASE / "evsds_v2sec/oiaddr/test/governance_features_test.csv",
+                     "oiaddr_test_evidence.csv.gz"),
+    "idrid": _first(BASE / "evsds_pss/idrid/test/governance_features_test.csv",
+                    "idrid_test_evidence.csv.gz"),
+    "tjdr": _first(BASE / "evsds_pss/tjdr/test/governance_features_test.csv",
+                   "tjdr_test_evidence.csv.gz"),
+    "fgadr": _first(BASE / "evsds_pss/fgadr/train/governance_features_train.csv",
+                    "fgadr_train_evidence.csv.gz"),
 }
-OUT = BASE / "tier_routing"
+# The per-detection tier CSVs and the summary go beside the workspace outputs, or into
+# _cache/ in the repository so that the bundled results/ files are never overwritten.
+OUT = BASE / "tier_routing" if BASE.is_dir() else ROOT / "_cache/tier_routing"
 TAB = ROOT / "_FINAL_Latex/tables/T_tier_routing.tex"
 # Skor fusi tiga pass OIA-DDR, dibangkitkan _septem/scripts_optionB/export_fused_scores.py.
 # Dicari di dua tempat supaya skrip ini jalan baik di pohon proyek maupun di repositori kode
@@ -113,7 +128,7 @@ def gate_matrix(d: dict) -> np.ndarray:
 
 def read_ids(path: Path):
     ids, imgs, cats = [], [], []
-    with open(path, newline="", encoding="utf-8") as fh:
+    with open_csv(path) as fh:
         for r in csv.DictReader(fh):
             ids.append(r["bbox_id"])
             imgs.append(r["image_id"])

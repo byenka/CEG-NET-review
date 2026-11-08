@@ -76,11 +76,11 @@ def main() -> None:
         "and its threshold are refitted on OIA-DDR validation. $|g_{\\mathrm{gate}}|-|g_{\\mathrm{raw}}|$ is the "
         "change in absolute coverage gap with an image-clustered paired 95\\% interval, and the last two columns "
         "give the AUPRC gain over $M_0$ and the number of seed intervals above and below zero. "
-        "Best AUPRC per cohort in bold."
+        "Best AUPRC per dataset in bold."
     )
     note = (
         f"The gate is fitted on {nval[0]:,} OIA-DDR validation detections, {nval[1]:,} of them exact true "
-        "positives. Positives per cohort: "
+        "positives. Positives per dataset: "
         + ", ".join(f"{c} {t['cohorts'][c]['n_positive']:,}" for c in COHORTS)
         + ". The gain columns are reported as measured, including the negative values."
     )
@@ -93,7 +93,7 @@ def main() -> None:
         "\\label{tab:exact_tp}\n\\footnotesize\n"
         "\\setlength{\\tabcolsep}{4pt}\n\\resizebox{\\textwidth}{!}{%\n"
         "\\begin{tabular}{llccccc}\n\\toprule\n"
-        "Cohort & Method & Gap & $|g_{\\mathrm{gate}}|-|g_{\\mathrm{raw}}|$ (95\\% CI) & AUPRC$\\uparrow$ "
+        "Dataset & Method & Gap & $|g_{\\mathrm{gate}}|-|g_{\\mathrm{raw}}|$ (95\\% CI) & AUPRC$\\uparrow$ "
         "& $\\Delta$AUPRC vs.\\ $M_0$ & Seeds CI $>0$; $<0$ \\\\\n"
         "\\midrule\n" + body + "\n\\bottomrule\n\\end{tabular}}\n"
         f"\\par\\smallskip{{\\footnotesize {note}}}\n"

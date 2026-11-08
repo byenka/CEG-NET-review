@@ -1,0 +1,25 @@
+\begin{table}[htbp]
+\centering
+\caption{Estimated computational cost per component. The detector is trained once and
+  its outputs are cached, and the later components run on CPU. Evaluation figures refer to
+  the OIA-DDR test split (64{,}214 candidate boxes, 225 images).}
+\label{tab:computational_cost}
+\small
+\setlength{\tabcolsep}{5pt}
+\begin{tabular}{@{}lccc@{}}
+\toprule
+\textbf{Component} & \textbf{Duration} & \textbf{Peak VRAM} & \textbf{Storage} \\
+\midrule
+Detector training (OIA-DDR train)    & $\approx$2.5\,h  & 24\,GB (RTX 4090)  & $\approx$4\,GB \\
+Secondary detector training          & $\approx$2.5\,h  & 24\,GB (RTX 4090)  & $\approx$4\,GB \\
+Detector inference (all splits)      & $\approx$15\,min & 8\,GB (GPU)        & $\approx$2\,GB \\
+KG construction and embedding        & $<$1\,min        & N/A (CPU)          & $<$1\,MB \\
+Evidence computation (test split)    & $<$2\,min        & N/A (CPU)          & $\approx$150\,MB \\
+Gate training (validation features)  & $\approx$30\,s       & N/A (CPU)          & $<$1\,MB \\
+Full evaluation (test + external)    & $\approx$5\,min  & N/A (CPU)          & $\approx$50\,MB \\
+\midrule
+\textbf{Total (first run)}           & $\approx$5.5\,h & --        & $\approx$10\,GB \\
+\textbf{Re-evaluation (cached)}      & $\approx$10\,min & --       & -- \\
+\bottomrule
+\end{tabular}
+\end{table}

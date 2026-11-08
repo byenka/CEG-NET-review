@@ -1,0 +1,853 @@
+{
+ "protocol": "_LGOVNET_NEW_SEP/PROTOCOL_LOCK_step7_alpha_sensitivity.md",
+ "protocol_sha256": "4d1a428e21c0ee6ef3aefb7629ec8bbb8a94a2976ad58b2eb145821dd48e2f9c",
+ "started": "2026-10-31T23:08:33",
+ "task": "governance_retain",
+ "alphas": [
+  0.1,
+  0.2,
+  0.3
+ ],
+ "seeds": [
+  0,
+  1,
+  2,
+  3,
+  4
+ ],
+ "n_boot": 2000,
+ "boot_seed": 0,
+ "environment": {
+  "python": "3.14.3",
+  "numpy": "2.5.3",
+  "sklearn": "1.9.1",
+  "executable": "E:\\RISET\\Junal2\\lgovnetv3\\lgovnetB\\.venv\\Scripts\\python.exe"
+ },
+ "cohorts": {
+  "OIA-DDR test": {
+   "n": 64214,
+   "n_positive": 24529,
+   "alphas": {
+    "0.10": {
+     "nominal": 0.9,
+     "gap": {
+      "M0_score": 0.056378164621468496,
+      "KG-gate-MLP (ours)": 0.013400464756002983,
+      "KG-gate+SDS+corrob (B6)": 0.014191365322679173
+     },
+     "coverage_per_seed": {
+      "KG-gate-MLP (ours)": [
+       0.9135309225814342,
+       0.9135309225814342,
+       0.9162216152309511,
+       0.914753964694851,
+       0.9089648986913449
+      ],
+      "KG-gate+SDS+corrob (B6)": [
+       0.9167108320763179,
+       0.9114109829181785,
+       0.915283949610665,
+       0.9138978352154592,
+       0.9136532267927759
+      ]
+     },
+     "closer_than_M0": {
+      "KG-gate-MLP (ours)": true,
+      "KG-gate+SDS+corrob (B6)": true
+     },
+     "abs_gap_advantage": {
+      "KG-gate-MLP (ours)": {
+       "point": -0.04297769986546551,
+       "ci95": [
+        -0.052723465163268396,
+        -0.03278401030726516
+       ],
+       "ci_below_0": true
+      },
+      "KG-gate+SDS+corrob (B6)": {
+       "point": -0.042186799298789324,
+       "ci95": [
+        -0.05209467487171836,
+        -0.031693290347635183
+       ],
+       "ci_below_0": true
+      }
+     }
+    },
+    "0.20": {
+     "nominal": 0.8,
+     "gap": {
+      "M0_score": 0.08805087855191807,
+      "KG-gate-MLP (ours)": 0.008137306861266125,
+      "KG-gate+SDS+corrob (B6)": 0.018924538301602123
+     },
+     "coverage_per_seed": {
+      "KG-gate-MLP (ours)": [
+       0.8044763341351053,
+       0.803497900444372,
+       0.8106730808430836,
+       0.8133637734926006,
+       0.8086754453911696
+      ],
+      "KG-gate+SDS+corrob (B6)": [
+       0.8210689388071263,
+       0.8103877043499531,
+       0.8218027640751763,
+       0.8249826735700599,
+       0.8163806107056953
+      ]
+     },
+     "closer_than_M0": {
+      "KG-gate-MLP (ours)": true,
+      "KG-gate+SDS+corrob (B6)": true
+     },
+     "abs_gap_advantage": {
+      "KG-gate-MLP (ours)": {
+       "point": -0.07991357169065194,
+       "ci95": [
+        -0.0941921330273905,
+        -0.060694450190282356
+       ],
+       "ci_below_0": true
+      },
+      "KG-gate+SDS+corrob (B6)": {
+       "point": -0.06912634025031594,
+       "ci95": [
+        -0.08378094091102063,
+        -0.05337291427461434
+       ],
+       "ci_below_0": true
+      }
+     }
+    },
+    "0.30": {
+     "nominal": 0.7,
+     "gap": {
+      "M0_score": 0.10158180113335236,
+      "KG-gate-MLP (ours)": 0.02256512699253943,
+      "KG-gate+SDS+corrob (B6)": 0.02422031065269692
+     },
+     "coverage_per_seed": {
+      "KG-gate-MLP (ours)": [
+       0.7234294100860206,
+       0.7203718048024786,
+       0.7201679644502426,
+       0.7254678136083819,
+       0.7233886420155734
+      ],
+      "KG-gate+SDS+corrob (B6)": [
+       0.7261608708059848,
+       0.7205348770842676,
+       0.7279546659056627,
+       0.7268946960740348,
+       0.7195564433935342
+      ]
+     },
+     "closer_than_M0": {
+      "KG-gate-MLP (ours)": true,
+      "KG-gate+SDS+corrob (B6)": true
+     },
+     "abs_gap_advantage": {
+      "KG-gate-MLP (ours)": {
+       "point": -0.07901667414081293,
+       "ci95": [
+        -0.09691859103592326,
+        -0.060034153928596845
+       ],
+       "ci_below_0": true
+      },
+      "KG-gate+SDS+corrob (B6)": {
+       "point": -0.07736149048065544,
+       "ci95": [
+        -0.09506508800193517,
+        -0.058684296048635884
+       ],
+       "ci_below_0": true
+      }
+     }
+    }
+   },
+   "control_point": {
+    "M0_score": {
+     "got": 0.08805087855191807,
+     "published": 0.08805087855191807,
+     "abs_diff": 0.0,
+     "ok": true
+    },
+    "KG-gate-MLP (ours)": {
+     "got": 0.008137306861266125,
+     "published": 0.008137306861266125,
+     "abs_diff": 0.0,
+     "ok": true
+    },
+    "KG-gate+SDS+corrob (B6)": {
+     "got": 0.018924538301602123,
+     "published": 0.018924538301602123,
+     "abs_diff": 0.0,
+     "ok": true
+    }
+   },
+   "control_interval": {
+    "KG-gate-MLP (ours)": {
+     "got": [
+      -0.0941921330273905,
+      -0.060694450190282356
+     ],
+     "published": [
+      -0.0941921330273905,
+      -0.060694450190282356
+     ],
+     "max_abs_diff": 0.0,
+     "ok": true
+    },
+    "KG-gate+SDS+corrob (B6)": {
+     "got": [
+      -0.08378094091102063,
+      -0.05337291427461434
+     ],
+     "published": [
+      -0.08378094091102063,
+      -0.05337291427461434
+     ],
+     "max_abs_diff": 0.0,
+     "ok": true
+    }
+   }
+  },
+  "IDRiD": {
+   "n": 8042,
+   "n_positive": 4177,
+   "alphas": {
+    "0.10": {
+     "nominal": 0.9,
+     "gap": {
+      "M0_score": 0.09640890591333495,
+      "KG-gate-MLP (ours)": 0.05149628920277716,
+      "KG-gate+SDS+corrob (B6)": 0.05173569547522128
+     },
+     "coverage_per_seed": {
+      "KG-gate-MLP (ours)": [
+       0.9492458702418003,
+       0.9545128082355758,
+       0.9585827148671295,
+       0.9559492458702418,
+       0.9391908067991381
+      ],
+      "KG-gate+SDS+corrob (B6)": [
+       0.9537945894182428,
+       0.9528369643284654,
+       0.9552310270529087,
+       0.9487670576969116,
+       0.9480488388795787
+      ]
+     },
+     "closer_than_M0": {
+      "KG-gate-MLP (ours)": true,
+      "KG-gate+SDS+corrob (B6)": true
+     },
+     "abs_gap_advantage": {
+      "KG-gate-MLP (ours)": {
+       "point": -0.044912616710557796,
+       "ci95": [
+        -0.059272971411666944,
+        -0.03184177964674009
+       ],
+       "ci_below_0": true
+      },
+      "KG-gate+SDS+corrob (B6)": {
+       "point": -0.044673210438113675,
+       "ci95": [
+        -0.05944839295172808,
+        -0.030991096878242412
+       ],
+       "ci_below_0": true
+      }
+     }
+    },
+    "0.20": {
+     "nominal": 0.8,
+     "gap": {
+      "M0_score": 0.19186018673689242,
+      "KG-gate-MLP (ours)": 0.08307397653818527,
+      "KG-gate+SDS+corrob (B6)": 0.088245152022983
+     },
+     "coverage_per_seed": {
+      "KG-gate-MLP (ours)": [
+       0.8805362700502753,
+       0.8814938951400527,
+       0.8889154895858271,
+       0.8915489585827149,
+       0.8728752693320565
+      ],
+      "KG-gate+SDS+corrob (B6)": [
+       0.8901125209480488,
+       0.8836485515920517,
+       0.8917883648551592,
+       0.8932248024898253,
+       0.88245152022983
+      ]
+     },
+     "closer_than_M0": {
+      "KG-gate-MLP (ours)": true,
+      "KG-gate+SDS+corrob (B6)": true
+     },
+     "abs_gap_advantage": {
+      "KG-gate-MLP (ours)": {
+       "point": -0.10878621019870716,
+       "ci95": [
+        -0.1287792207792208,
+        -0.09009380253628584
+       ],
+       "ci_below_0": true
+      },
+      "KG-gate+SDS+corrob (B6)": {
+       "point": -0.10361503471390943,
+       "ci95": [
+        -0.12409321809683409,
+        -0.08496620812880515
+       ],
+       "ci_below_0": true
+      }
+     }
+    },
+    "0.30": {
+     "nominal": 0.7,
+     "gap": {
+      "M0_score": 0.2621738089537946,
+      "KG-gate-MLP (ours)": 0.1280105338759876,
+      "KG-gate+SDS+corrob (B6)": 0.11829063921474747
+     },
+     "coverage_per_seed": {
+      "KG-gate-MLP (ours)": [
+       0.8324156092889634,
+       0.8245152022983002,
+       0.8237969834809672,
+       0.8331338281062964,
+       0.8261910462054106
+      ],
+      "KG-gate+SDS+corrob (B6)": [
+       0.8223605458463011,
+       0.8161359827627483,
+       0.8259516399329663,
+       0.8180512329423031,
+       0.8089537945894183
+      ]
+     },
+     "closer_than_M0": {
+      "KG-gate-MLP (ours)": true,
+      "KG-gate+SDS+corrob (B6)": true
+     },
+     "abs_gap_advantage": {
+      "KG-gate-MLP (ours)": {
+       "point": -0.134163275077807,
+       "ci95": [
+        -0.1586693586294969,
+        -0.10907814339922664
+       ],
+       "ci_below_0": true
+      },
+      "KG-gate+SDS+corrob (B6)": {
+       "point": -0.14388316973904713,
+       "ci95": [
+        -0.1695265157782512,
+        -0.11815372915720135
+       ],
+       "ci_below_0": true
+      }
+     }
+    }
+   },
+   "control_point": {
+    "M0_score": {
+     "got": 0.19186018673689242,
+     "published": 0.19186018673689242,
+     "abs_diff": 0.0,
+     "ok": true
+    },
+    "KG-gate-MLP (ours)": {
+     "got": 0.08307397653818527,
+     "published": 0.08307397653818527,
+     "abs_diff": 0.0,
+     "ok": true
+    },
+    "KG-gate+SDS+corrob (B6)": {
+     "got": 0.088245152022983,
+     "published": 0.088245152022983,
+     "abs_diff": 0.0,
+     "ok": true
+    }
+   },
+   "control_interval": {
+    "KG-gate-MLP (ours)": {
+     "got": [
+      -0.1287792207792208,
+      -0.09009380253628584
+     ],
+     "published": [
+      -0.1287792207792208,
+      -0.09009380253628584
+     ],
+     "max_abs_diff": 0.0,
+     "ok": true
+    },
+    "KG-gate+SDS+corrob (B6)": {
+     "got": [
+      -0.12409321809683409,
+      -0.08496620812880515
+     ],
+     "published": [
+      -0.12409321809683409,
+      -0.08496620812880515
+     ],
+     "max_abs_diff": 0.0,
+     "ok": true
+    }
+   }
+  },
+  "TJDR": {
+   "n": 23181,
+   "n_positive": 3205,
+   "alphas": {
+    "0.10": {
+     "nominal": 0.9,
+     "gap": {
+      "M0_score": -0.06599063962558505,
+      "KG-gate-MLP (ours)": -0.007394695787831473,
+      "KG-gate+SDS+corrob (B6)": -0.00858034321372847
+     },
+     "coverage_per_seed": {
+      "KG-gate-MLP (ours)": [
+       0.9014040561622465,
+       0.8926677067082683,
+       0.8929797191887675,
+       0.8783151326053042,
+       0.8976599063962558
+      ],
+      "KG-gate+SDS+corrob (B6)": [
+       0.8917316692667707,
+       0.8876755070202809,
+       0.8929797191887675,
+       0.88798751950078,
+       0.8967238689547582
+      ]
+     },
+     "closer_than_M0": {
+      "KG-gate-MLP (ours)": true,
+      "KG-gate+SDS+corrob (B6)": true
+     },
+     "abs_gap_advantage": {
+      "KG-gate-MLP (ours)": {
+       "point": -0.05859594383775357,
+       "ci95": [
+        -0.09716952953659054,
+        -0.005828453440747493
+       ],
+       "ci_below_0": true
+      },
+      "KG-gate+SDS+corrob (B6)": {
+       "point": -0.057410296411856576,
+       "ci95": [
+        -0.09506027589205907,
+        -0.006537677044733424
+       ],
+       "ci_below_0": true
+      }
+     }
+    },
+    "0.20": {
+     "nominal": 0.8,
+     "gap": {
+      "M0_score": -0.05616224648985968,
+      "KG-gate-MLP (ours)": -0.050234009360374365,
+      "KG-gate+SDS+corrob (B6)": -0.02040561622464898
+     },
+     "coverage_per_seed": {
+      "KG-gate-MLP (ours)": [
+       0.7466458658346334,
+       0.7522620904836194,
+       0.7463338533541342,
+       0.7429017160686427,
+       0.7606864274570982
+      ],
+      "KG-gate+SDS+corrob (B6)": [
+       0.7778471138845554,
+       0.7762870514820592,
+       0.787207488299532,
+       0.778783151326053,
+       0.7778471138845554
+      ]
+     },
+     "closer_than_M0": {
+      "KG-gate-MLP (ours)": true,
+      "KG-gate+SDS+corrob (B6)": true
+     },
+     "abs_gap_advantage": {
+      "KG-gate-MLP (ours)": {
+       "point": -0.005928237129485314,
+       "ci95": [
+        -0.043311025599361765,
+        0.024556569875606435
+       ],
+       "ci_below_0": false
+      },
+      "KG-gate+SDS+corrob (B6)": {
+       "point": -0.0357566302652107,
+       "ci95": [
+        -0.07475819373318936,
+        0.013365193320893393
+       ],
+       "ci_below_0": false
+      }
+     }
+    },
+    "0.30": {
+     "nominal": 0.7,
+     "gap": {
+      "M0_score": -0.03728549141965676,
+      "KG-gate-MLP (ours)": -0.0534477379095164,
+      "KG-gate+SDS+corrob (B6)": -0.0009048361934476112
+     },
+     "coverage_per_seed": {
+      "KG-gate-MLP (ours)": [
+       0.6449297971918877,
+       0.6455538221528861,
+       0.6393135725429017,
+       0.6477379095163807,
+       0.6552262090483619
+      ],
+      "KG-gate+SDS+corrob (B6)": [
+       0.7017160686427457,
+       0.6879875195007801,
+       0.7017160686427457,
+       0.7020280811232449,
+       0.7020280811232449
+      ]
+     },
+     "closer_than_M0": {
+      "KG-gate-MLP (ours)": false,
+      "KG-gate+SDS+corrob (B6)": true
+     },
+     "abs_gap_advantage": {
+      "KG-gate-MLP (ours)": {
+       "point": 0.016162246489859644,
+       "ci95": [
+        -0.023857964015845032,
+        0.03403152260053979
+       ],
+       "ci_below_0": false
+      },
+      "KG-gate+SDS+corrob (B6)": {
+       "point": -0.036380655226209146,
+       "ci95": [
+        -0.07488756357905295,
+        0.031208425451217037
+       ],
+       "ci_below_0": false
+      }
+     }
+    }
+   },
+   "control_point": {
+    "M0_score": {
+     "got": -0.05616224648985968,
+     "published": -0.05616224648985968,
+     "abs_diff": 0.0,
+     "ok": true
+    },
+    "KG-gate-MLP (ours)": {
+     "got": -0.050234009360374365,
+     "published": -0.050234009360374365,
+     "abs_diff": 0.0,
+     "ok": true
+    },
+    "KG-gate+SDS+corrob (B6)": {
+     "got": -0.02040561622464898,
+     "published": -0.02040561622464898,
+     "abs_diff": 0.0,
+     "ok": true
+    }
+   },
+   "control_interval": {
+    "KG-gate-MLP (ours)": {
+     "got": [
+      -0.043311025599361765,
+      0.024556569875606435
+     ],
+     "published": [
+      -0.043311025599361765,
+      0.024556569875606435
+     ],
+     "max_abs_diff": 0.0,
+     "ok": true
+    },
+    "KG-gate+SDS+corrob (B6)": {
+     "got": [
+      -0.07475819373318936,
+      0.013365193320893393
+     ],
+     "published": [
+      -0.07475819373318936,
+      0.013365193320893393
+     ],
+     "max_abs_diff": 0.0,
+     "ok": true
+    }
+   }
+  },
+  "FGADR": {
+   "n": 538986,
+   "n_positive": 89433,
+   "alphas": {
+    "0.10": {
+     "nominal": 0.9,
+     "gap": {
+      "M0_score": 0.07452841792179621,
+      "KG-gate-MLP (ours)": 0.04969418447329288,
+      "KG-gate+SDS+corrob (B6)": 0.0509331007569912
+     },
+     "coverage_per_seed": {
+      "KG-gate-MLP (ours)": [
+       0.9486878445316606,
+       0.9510247895072289,
+       0.9522435789920947,
+       0.9517292274663715,
+       0.9447854818691087
+      ],
+      "KG-gate+SDS+corrob (B6)": [
+       0.9518410430154417,
+       0.9509912448425079,
+       0.9524560285353281,
+       0.9501861728892019,
+       0.9491910145024767
+      ]
+     },
+     "closer_than_M0": {
+      "KG-gate-MLP (ours)": true,
+      "KG-gate+SDS+corrob (B6)": true
+     },
+     "abs_gap_advantage": {
+      "KG-gate-MLP (ours)": {
+       "point": -0.02483423344850333,
+       "ci95": [
+        -0.028112803923090984,
+        -0.02149468895653038
+       ],
+       "ci_below_0": true
+      },
+      "KG-gate+SDS+corrob (B6)": {
+       "point": -0.023595317164805008,
+       "ci95": [
+        -0.026919110721349344,
+        -0.0203129180651826
+       ],
+       "ci_below_0": true
+      }
+     }
+    },
+    "0.20": {
+     "nominal": 0.8,
+     "gap": {
+      "M0_score": 0.14126329207339572,
+      "KG-gate-MLP (ours)": 0.08561045699014913,
+      "KG-gate+SDS+corrob (B6)": 0.09201972426285587
+     },
+     "coverage_per_seed": {
+      "KG-gate-MLP (ours)": [
+       0.8848076213478246,
+       0.8807263538067603,
+       0.8886428946809344,
+       0.8914271018527836,
+       0.8824483132624423
+      ],
+      "KG-gate+SDS+corrob (B6)": [
+       0.8934845079556764,
+       0.8855679670815023,
+       0.8938534992676082,
+       0.8970066977513893,
+       0.8901859492581038
+      ]
+     },
+     "closer_than_M0": {
+      "KG-gate-MLP (ours)": true,
+      "KG-gate+SDS+corrob (B6)": true
+     },
+     "abs_gap_advantage": {
+      "KG-gate-MLP (ours)": {
+       "point": -0.05565283508324659,
+       "ci95": [
+        -0.060451557228010676,
+        -0.050368213972817495
+       ],
+       "ci_below_0": true
+      },
+      "KG-gate+SDS+corrob (B6)": {
+       "point": -0.049243567810539846,
+       "ci95": [
+        -0.05376367625576105,
+        -0.044179272883970215
+       ],
+       "ci_below_0": true
+      }
+     }
+    },
+    "0.30": {
+     "nominal": 0.7,
+     "gap": {
+      "M0_score": 0.19427839835407512,
+      "KG-gate-MLP (ours)": 0.12938959891762547,
+      "KG-gate+SDS+corrob (B6)": 0.1255073630539063
+     },
+     "coverage_per_seed": {
+      "KG-gate-MLP (ours)": [
+       0.8324555812731318,
+       0.824583766618586,
+       0.8288439390381627,
+       0.8318070510885244,
+       0.8292576565697226
+      ],
+      "KG-gate+SDS+corrob (B6)": [
+       0.8267306251607348,
+       0.8191495309337716,
+       0.829022843916675,
+       0.8301298178524705,
+       0.8225039974058793
+      ]
+     },
+     "closer_than_M0": {
+      "KG-gate-MLP (ours)": true,
+      "KG-gate+SDS+corrob (B6)": true
+     },
+     "abs_gap_advantage": {
+      "KG-gate-MLP (ours)": {
+       "point": -0.06488879943644965,
+       "ci95": [
+        -0.07049551590442259,
+        -0.059145404996144665
+       ],
+       "ci_below_0": true
+      },
+      "KG-gate+SDS+corrob (B6)": {
+       "point": -0.06877103530016881,
+       "ci95": [
+        -0.07410210951873203,
+        -0.06325779738630809
+       ],
+       "ci_below_0": true
+      }
+     }
+    }
+   },
+   "control_point": {
+    "M0_score": {
+     "got": 0.14126329207339572,
+     "published": 0.14126329207339572,
+     "abs_diff": 0.0,
+     "ok": true
+    },
+    "KG-gate-MLP (ours)": {
+     "got": 0.08561045699014913,
+     "published": 0.08561045699014913,
+     "abs_diff": 0.0,
+     "ok": true
+    },
+    "KG-gate+SDS+corrob (B6)": {
+     "got": 0.09201972426285587,
+     "published": 0.09201972426285587,
+     "abs_diff": 0.0,
+     "ok": true
+    }
+   },
+   "control_interval": {
+    "KG-gate-MLP (ours)": {
+     "got": [
+      -0.060451557228010676,
+      -0.050368213972817495
+     ],
+     "published": [
+      -0.060451557228010676,
+      -0.050368213972817495
+     ],
+     "max_abs_diff": 0.0,
+     "ok": true
+    },
+    "KG-gate+SDS+corrob (B6)": {
+     "got": [
+      -0.05376367625576105,
+      -0.044179272883970215
+     ],
+     "published": [
+      -0.05376367625576105,
+      -0.044179272883970215
+     ],
+     "max_abs_diff": 0.0,
+     "ok": true
+    }
+   }
+  }
+ },
+ "status": "valid",
+ "P1_full_gate": {
+  "criterion": "|g_B6| < |g_M0| in all 8 cells (alpha 0.10 and 0.30 x 4 datasets)",
+  "k": 8,
+  "met": true
+ },
+ "summary": {
+  "KG-gate-MLP (ours)": {
+   "cells_closer": {
+    "0.10": {
+     "OIA-DDR test": true,
+     "IDRiD": true,
+     "TJDR": true,
+     "FGADR": true
+    },
+    "0.20": {
+     "OIA-DDR test": true,
+     "IDRiD": true,
+     "TJDR": true,
+     "FGADR": true
+    },
+    "0.30": {
+     "OIA-DDR test": true,
+     "IDRiD": true,
+     "TJDR": false,
+     "FGADR": true
+    }
+   },
+   "k_of_8_at_0.10_and_0.30": 7,
+   "n_ci_below_0": {
+    "0.10": 4,
+    "0.20": 3,
+    "0.30": 3
+   }
+  },
+  "KG-gate+SDS+corrob (B6)": {
+   "cells_closer": {
+    "0.10": {
+     "OIA-DDR test": true,
+     "IDRiD": true,
+     "TJDR": true,
+     "FGADR": true
+    },
+    "0.20": {
+     "OIA-DDR test": true,
+     "IDRiD": true,
+     "TJDR": true,
+     "FGADR": true
+    },
+    "0.30": {
+     "OIA-DDR test": true,
+     "IDRiD": true,
+     "TJDR": true,
+     "FGADR": true
+    }
+   },
+   "k_of_8_at_0.10_and_0.30": 8,
+   "n_ci_below_0": {
+    "0.10": 4,
+    "0.20": 3,
+    "0.30": 3
+   }
+  }
+ },
+ "finished": "2026-10-31T23:45:46"
+}

@@ -99,9 +99,9 @@
   "ci_below_zero_count": 5,
   "bootstrap_validation": "Exact weighted image resampling checked against sklearn expanded samples, 4 draws per score",
   "source_sha256": {
-    "E:/RISET/Junal2/lgovnetv3/lgovnetB/outputs/0506/evsds_v2sec/oiaddr/valid/governance_features_valid.csv": "035111dcade3947c32074e9dd4481265a90a9aedd2739063883fac9bd7ab1c08",
-    "E:/tmp/zerobox/feat/fgadr/train/governance_features_train.csv": "d533fd6f58d024b2e9dd99d48f149b211cae9c98c0de9a09e604dc16c01b6e75",
-    "E:/tmp/zerobox/scripts/fgadr_two_pass_merged.py": "2b76a584095effb24321c2302b6259df0b7f1f434f80f2701f6748eafcbfad65"
+    "outputs/0506/evsds_v2sec/oiaddr/valid/governance_features_valid.csv": "035111dcade3947c32074e9dd4481265a90a9aedd2739063883fac9bd7ab1c08",
+    "zerobox/feat/fgadr/train/governance_features_train.csv": "d533fd6f58d024b2e9dd99d48f149b211cae9c98c0de9a09e604dc16c01b6e75",
+    "zerobox/scripts/fgadr_two_pass_merged.py": "2b76a584095effb24321c2302b6259df0b7f1f434f80f2701f6748eafcbfad65"
   },
   "elapsed_seconds": 262.8689003000036
 }

@@ -2,6 +2,19 @@
 gate.py
 Learned Governance Gate (LGG) for LGov-Net (Contribution 2).
 
+LEGACY MODULE, NOT USED FOR THE REPORTED RESULTS.
+--------------------------------------------------
+This four-way gate (LayerNorm/ReLU/Dropout, Gumbel-Softmax over tiers R1-R4, a
+knowledge-graph embedding e_pred as input) is an earlier design. The gate reported in
+the paper is a binary retain model with one hidden layer of 16 tanh units, fitted by
+full-batch gradient descent on OIA-DDR validation: `fit_mlp` and `apply_mlp` in
+tools/eval_fp_reduction_benchmark.py, with the retain threshold from
+`threshold_for_tp_ret` in the same file. Tiers are not predicted by a network; they are
+the two-way rule over (retain decision, SDCA) of Algorithm 1, `assign` in
+tools/make_tier_routing.py. This module is kept because the earlier detector-training
+scripts (tools/train_stage3d_lgg.py, tools/train_stage5_mode2.py, src/experiment_runner.py)
+still import it.
+
 Takes per-bbox evidence and routes each bbox to one of 4 governance tiers
 (R1–R4) using a 2-layer MLP with optional Gumbel-Softmax for differentiable
 routing during training.

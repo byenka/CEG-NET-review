@@ -31,6 +31,13 @@ SRC, ROOT = _resolve("outputs/0506/selective_conformal/baselines.json",
 FUS = SRC.parent / "fusion_headtohead.json"
 GCAL, _ = _resolve("_LGOVNET_NEW_SEP/results/step4_gate_calibration.json",
                    "results/conditional_coverage/step4_gate_calibration.json")
+# The three-pass score mean row (added 2026-09-30) comes from the locked step 5 run for OIA-DDR, IDRiD and TJDR and
+# from the locked step 6 run for FGADR, whose secondary pass step 5 did not read.
+STEP5, _ = _resolve("_LGOVNET_NEW_SEP/results/step5_fusion_external_coverage.json",
+                    "results/conditional_coverage/step5_fusion_external_coverage.json")
+STEP6, _ = _resolve("_LGOVNET_NEW_SEP/results/step6_fgadr_three_pass.json",
+                    "results/conditional_coverage/step6_fgadr_three_pass.json")
+MEAN_LABEL = "Three-pass score mean"
 _TABLES = ROOT / "_FINAL_Latex/tables" if (ROOT / "_FINAL_Latex/tables").is_dir() else ROOT / "tables"
 
 COHORTS = ["OIA-DDR test", "IDRiD", "TJDR", "FGADR"]
@@ -65,31 +72,49 @@ def main() -> None:
     nominal = 1.0 - alpha
 
     # ---------------- S15
+    # Three-pass score mean per cohort, with a control that the locked runs scored the same population
+    s5 = json.loads(STEP5.read_text(encoding="utf-8"))
+    s6 = json.loads(STEP6.read_text(encoding="utf-8"))
+    mean = {c: (s5["cohorts"][c]["methods"]["F"]["aurc"], s5["cohorts"][c]["methods"]["F"]["gap"])
+            for c in COHORTS[:3]}
+    f3 = s6["fgadr_three_pass"]["D_operating_point"]["F3"]
+    mean["FGADR"] = (f3["aurc"], f3["gap"])
+    for c in COHORTS:
+        ref = d["cohorts"][c]["methods"]
+        run = s5["cohorts"][c]["methods"] if c != "FGADR" else s6["fgadr_three_pass"]["D_operating_point"]
+        assert abs(run["M0"]["gap"] - ref["M0_score"]["conformal_coverage_gap"]) < 1e-9, c
+        assert abs(run["M0"]["aurc"] - ref["M0_score"]["aurc"]) < 1e-9, c
+        assert abs(run["B6"]["aurc"] - ref["KG-gate+SDS+corrob (B6)"]["aurc"]) < 1e-6, c
+    assert s5["cohorts"]["OIA-DDR test"]["fusion_passes"] == 3 and s5["cohorts"]["TJDR"]["fusion_passes"] == 3
+
     rows = []
-    # Bold marks the best AURC in each cohort column. The coverage gap is not bolded, because the
-    # text requires it to be read together with ranking.
-    best_aurc = {c: min(d["cohorts"][c]["methods"][k]["aurc"] for k, _ in ROWS) for c in COHORTS}
+    # Bold marks the best AURC in each cohort column, whichever method holds it. The coverage gap is
+    # not bolded, because the text requires it to be read together with ranking.
+    best_aurc = {c: min([d["cohorts"][c]["methods"][k]["aurc"] for k, _ in ROWS] + [mean[c][0]]) for c in COHORTS}
+
+    def row(label, aurcs, gaps):
+        cells = [label] + [r"\textbf{" + f4(v) + "}" if v == best_aurc[c] else f4(v) for c, v in zip(COHORTS, aurcs)]
+        return " & ".join(cells + [sg(g) for g in gaps]) + r" \\"
+
     for key, label in ROWS:
-        cells = [label]
-        for c in COHORTS:
-            v = d["cohorts"][c]["methods"][key]["aurc"]
-            cells.append(r"\textbf{" + f4(v) + "}" if v == best_aurc[c] else f4(v))
-        cells += [sg(d["cohorts"][c]["methods"][key]["conformal_coverage_gap"]) for c in COHORTS]
-        rows.append(" & ".join(cells) + r" \\")
+        if key == "KG-gate-MLP (ours)":
+            rows.append(row(MEAN_LABEL, [mean[c][0] for c in COHORTS], [mean[c][1] for c in COHORTS]))
+        rows.append(row(label, [d["cohorts"][c]["methods"][key]["aurc"] for c in COHORTS],
+                        [d["cohorts"][c]["methods"][key]["conformal_coverage_gap"] for c in COHORTS]))
 
     note = ""
     if fus:
         m = fus["methods"]
         p = fus["paired_vs_fusion"]
-        # The coverage gaps of these two rows are already in the body text, so the note keeps only
-        # the AURC values, which appear nowhere else.
+        # The three-pass mean is now a row of the table, so the note keeps only the paired in-domain
+        # AURC differences to it, which appear nowhere else.
+        assert abs(m["Three-pass mean (F)"]["aurc"] - mean["OIA-DDR test"][0]) < 1e-6
         note = (
-            "On OIA-DDR the three-pass mean reaches an AURC of "
-            f"{m['Three-pass mean (F)']['aurc']:.4f}. The full gate is worse by "
-            f"{p['Full gate (S+E)']['delta']:+.4f} "
+            "On OIA-DDR, the paired AURC difference to the three-pass mean is "
+            f"{p['Full gate (S+E)']['delta']:+.4f} for the full gate "
             f"(95\\% CI [{p['Full gate (S+E)']['ci95'][0]:+.4f}, "
-            f"{p['Full gate (S+E)']['ci95'][1]:+.4f}]), and the gate that reads the averaged score "
-            f"is better by {p['Fusion-input gate (F+E)']['delta']:+.4f} "
+            f"{p['Full gate (S+E)']['ci95'][1]:+.4f}]) and "
+            f"{p['Fusion-input gate (F+E)']['delta']:+.4f} for the gate that reads the averaged score "
             f"(95\\% CI [{p['Fusion-input gate (F+E)']['ci95'][0]:+.4f}, "
             f"{p['Fusion-input gate (F+E)']['ci95'][1]:+.4f}])."
         )
@@ -100,14 +125,16 @@ def main() -> None:
         "that should have been suppressed among those retained, and lower is better. "
         "The coverage gap is the empirical minus the nominal coverage of a split-conformal "
         f"threshold calibrated on the OIA-DDR validation split at a nominal {nominal:.2f}. "
-        "Best AURC per cohort in bold. "
+        "Best AURC per dataset in bold. "
+        "The three-pass score mean averages the detector scores of the primary, flipped and secondary "
+        "passes that the evidence also uses. "
         "Learned rows average five gate seeds, and maximum-softmax probability and predictive "
         "entropy are omitted."
     )
 
     s15 = (
         "% Generated by tools/make_selective_conformal_tables.py from frozen JSON; no refitting.\n"
-        "% Source: outputs/0506/selective_conformal/baselines.json\n"
+        "% Source: outputs/0506/selective_conformal/baselines.json; three-pass mean from step5/step6 JSON\n"
         f"% sha256[:16] = {dig}\n"
         "\\begin{table}[htbp]\n\\centering\n"
         "\\caption{" + caption + "}\n"
@@ -168,7 +195,7 @@ def main() -> None:
         "\\label{tab:calibration_family}\n\\footnotesize\n"
         "\\setlength{\\tabcolsep}{4pt}\n\\resizebox{\\textwidth}{!}{%\n"
         "\\begin{tabular}{l" + "r" * (2 * nc) + "}\n\\toprule\n"
-        f"\\multirow{{2}}{{*}}{{Cohort}} & \\multicolumn{{{nc}}}{{c}}{{Expected calibration error}} "
+        f"\\multirow{{2}}{{*}}{{Dataset}} & \\multicolumn{{{nc}}}{{c}}{{Expected calibration error}} "
         f"& \\multicolumn{{{nc}}}{{c}}{{Brier score}} \\\\\n"
         f"\\cmidrule(lr){{2-{nc + 1}}}\\cmidrule(lr){{{nc + 2}-{2 * nc + 1}}}\n"
         " & " + " & ".join(names) + " & " + " & ".join(names) + " \\\\\n"

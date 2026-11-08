@@ -2196,7 +2196,7 @@ def run_full_mode2_detector(
         "mode2_path": "full_mode2_detector",
         "mode2_version": str(getattr(args, "mode2_version", "v1")),
         "v2_features": v2_features,
-        # B2 provenance contract (Mode2 checklist Mei 31_claude.md): the
+        # B2 provenance contract (Mode 2 checklist): the
         # canonical scope label is the SOLE truth for downstream C3-claim
         # eligibility. Closed-loop claim scope and detached diagnostic scope
         # are both supported in run_full_mode2_detector.
@@ -2266,7 +2266,7 @@ def run_full_mode2_detector(
         "allow_detached_lgg": bool(args.allow_detached_lgg),
         "full_mode2_detector": True,
         "detector_loss_replacement": "roi_sdgl",
-        # HONEST c3 gating (Mode2_implementation_checklist Mei 31_claude.md §D8):
+        # HONEST c3 gating (Mode 2 implementation checklist §D8):
         # Only TRUE when (i) canonical scope is the claim variant AND (ii) LGG
         # was actually called >=1 time AND (iii) GateLoss produced non-zero
         # signal during training. Silent wiring failures will keep this FALSE
@@ -2890,7 +2890,7 @@ def main() -> None:
         ),
     )
 
-    # ── B2 provenance + scope contract (Mode 2 checklist Mei 31_claude.md) ──
+    # ── B2 provenance + scope contract (Mode 2 checklist) ──
     parser.add_argument(
         "--mode1_lock_file",
         default=None,
@@ -3060,7 +3060,7 @@ def main() -> None:
             "v2_composite" if args.mode2_version == "v2" else "val_loss"
         )
 
-    # ── B2/B5 scope assignment (Mode2_implementation_checklist Mei 31_claude.md) ─
+    # ── B2/B5 scope assignment (Mode 2 implementation checklist) ─
     # Two valid scopes for the full-detector path:
     #   - roi_sdgl_kg_encoder_only       : diagnostic baseline (Opsi 3a). Selected
     #     by --allow_detached_lgg. LGG / online evidence / GateLoss are NOT in
@@ -3422,7 +3422,7 @@ def main() -> None:
         # mode2_path field lets downstream audits separate proxy vs full runs
         # without inferring from absence of keys.
         "mode2_path": "proxy_reclassifier",
-        # B2 provenance contract (Mode2 checklist Mei 31_claude.md): canonical
+        # B2 provenance contract (Mode 2 checklist): canonical
         # scope label distinct from legacy mode2_path, source provenance to
         # MODE1 LOCKED, and baseline reference. Downstream audits MUST read
         # these to determine claim eligibility, NOT the legacy mode2_path.

@@ -1,0 +1,47 @@
+\begin{table}[htbp]
+\centering
+\caption{Implementation hyperparameters. The detectors and the knowledge graph are fixed, and the gate is fitted on the OIA-DDR validation split. Settings of the exploratory graph and anatomy controls are given in Supplementary~S9.}
+\label{tab:impl_hyperparams}
+\scriptsize
+\setlength{\tabcolsep}{3pt}
+\renewcommand{\arraystretch}{1.05}
+\resizebox{\textwidth}{!}{%
+\begin{tabular}{@{}>{\raggedright\arraybackslash}p{0.17\textwidth}>{\raggedright\arraybackslash}p{0.33\textwidth}>{\raggedright\arraybackslash}p{0.46\textwidth}@{}}
+\toprule
+\textbf{Component} & \textbf{Parameter} & \textbf{Value} \\
+\midrule
+Primary detector (frozen) & Architecture & Faster R-CNN / ResNet-50-FPN, COCO initialization \\
+ & Optimizer & Adam, no weight decay \\
+ & Learning rate & $10^{-4}$, backbone frozen (epochs 1--5); $10^{-5}$, cosine to $10^{-7}$ (epochs 6--25) \\
+ & Epochs / batch size & 25 / 2; checkpoint at epoch 18 (best validation $\mathrm{mAP}_{50}$) \\
+ & Anchor sizes (px) / ratios & $\{8,16,32,64,128\}$ / $\{0.5,1,2\}$ \\
+ & Input size & shorter side 800\,px, longer side $\leq$1{,}333\,px \\
+ & Augmentation & none \\
+ & Export & score $\geq 0.01$, at most 300 per image; original and flipped image \\
+\midrule
+Secondary detector (frozen) & Architecture & Faster R-CNN-v2 / ResNet-50-FPN, ImageNet backbone \\
+ & Training & AdamW, weight decay $10^{-4}$; $10^{-4}$, then $10^{-5}$ after epoch 5; 25 epochs \\
+ & Export & score $\geq 0.05$, at most 300 per image \\
+\midrule
+Clinical KG (fixed) & Severity costs $w_{\mathrm{sev}}$ & 0 (same group), 1, 1.5 (Hard\_EX--Soft\_EX), 2 \\
+\midrule
+Clinical evidence gate & Input dim & 5 (KG-gate) or 7 (+multi-source) \\
+ & Hidden units / activation & 16, $\tanh$ (hidden), sigmoid (output) \\
+ & Optimizer / loss & Full-batch gradient descent / binary cross-entropy \\
+ & Iterations / learning rate & 1{,}500 / $0.1$ \\
+ & Initialization & $\mathcal{N}(0,0.5^2)$ weights; seeds 0--4 \\
+ & Input standardization & validation mean and std \\
+\midrule
+Decision and tiers & Retain threshold $\tau^\star$ & validation, TP retention 0.80 ($0.306$ for the KG-gate, seed 0) \\
+ & Conflict threshold $\delta$ on SDCA & $0.30$; identical tiers for any $\delta\in(0,0.50]$ \\
+\midrule
+Evidence & Box matching (SAS, PSS, ev\_sds) & IoU $\geq 0.15$ \\
+ & PSS without a flipped match & placeholder $0.5$ \\
+ & APS under low anatomy confidence & $0.5$ \\
+\midrule
+Reference targets (evaluation only) & Matched detection & IoU $\geq 0.5$; clinically close if $\mathrm{SDM}_{\mathrm{norm}}<0.30$ \\
+ & Localization-weak & $0.1\leq$ IoU $<0.5$ \\
+ & Low-confidence candidate & IoU $<0.1$ and score $<0.15$ \\
+\bottomrule
+\end{tabular}}
+\end{table}

@@ -100,6 +100,14 @@ def conformal_threshold(cal_score: np.ndarray, cal_label: np.ndarray, alpha: flo
 
     Nonkonformitas positif kalibrasi adalah -skor, sehingga bebas skala. Ambangnya
     kuantil ceil((n+1)(1-alpha))/n, koreksi sampel-hingga yang baku pada split conformal.
+
+    Konvensi (audit 2026-11-01): np.quantile(method="higher") pada level k/n,
+    k = ceil((n+1)(1-alpha)), mengembalikan statistik terurut ke-(k+1) dari nonkonformitas,
+    bukan ke-k seperti definisi buku teks. Ambangnya satu peringkat lebih konservatif, jadi
+    jaminan >= 1-alpha tetap berlaku. Untuk M0, knowledge-graph gate dan full gate pada
+    protokol terbit, efeknya pada cakupan uji paling besar 3,1e-4 di alpha 0,10/0,20/0,30,
+    tidak ada nilai alpha = 0,20 yang berubah pada tiga desimal, dan tidak ada urutan
+    gate-lawan-skor yang berubah. Fungsi ini sengaja tidak diubah agar angka terbit tetap.
     """
     s = cal_score[cal_label == 1]
     if s.size == 0:

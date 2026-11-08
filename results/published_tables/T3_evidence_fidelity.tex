@@ -1,0 +1,20 @@
+% lima seed gate (SD sampel), bootstrap image-clustered 2.000 per seed.
+\begin{table}[t]
+\centering
+\caption{Contribution of each evidence signal to the knowledge-graph gate on OIA-DDR test. Each signal is set to a constant in both splits before fitting, and the last row replaces the constant APS with the external anatomy model. $\Delta$ is the change from the reference within each seed, mean $\pm$ SD over five seeds.}
+\label{tab:evidence}
+\footnotesize
+\setlength{\tabcolsep}{4pt}
+\begin{tabular}{@{}lccc@{}}
+\toprule
+Evidence vector & AUPRC & $\Delta$AUPRC & Seeds $\Delta<0$ \\
+\midrule
+All evidence (reference) & 0.681 $\pm$ 0.004 & -- & -- \\
+\midrule
+SAS set to a constant & 0.679 $\pm$ 0.003 & $-$0.002 $\pm$ 0.002 & 4/5 \\
+SDCA set to a constant & 0.674 $\pm$ 0.000 & $-$0.008 $\pm$ 0.004 & 5/5 \\
+PSS set to a constant & 0.664 $\pm$ 0.002 & $-$0.017 $\pm$ 0.003 & 5/5 \\
+APS from the external anatomy model & 0.678 $\pm$ 0.004 & $-$0.004 $\pm$ 0.001 & 5/5 \\
+\bottomrule
+\end{tabular}
+\end{table}

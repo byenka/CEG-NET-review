@@ -1,0 +1,37 @@
+% lima seed gate (SD sampel), bootstrap image-clustered 2.000 per seed.
+\begin{table}[t]
+\centering
+\caption{Comparison with false-positive-reduction methods on OIA-DDR test (deployed
+configuration). All methods use the same frozen-detector boxes, learned methods are
+fitted on validation, and Audit marks each implementation's native output. AUPRC is
+average precision, and the remaining columns are taken at each method's own threshold, selected
+on validation for a TP retention of 0.80. The ensembling rows average detector scores
+over the passes the gate already consumes, and the last row supplies that mean to the
+full gate in place of the raw-score input. Best AUPRC in bold.}
+\label{tab:fp_benchmark}
+\footnotesize
+\setlength{\tabcolsep}{3pt}
+\resizebox{\textwidth}{!}{%
+\begin{tabular}{llccccc}
+\toprule
+Method & Family & AUPRC$\uparrow$ & $\mathrm{TP}_{\mathrm{ret}}$ & FP suppr. & Prec. & Audit \\
+\midrule
+Score threshold ($M_0$) & --- & 0.649 & 0.888 & 0.352 & 0.459 &  \\
+Max-softmax prob. & [Hendrycks'17] & 0.473 & 0.849 & 0.131 & 0.376 &  \\
+Predictive entropy & [uncertainty] & 0.474 & 0.849 & 0.134 & 0.377 &  \\
+Top-1$-$top-2 margin & [uncertainty] & 0.472 & 0.848 & 0.129 & 0.376 &  \\
+Temperature scaling & [Guo'17] & 0.649 & 0.888 & 0.352 & 0.459 &  \\
+Score-only gate$^{\dagger}$ & (learned-score) & 0.649 & 0.888 & 0.352 & 0.459 &  \\
+Flip TTA, score mean & [ensembling] & 0.689 & 0.875 & 0.488 & 0.514 &  \\
+Two-detector ensemble, score mean & [ensembling] & 0.701 & 0.857 & 0.523 & 0.526 &  \\
+Three-pass score mean & [ensembling] & 0.722 & 0.846 & 0.600 & 0.566 &  \\
+Full gate without knowledge graph$^{\dagger}$ & (ablation) & 0.691 & 0.857 & 0.521 & 0.525 &  \\
+Knowledge-graph gate, linear & this work & 0.682 & 0.802 & 0.573 & 0.538 & \checkmark \\
+Knowledge-graph gate, MLP$^{\dagger}$ & this work & 0.681 & 0.808 & 0.575 & 0.540 & \checkmark \\
+Full gate, CEG-Net$^{\dagger}$ & this work & 0.699 & 0.819 & 0.579 & 0.546 & \checkmark \\
+Full gate on the three-pass mean$^{\dagger}$ & this work & \textbf{0.733} & 0.806 & 0.662 & 0.596 & \checkmark \\
+\bottomrule
+\end{tabular}}
+\\[2pt]
+{\footnotesize $^{\dagger}$Mean over five gate-initialization seeds.}
+\end{table}

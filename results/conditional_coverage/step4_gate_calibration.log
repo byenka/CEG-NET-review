@@ -40,4 +40,4 @@ validation n=39,710 positives=14,136 | temperature T=2.0000
   KG-gate+SDS (B5)           ECE=0.2116+-0.0017  Brier=0.1651  mean(p)-rate=+0.2116  ECE-isotonic=-0.0392
   KG-gate+SDS+corrob (B6)    ECE=0.2037+-0.0014  Brier=0.1599  mean(p)-rate=+0.2037  ECE-isotonic=-0.0471
 
-written E:\RISET\Junal2\lgovnetv3\lgovnetB\_UPLOAD_GITHUB\_cache\step4_gate_calibration.json
+written _cache\step4_gate_calibration.json

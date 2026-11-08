@@ -2,8 +2,8 @@
 """verify_mode2_preflight.py — Mode 2 preflight verifier (B1).
 
 Read-only predicate gate that MUST pass before any Mode 2 training run.
-Encodes the canonical checks from
-``start29/Hasil analisa/Mode2_implementation_checklist Mei 31_claude.md`` §B1.
+Encodes the canonical Mode 2 implementation checks from the locked checklist
+under §B1.
 
 Mode 2 may only be started against a Mode 1 LOCKED baseline:
 ``outputs/point123_2026-05-30_point123_external_pss_stage3d_final_clean``.

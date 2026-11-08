@@ -17,3 +17,6 @@ detector_cache/
 governance_features_*.csv
 routing_manifest.json
 *_gate_tiers.csv
+
+# Scratch output of generators run inside the repository (tier CSVs, run logs).
+_cache/

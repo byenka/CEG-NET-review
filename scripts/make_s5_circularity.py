@@ -10,8 +10,18 @@ import json
 from decimal import ROUND_HALF_UP, Decimal
 from pathlib import Path
 
-ROOT = Path(__file__).resolve().parents[1]
-SRC = ROOT / "_septem/scripts_optionB/circularity_check.json"
+def _resolve(*candidates):
+    """Find the input in the research workspace layout or in the repository layout."""
+    for base in Path(__file__).resolve().parents:
+        for rel in candidates:
+            p = base / rel
+            if p.exists():
+                return p, base
+    raise SystemExit("input not found: " + " or ".join(candidates))
+
+
+SRC, ROOT = _resolve("_septem/scripts_optionB/circularity_check.json",
+                     "results/experiments/circularity_check.json")
 OUT = ROOT / "_FINAL_Latex/tables/S5_label_circularity.tex"
 
 
@@ -26,7 +36,7 @@ def sgn(v, nd=3):
 d = json.loads(SRC.read_text(encoding="utf-8"))
 m0, n, npos = d["m0_ap_test_clean"], d["n_test_clean"], d["n_test_clean_pos"]
 rows = [rf"Detector score threshold ($M_0$) & -- & {q(m0)} & -- & -- \\", r"\midrule"]
-blocks = (("A_fit_deployed_eval_clean", "as in Table~\\ref{tab:governance}"),
+blocks = (("A_fit_deployed_eval_clean", "as in the main results"),
           ("B_fit_clean_eval_clean", "refitted on this label"))
 names = (("kg_gate", "Knowledge-graph gate (B4)"), ("full_gate", "Full gate, CEG-Net (B6)"))
 for bkey, how in blocks:
@@ -37,8 +47,6 @@ for bkey, how in blocks:
     if bkey == blocks[0][0]:
         rows.append(r"\midrule")
 tex = "\n".join([
-    "% S5 — DIBANGKITKAN _septem/scripts_optionB/make_s5_circularity.py dari",
-    "% _septem/scripts_optionB/circularity_check.json. JANGAN diedit tangan.",
     r"\begin{table}[htbp]",
     r"\centering",
     (r"\caption{Gating on a label that does not use $\mathrm{SDM}_{\mathrm{norm}}$. The clinically close "

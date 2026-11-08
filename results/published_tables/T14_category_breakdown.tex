@@ -1,0 +1,23 @@
+% Source: outputs/0506/evsds_v2sec/oiaddr/test/governance_features_test.csv (deployed
+% configuration; columns category + ev_sas/ev_sdca/ev_aps/ev_pss/pred_score).
+%     _septem/scripts_optionB/clinical_cost_fusion.json;
+\begin{table}[htbp]
+\centering
+\caption{Mean evidence values and detector score per reliability category on OIA-DDR test (64{,}214 candidate detections). Target is the triage target of each category. APS is constant at 0.5 because this configuration uses the approximate anatomy provider.}
+\label{tab:category_breakdown}
+\small
+\setlength{\tabcolsep}{4.5pt}
+\begin{tabular}{@{}llrccccc@{}}
+\toprule
+\textbf{Category} & \textbf{Target} & \textbf{$n$} & \textbf{SAS} & \textbf{SDCA} & \textbf{APS} & \textbf{PSS} & \textbf{score} \\
+\midrule
+TP exact & RETAIN & 5{,}488 & 0.983 & 0.416 & 0.500 & 0.935 & 0.608 \\
+Clinically close & RETAIN & 1{,}217 & 0.940 & 0.000 & 0.500 & 0.863 & 0.445 \\
+Localization weak & RETAIN & 17{,}824 & 0.987 & 0.332 & 0.500 & 0.855 & 0.331 \\
+\midrule
+Low-conf. candidate & SUPPRESS & 19{,}005 & 0.995 & 0.238 & 0.500 & 0.674 & 0.070 \\
+Background FP & SUPPRESS & 20{,}589 & 0.996 & 0.417 & 0.500 & 0.743 & 0.322 \\
+Unsafe mismatch & SUPPRESS & 91 & 0.967 & 0.714 & 0.500 & 0.830 & 0.436 \\
+\bottomrule
+\end{tabular}
+\end{table}

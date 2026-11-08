@@ -6,8 +6,19 @@ import hashlib
 import json
 from pathlib import Path
 
-ROOT = Path(__file__).resolve().parents[2]
-RES = ROOT / "_LGOVNET_NEW_SEP/results"
+def _resolve(*candidates):
+    """Find the input in the research workspace layout or in the repository layout."""
+    for base in Path(__file__).resolve().parents:
+        for rel in candidates:
+            p = base / rel
+            if p.exists():
+                return p, base
+    raise SystemExit("input not found: " + " or ".join(candidates))
+
+
+RES, ROOT = _resolve("_LGOVNET_NEW_SEP/results/step0_conditional_coverage.json",
+                     "results/conditional_coverage/step0_conditional_coverage.json")
+RES = RES.parent
 OUT = ROOT / "_FINAL_Latex/tables/S18_mondrian_preview.tex"
 
 

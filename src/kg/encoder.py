@@ -2,6 +2,16 @@
 encoder.py
 2-layer heterogeneous GAT encoder for LGov-Net (Contribution 1).
 
+EXPLORATORY, NOT PART OF THE PRIMARY SYSTEM.
+--------------------------------------------
+The reported gate reads a fixed prior table, sdm_norm_clinical_prior.json, which
+tools/audit_stage3a_kg.py writes with `build_clinical_prior_sdm` in src/kg/schema.py;
+no learned graph embedding enters it. This encoder appears only in the exploratory
+control reported as a negative result, the knowledge graph inside detector training
+(tools/train_stage5_mode2.py); the graph-attention gate control has its own
+implementation in _NATIVE/scripts/native_gate_experiment.py. The SDM written from this
+encoder by the stage-3A audit is a diagnostic and is not used for the evidence vector.
+
 Architecture (architecture-lgov-net-v2_rev.txt):
 
   Input per node:

@@ -74,7 +74,7 @@ def main() -> None:
         "\\setlength{\\tabcolsep}{4pt}\n"
         "\\begin{tabular}{lrrrrc}\n"
         "\\toprule\n"
-        "Cohort & Images & Boxes & Distinct & Degenerate & Split \\\\\n"
+        "Dataset & Images & Boxes & Distinct & Degenerate & Split \\\\\n"
         " & & & boxes & boxes & overlap \\\\\n"
         "\\midrule\n"
         + "\n".join(rows) + "\n"

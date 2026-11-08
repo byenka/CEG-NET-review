@@ -40,6 +40,7 @@ from __future__ import annotations
 
 import argparse
 import csv
+import gzip
 import json
 import math
 from pathlib import Path
@@ -50,12 +51,20 @@ import numpy as np
 
 # ---------- data ----------
 
+def open_csv(path: Path):
+    """Open a CSV as text; the repository ships the evidence CSVs gzipped."""
+    if str(path).endswith(".gz"):
+        return gzip.open(path, "rt", newline="", encoding="utf-8")
+    return open(path, newline="", encoding="utf-8")
+
+
 def load_csv(path: Path, positive: str = "tp_exact") -> Dict[str, np.ndarray]:
     """positive='tp_exact' -> label 1 iff category==TP_EXACT (clinically correct
     detection: correct class + IoU>=0.5); the clinical FP-reduction task aligned
     with the governance routing claim. positive='near_lesion' -> label 1 iff the
     CSV `label` column is 1 (IoU>=0.1 with any GT, looser)."""
-    rows = list(csv.DictReader(open(path, newline="", encoding="utf-8")))
+    with open_csv(path) as fh:
+        rows = list(csv.DictReader(fh))
     def fcol(c):
         return np.array([float(r[c]) if r[c] not in ("", "nan") else np.nan for r in rows],
                         dtype=np.float64)

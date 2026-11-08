@@ -361,8 +361,11 @@ def summarize(res: dict) -> dict:
 
 
 def tables_only() -> int:
-    """Tulis ulang tabel dari JSON yang sudah ada, tanpa menghitung ulang model."""
-    p = OUT / "indomain_results.json"
+    """Tulis ulang tabel dari JSON yang sudah ada, tanpa menghitung ulang model.
+    Repositori kode menyimpan JSON yang sama di results/tables_source/."""
+    p = next((x for x in (OUT / "indomain_results.json",
+                          ROOT / "results/tables_source/indomain_results.json") if x.exists()),
+             OUT / "indomain_results.json")
     res = json.loads(p.read_text(encoding="utf-8"))
     write_tables(res)
     print("[indomain] tabel T2, T3, T8 ditulis ulang dari JSON", flush=True)
@@ -377,11 +380,8 @@ def write_tables(res: dict) -> None:
 
 # ── tabel ─────────────────────────────────────────────────────────────────────
 
-HEADER = ("% {name} — DIBANGKITKAN tools/make_indomain_results.py dari\n"
-          "% outputs/0506/indomain_5seed/indomain_results.json. JANGAN diedit tangan.\n"
-          "% Protokol tunggal: gate numpy dipasang pada OIA-DDR valid, konfigurasi deployed,\n"
-          "% lima seed gate (SD sampel), bootstrap image-clustered 2.000 per seed.\n"
-          "% AUPRC = average precision (sklearn), tidak bergantung urutan skor kembar.\n")
+# Satu baris komentar, sama dengan tabel terbit; sumbernya tercatat di REGENERATE.md.
+HEADER = "% lima seed gate (SD sampel), bootstrap image-clustered 2.000 per seed.\n"
 
 
 def build_t2(res: dict) -> str:
@@ -394,9 +394,11 @@ def build_t2(res: dict) -> str:
             ("evidence_only", "Evidence-only gate", "SAS, SDCA, APS, PSS"),
             ("kg_gate", "Knowledge-graph gate (B4)", r"evidence $+$ score"),
             ("full_gate", "Full gate, CEG-Net (B6)", r"B4 $+$ multi-source"))
+    best = max(s[g]["auprc"]["mean"] for g, _, _ in spec)  # bold: AUPRC terbaik di tabel
     for g, name, inputs in spec:
         a, dl, b = s[g]["auprc"], s[g]["delta_vs_m0"], s["boot_" + boot_key[g]]
-        rows.append(rf"{name} & {inputs} & {q(a['mean'])} $\pm$ {q(a['sd'])} & "
+        au = rf"\textbf{{{q(a['mean'])}}}" if a["mean"] == best and best > m0 else q(a["mean"])
+        rows.append(rf"{name} & {inputs} & {au} $\pm$ {q(a['sd'])} & "
                     rf"{sgn(dl['mean'])} $\pm$ {q(dl['sd'])} & {dl['n_pos']}/5 & {b['n_ci_above_0']}/5 \\")
     ms, mb = s["full_gate"]["delta_vs_kg"], s["boot_full_gate_minus_kg_gate"]
     tail = (rf"\multicolumn{{3}}{{@{{}}l}}{{Multi-source contribution (B6 $-$ B4)}} & "
@@ -405,17 +407,17 @@ def build_t2(res: dict) -> str:
         r"\begin{table}[t]",
         r"\centering",
         (r"\caption{In-domain gating on OIA-DDR test (deployed configuration). Gates are "
-         r"fitted on OIA-DDR validation with five initialization seeds; values are mean "
+         r"fitted on OIA-DDR validation with five initialization seeds. Values are mean "
          r"$\pm$ SD over seeds, and AUPRC is computed as average precision. The last column "
          r"counts seeds whose 95\% image-clustered paired-bootstrap interval (2{,}000 "
-         r"resamples) for the gain excludes zero.}"),
+         r"resamples) for the gain excludes zero. Best AUPRC in bold.}"),
         r"\label{tab:governance}",
         r"\footnotesize",
         r"\setlength{\tabcolsep}{3pt}",
         r"\resizebox{\textwidth}{!}{%",
         r"\begin{tabular}{@{}llcccc@{}}",
         r"\toprule",
-        r"Model & Inputs & AUPRC & $\Delta$AUPRC vs.\ $M_0$ & Seeds $\Delta>0$ & Seeds CI $>0$ \\",
+        r"Model & Inputs & AUPRC$\uparrow$ & $\Delta$AUPRC vs.\ $M_0$ & Seeds $\Delta>0$ & Seeds CI $>0$ \\",
         r"\midrule",
         *rows,
         r"\midrule",
@@ -443,11 +445,10 @@ def build_t3(res: dict) -> str:
     return HEADER.format(name="T3") + "\n".join([
         r"\begin{table}[t]",
         r"\centering",
-        (r"\caption{Contribution of each evidence pillar to the knowledge-graph gate on OIA-DDR "
-         r"test (deployed configuration, five gate seeds, AUPRC as average precision). A pillar "
-         r"is set to a constant in both splits before fitting; the last row replaces the "
-         r"constant APS of the geometric anatomy approximation with the external anatomy model. "
-         r"$\Delta$ is the change from the reference within each seed, mean $\pm$ SD.}"),
+        (r"\caption{Contribution of each evidence signal to the knowledge-graph gate on OIA-DDR "
+         r"test. Each signal is set to a constant in both splits before fitting, and the last "
+         r"row replaces the constant APS with the external anatomy model. $\Delta$ is the "
+         r"change from the reference within each seed, mean $\pm$ SD over five seeds.}"),
         r"\label{tab:evidence}",
         r"\footnotesize",
         r"\setlength{\tabcolsep}{4pt}",
@@ -474,8 +475,10 @@ def fusion_rows() -> tuple[list[str], list[str]]:
     SUDAH dikonsumsi gate penuh lewat SAS, PSS dan ev_sds, jadi baseline ini tidak lebih mahal.
     Mengembalikan ([], []) bila JSON belum ada, supaya generator tetap dapat dijalankan.
     """
-    fus = ROOT / "_septem/scripts_optionB/baselines_nokg.json"
-    gof = ROOT / "_septem/scripts_optionB/gate_on_fusion.json"
+    exp = next((d for d in (ROOT / "_septem/scripts_optionB", ROOT / "results/experiments")
+                if (d / "baselines_nokg.json").is_file()), ROOT / "_septem/scripts_optionB")
+    fus = exp / "baselines_nokg.json"
+    gof = exp / "gate_on_fusion.json"
     if not (fus.is_file() and gof.is_file()):
         print("[indomain] JSON fusi belum ada; T8 ditulis tanpa baris fusi", flush=True)
         return [], []
@@ -540,22 +543,22 @@ def build_t8(res: dict) -> str:
     return HEADER.format(name="T8") + "\n".join([
         r"\begin{table}[t]",
         r"\centering",
-        (r"\caption{Comparison with false-positive-reduction methods on OIA-DDR test (deployed "
-         r"configuration). All methods use the same frozen-detector boxes, and learned methods "
-         r"are fitted on validation. AUPRC is computed as average precision. TP retention, FP "
-         r"suppression and precision are taken at the threshold selected on validation for a "
-         r"TP retention of 0.80 and are descriptive. The ensembling rows average detector scores "
-         r"over the passes the gate already consumes, namely the primary detector, its "
-         r"horizontally flipped pass and the secondary detector; a box that a pass does not "
-         r"produce contributes a score of zero. The last row gives that three-pass mean to the "
-         r"full gate as one additional input.}"),
+        # Baris terakhir memakai gate_fused (scripts/gate_on_fusion.py): skor fusi
+        # MENGGANTIKAN skor mentah, bukan masukan tambahan.
+        ("\\caption{Comparison with false-positive-reduction methods on OIA-DDR test (deployed\n"
+         "configuration). All methods use the same frozen-detector boxes, learned methods are\n"
+         "fitted on validation, and Audit marks each implementation's native output. AUPRC is\n"
+         "average precision, and the remaining columns are taken at each method's own threshold, selected\n"
+         "on validation for a TP retention of 0.80. The ensembling rows average detector scores\n"
+         "over the passes the gate already consumes, and the last row supplies that mean to the\n"
+         "full gate in place of the raw-score input. Best AUPRC in bold.}"),
         r"\label{tab:fp_benchmark}",
         r"\footnotesize",
         r"\setlength{\tabcolsep}{3pt}",
         r"\resizebox{\textwidth}{!}{%",
         r"\begin{tabular}{llccccc}",
         r"\toprule",
-        r"Method & Family & AUPRC & $\mathrm{TP}_{\mathrm{ret}}$ & FP suppr. & Prec. & Audit \\",
+        r"Method & Family & AUPRC$\uparrow$ & $\mathrm{TP}_{\mathrm{ret}}$ & FP suppr. & Prec. & Audit \\",
         r"\midrule",
         *rows,
         r"\bottomrule",

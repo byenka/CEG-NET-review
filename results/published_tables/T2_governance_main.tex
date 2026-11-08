@@ -1,0 +1,22 @@
+% lima seed gate (SD sampel), bootstrap image-clustered 2.000 per seed.
+\begin{table}[t]
+\centering
+\caption{In-domain gating on OIA-DDR test (deployed configuration). Gates are fitted on OIA-DDR validation with five initialization seeds. Values are mean $\pm$ SD over seeds, and AUPRC is computed as average precision. The last column counts seeds whose 95\% image-clustered paired-bootstrap interval (2{,}000 resamples) for the gain excludes zero. Best AUPRC in bold.}
+\label{tab:governance}
+\footnotesize
+\setlength{\tabcolsep}{3pt}
+\resizebox{\textwidth}{!}{%
+\begin{tabular}{@{}llcccc@{}}
+\toprule
+Model & Inputs & AUPRC$\uparrow$ & $\Delta$AUPRC vs.\ $M_0$ & Seeds $\Delta>0$ & Seeds CI $>0$ \\
+\midrule
+Detector score threshold ($M_0$) & score & 0.649 & -- & -- & -- \\
+Score-only gate & score & 0.649 $\pm$ 0.000 & 0.000 $\pm$ 0.000 & 0/5 & 0/5 \\
+Evidence-only gate & SAS, SDCA, APS, PSS & 0.525 $\pm$ 0.001 & $-$0.123 $\pm$ 0.001 & 0/5 & 0/5 \\
+Knowledge-graph gate (B4) & evidence $+$ score & 0.681 $\pm$ 0.004 & $+$0.033 $\pm$ 0.004 & 5/5 & 5/5 \\
+Full gate, CEG-Net (B6) & B4 $+$ multi-source & \textbf{0.699} $\pm$ 0.002 & $+$0.050 $\pm$ 0.002 & 5/5 & 5/5 \\
+\midrule
+\multicolumn{3}{@{}l}{Multi-source contribution (B6 $-$ B4)} & $+$0.017 $\pm$ 0.003 & 5/5 & 5/5 \\
+\bottomrule
+\end{tabular}}
+\end{table}

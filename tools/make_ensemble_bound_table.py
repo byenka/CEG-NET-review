@@ -24,7 +24,7 @@ def _resolve(*candidates):
 
 
 SRC, ROOT = _resolve("_LGOVNET_NEW_SEP/results/ensemble_external.json",
-                     "results/ensemble/ensemble_external.json")
+                     "results/conditional_coverage/ensemble_external.json")
 _TABLES = ROOT / "_FINAL_Latex/tables" if (ROOT / "_FINAL_Latex/tables").is_dir() else ROOT / "tables"
 OUT = _TABLES / "S17_ensemble_bound.tex"
 
@@ -92,7 +92,7 @@ def main() -> None:
         "\\label{tab:ensemble_bound}\n\\footnotesize\n"
         "\\setlength{\\tabcolsep}{3pt}\n\\resizebox{\\textwidth}{!}{%\n"
         "\\begin{tabular}{lrrrrrrcrr}\n\\toprule\n"
-        "\\multirow{2}{*}{Cohort} & \\multirow{2}{*}{$n$} & \\multicolumn{4}{c}{AUPRC$\\uparrow$} "
+        "\\multirow{2}{*}{Dataset} & \\multirow{2}{*}{$n$} & \\multicolumn{4}{c}{AUPRC$\\uparrow$} "
         "& \\multicolumn{2}{c}{Gate $-$ E6} & \\multicolumn{2}{c}{Coverage gap} \\\\\n"
         "\\cmidrule(lr){3-6}\\cmidrule(lr){7-8}\\cmidrule(lr){9-10}\n"
         " & & $S$ & E5 & E6 & gate & $\\Delta$ & 95\\% CI & gate & E6 \\\\\n"

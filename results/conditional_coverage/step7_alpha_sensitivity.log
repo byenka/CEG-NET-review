@@ -1,0 +1,41 @@
+lock sha256 4d1a428e21c0ee6ef3aefb7629ec8bbb8a94a2976ad58b2eb145821dd48e2f9c
+=== OIA-DDR test
+    OIA-DDR test bootstrap 250/2000  3s
+    OIA-DDR test bootstrap 500/2000  6s
+    OIA-DDR test bootstrap 750/2000  9s
+    OIA-DDR test bootstrap 1000/2000  12s
+    OIA-DDR test bootstrap 1250/2000  15s
+    OIA-DDR test bootstrap 1500/2000  18s
+    OIA-DDR test bootstrap 1750/2000  21s
+    OIA-DDR test bootstrap 2000/2000  25s
+=== IDRiD
+    IDRiD bootstrap 250/2000  0s
+    IDRiD bootstrap 500/2000  1s
+    IDRiD bootstrap 750/2000  1s
+    IDRiD bootstrap 1000/2000  1s
+    IDRiD bootstrap 1250/2000  2s
+    IDRiD bootstrap 1500/2000  2s
+    IDRiD bootstrap 1750/2000  2s
+    IDRiD bootstrap 2000/2000  3s
+=== TJDR
+    TJDR bootstrap 250/2000  0s
+    TJDR bootstrap 500/2000  1s
+    TJDR bootstrap 750/2000  1s
+    TJDR bootstrap 1000/2000  2s
+    TJDR bootstrap 1250/2000  2s
+    TJDR bootstrap 1500/2000  3s
+    TJDR bootstrap 1750/2000  3s
+    TJDR bootstrap 2000/2000  4s
+=== FGADR
+    FGADR bootstrap 250/2000  19s
+    FGADR bootstrap 500/2000  37s
+    FGADR bootstrap 750/2000  56s
+    FGADR bootstrap 1000/2000  75s
+    FGADR bootstrap 1250/2000  94s
+    FGADR bootstrap 1500/2000  113s
+    FGADR bootstrap 1750/2000  132s
+    FGADR bootstrap 2000/2000  151s
+status valid
+P1 (full gate) k = 8/8, met = True
+written E:\RISET\Junal2\lgovnetv3\lgovnetB\_LGOVNET_NEW_SEP\results\step7_alpha_sensitivity.json
+exit=0

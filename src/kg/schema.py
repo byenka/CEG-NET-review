@@ -313,6 +313,12 @@ def build_adjacency_dict() -> dict:
 def build_clinical_prior_sdm() -> dict:
     """Build a grading-aware clinical-prior SDM from ICDR severity_transition weights.
 
+    Note on wording: the costs in SEVERITY_TRANSITION are an author-defined severity
+    ordering of the lesion pairs, informed by ICDR but not derived from it; the paper
+    reports them as such and no experiment establishes their clinical correctness. The
+    names ICDR_cost and severity_transition_icdr are kept for compatibility with the
+    stored artifacts.
+
     Contribution 1 claim: 'grading-aware SDM' means semantic distance between
     lesion classes is proportional to the ICDR grade cost of confusing them.
     This function implements that claim deterministically — no encoder training

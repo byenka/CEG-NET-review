@@ -16,8 +16,18 @@ import statistics
 from decimal import ROUND_CEILING, ROUND_HALF_UP, Decimal
 from pathlib import Path
 
-ROOT = Path(__file__).resolve().parents[2]
-SRC = ROOT / "_septem/scripts_optionB/target_recalibration.json"
+def _resolve(*candidates):
+    """Find the input in the research workspace layout or in the repository layout."""
+    for base in Path(__file__).resolve().parents:
+        for rel in candidates:
+            p = base / rel
+            if p.exists():
+                return p, base
+    raise SystemExit("input not found: " + " or ".join(candidates))
+
+
+SRC, ROOT = _resolve("_septem/scripts_optionB/target_recalibration.json",
+                     "results/experiments/target_recalibration.json")
 OUT = ROOT / "_FINAL_Latex/tables/S7_target_recalibration.tex"
 
 ORDER = ["OIA-DDR", "IDRiD", "TJDR", "FGADR"]
@@ -81,7 +91,7 @@ tex = "\n".join([
     r"\centering",
     (r"\caption{Recalibrating the operating point on the target domain. Cells give true-positive retention / "
      r"false-positive suppression at the target retention. $\tau_{\mathrm{source}}$ is selected on OIA-DDR validation, "
-     r"$\tau_{\mathrm{target}}$ on the held-out half of the target cohort, and $\tau_{\mathrm{oracle}}$ on the "
+     r"$\tau_{\mathrm{target}}$ on the held-out half of the target dataset, and $\tau_{\mathrm{oracle}}$ on the "
      r"evaluation half itself, an upper bound.}"),
     r"\label{tab:target_recalibration}",
     r"\footnotesize",
@@ -89,7 +99,7 @@ tex = "\n".join([
     r"\resizebox{\textwidth}{!}{%",
     r"\begin{tabular}{@{}lcccccc@{}}",
     r"\toprule",
-    (r"Cohort & Calib.\ images & $\tau_{\mathrm{source}}$ & $\tau_{\mathrm{target}}$ & "
+    (r"Dataset & Calib.\ images & $\tau_{\mathrm{source}}$ & $\tau_{\mathrm{target}}$ & "
      r"$\tau_{\mathrm{oracle}}$ & $\Delta$FP-supp. & SD \\"),
     (r" & per half & TP ret.\ / FP supp. & TP ret.\ / FP supp. & TP ret.\ / FP supp. & "
      r"(target$-$source) & (TP ret.) \\"),

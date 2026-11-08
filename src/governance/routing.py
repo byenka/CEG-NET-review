@@ -3,6 +3,15 @@ routing.py
 Automatic ground-truth derivation and tier-target construction for the
 Learned Governance Gate (LGG) — LGov-Net Contribution 2.
 
+LEGACY MODULE, NOT USED FOR THE REPORTED RESULTS.
+--------------------------------------------------
+The annotation-derived tier targets below trained the earlier four-way gate of
+src/governance/gate.py. In the paper, tiers are never learned and never read the
+annotations: they are the two-way rule over (retain decision, SDCA) of Algorithm 1,
+`assign` in tools/make_tier_routing.py. The RETAIN target that the reported gate is
+fitted to is written by tools/audit_stage3c_governance_targets.py. This module is kept
+because the earlier training scripts still import it.
+
 This module produces per-bbox *supervision targets* (pseudo-labels) that
 tell the LGG which tier (R1–R4) each candidate bounding box should be
 assigned to during training.  Targets are derived purely from detector

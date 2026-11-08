@@ -16,36 +16,70 @@ cached detections in `results/evidence/` and `results/detector_outputs/`.
 
 | Path | Contents |
 |---|---|
-| `src/` | Evidence pillars, knowledge graph, gate, routing, certificate, losses, models |
-| `src/kg/` | Graph schema, builder, encoder, dataset statistics |
-| `src/governance/` | `evidence.py` (SAS, SDCA, APS, PSS), `gate.py`, `routing.py`. `certificate.py` is a legacy schema kept as documentation; the reported certificates come from `tools/emit_certificates.py` |
+| `src/` | Evidence signals, knowledge graph, and the modules of an earlier design (see the next two rows) |
+| `src/kg/` | Graph schema and the fixed lesion-pair prior (`schema.py`), builder, dataset statistics. `encoder.py` (a graph-attention encoder) is exploratory and does not enter the reported gate |
+| `src/governance/` | `evidence.py` computes the evidence signals (SAS, SDCA, APS, PSS and the multi-source signals). `gate.py`, `routing.py`, `refine.py` and `certificate.py` are **legacy modules of an earlier four-way design** and produce no reported number; they are kept because older training scripts import them. Where the reported gate, tiers and certificates live is listed below |
 | `configs/` | `kg.yaml` holds the node set, the five edge types and the fixed author-defined severity costs |
 | `tools/` | Table generators, benchmark and evaluation entry points |
 | `journal/figures/scripts/` | Figure generators, one per figure, with the shared style module |
 | `scripts/` | Standalone analyses reported in the paper and its appendices |
 | `results/tables_source/` | Seed-level JSON behind the main and supplementary tables |
+| `results/published_tables/` | The tables as typeset in the paper (source file names; LaTeX assigns the numbers), against which the generators are checked |
 | `results/experiments/` | JSON behind the added baselines and the robustness checks |
 | `results/certificates/` | Certificate manifest, the five verification checks, one sample record per cohort, and the full certificates for all four cohorts, compressed |
 | `results/evidence/` | Per-detection evidence vectors for OIA-DDR validation and test, IDRiD, TJDR and FGADR (gzipped CSV, local path columns removed), and the scores of the five comparison detectors on the OIA-DDR candidates |
 | `results/detector_outputs/` | Cached detections per cohort: the primary detector, its horizontally flipped pass, and the secondary detector (zip). The TJDR and FGADR secondary exports include the lesion-free images (`merge_note.json` in each zip) |
-| `results/conditional_coverage/` | Results of the conditional-coverage, image-disjoint calibration, ensemble, gate-calibration and score-averaging operating-point analyses, with their run logs |
+| `results/conditional_coverage/` | Results of the conditional-coverage, image-disjoint calibration, miscoverage-level sensitivity, ensemble, gate-calibration and score-averaging operating-point analyses, with their run logs |
 | `scripts/conditional_coverage/` | Scripts of those analyses and of their tables |
 | `PROTOCOL_LOCK_*.md` | Protocols written before each locked analysis was run |
 
+## Where the paper lives in the code
+
+| Paper element | Code |
+|---|---|
+| Evidence signals SAS, SDCA, APS, PSS and the multi-source signals | `src/governance/evidence.py` (`compute_sas`, `compute_sdca`, `compute_aps`, `compute_pss`, `compute_source_disagreement`), assembled per detection by `tools/audit_stage3c_governance_targets.py`, which also writes the RETAIN target |
+| Lesion-pair prior $\mathrm{SDM}_{\mathrm{norm}}$ | costs in `configs/kg.yaml`, table built by `build_clinical_prior_sdm` in `src/kg/schema.py` and written by `tools/audit_stage3a_kg.py`. The costs are an author-defined severity ordering; the identifiers that mention ICDR are historical |
+| Gate $g(x)$ | `fit_mlp` and `apply_mlp` in `tools/eval_fp_reduction_benchmark.py` |
+| Operating point $\tau^\star$ (true-positive retention 0.80) | `threshold_for_tp_ret`, same file |
+| Split-conformal threshold, coverage gap, risk-coverage area | `conformal_threshold`, `coverage_at`, `aurc` in `tools/eval_selective_conformal_baselines.py`; external cohorts and score averaging in `scripts/conditional_coverage/` |
+| Four tiers (Algorithm 1) | `assign` in `tools/make_tier_routing.py`, $\delta = 0.30$ |
+| Audit certificates | `tools/emit_certificates.py`, checked by `tools/verify_certificates.py` |
+| Score fusion and the fusion-input gate | `scripts/gate_on_fusion.py` (in domain), `scripts/fusion_external.py` (external), `scripts/conditional_coverage/step6_fgadr_three_pass.py` (FGADR) |
+
+Internal identifiers keep the project's earlier working name, LGov-Net (`lgovnet`,
+`LGG`, `governance_*`), and some paths name research-workspace folders
+(`_septem/`, `_NATIVE/`, `_LGOVNET_NEW_SEP/`, `outputs/0506/`). Both refer to the
+CEG-Net pipeline described in the paper.
+
 ## Reproducing the tables
 
-The finalization tables are reproducible directly from the bundled JSON, without
-fitting a model or accessing detector caches:
+Every table of the paper that reports a result is regenerated from the bundled
+files, without a GPU, without fitting a detector and without the image datasets,
+and compared byte for byte with the typeset version in `results/published_tables/`:
+
+```bash
+python tools/verify_tables_against_generators.py
+```
+
+The script runs each generator with its file writes redirected into a temporary
+directory, so nothing in the repository is overwritten, and exits non-zero if any
+table differs. It currently reports 31 of 31 generated tables identical. Three
+files are not generated: `T_impl_hyperparams.tex` and `T_impl_computational.tex`
+state settings rather than results, and `T14_category_breakdown.tex` is not
+typeset. To write the tables instead, run a generator directly; each writes under
+`_FINAL_Latex/tables/`. For the dataset table, the ground-truth columns are the
+published counts, recomputed from the annotation XML when the datasets are placed
+under `data/`; the evaluated-image counts and detections per image are read from
+`results/detector_outputs/`.
+
+The finalization tables alone can also be rendered with
 
 ```bash
 python scripts/finalization/render_final_tables.py
 ```
 
-This writes `T15_fusion_evidence.tex` and `S10_native_gate_control.tex` under
-`_FINAL_Latex/tables/`, with the FGADR row of T15 read from
-`results/conditional_coverage/step6_fgadr_three_pass.json`. These are source
-filenames; manuscript numbering is assigned by LaTeX. The generator also applies
-editorial caption corrections to T8/S6 if those files are present.
+which writes `T15_fusion_evidence.tex` and `S10_native_gate_control.tex`, with the
+FGADR row of T15 read from `results/conditional_coverage/step6_fgadr_three_pass.json`.
 
 Two checks run from the bundled artifacts without a model. The certificate
 verification regenerates the supplementary table from `results/certificates/verification.json`:
@@ -64,12 +98,14 @@ The annotation-grounded endpoint is reproduced the same way, from
 `results/experiments/annotation_endpoint.json` with `scripts/make_annotation_endpoint_table.py`;
 its criteria were fixed before the run in `PROTOCOL_LOCK_annotation_endpoint.md`.
 
-Older generators and data are retained. They are not all turnkey: many expect
-`outputs/0506/` or `_septem/scripts_optionB/` paths from the research workspace,
-and some require per-detection evidence. Map their documented input paths before
-running them; bundled JSON alone does not reproduce the entire pipeline.
-Figure scripts likewise have different input requirements. The architecture
-schematic can be rendered with `python scripts/finalization/render_architecture.py`.
+The table generators above resolve their inputs in either layout. The experiment
+runners that produced the JSON files (for example `tools/eval_fp_reduction_benchmark.py`
+and the scripts under `scripts/`) read the uncompressed evidence CSVs and detector
+caches at research-workspace paths such as `outputs/0506/`; unpack
+`results/evidence/` and `results/detector_outputs/` and map those paths before
+re-running an experiment. Figure scripts likewise have different input requirements.
+The architecture schematic can be rendered with
+`python scripts/finalization/render_architecture.py`.
 
 The primary MLP protocol (the exploratory graph control uses its separately documented optimizer): the gate is fitted on the
 OIA-DDR validation split only (one hidden layer of 16 tanh units, full-batch

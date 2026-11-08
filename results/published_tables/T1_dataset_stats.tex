@@ -1,0 +1,46 @@
+%   data/<ds>/xml/<split>/*.xml  (ground-truth boxes; degenerate boxes dropped)
+%   outputs/detector_cache/primary/<ds>/export_summary.json  (preds/img)
+\begin{table}[htbp]
+\centering
+\caption{Dataset statistics. $N_{\mathrm{source}}$ is the number of annotated images the
+provider distributes and $N_{\mathrm{eval}}$ the number entering the cached evaluation set. The two differ only on the TJDR train split, which no reported result
+uses. $N_{\mathrm{GT}}$ counts ground-truth boxes and $w_{\mathrm{MA}}$ is the
+median microaneurysm box width. $N_{\mathrm{GT}}$/img is taken over
+$N_{\mathrm{source}}$ and preds/img over $N_{\mathrm{eval}}$, preds being the
+candidate detections of the frozen primary detector. FGADR has no test split and is
+evaluated on its train split.}
+\label{tab:dataset_stats}
+\footnotesize
+\setlength{\tabcolsep}{3pt}
+\resizebox{\textwidth}{!}{%
+\begin{tabular}{lcccccccccc}
+\toprule
+\multirow{2}{*}{\textbf{Dataset / Split}}
+  & \multirow{2}{*}{$N_\mathrm{source}$}
+  & \multirow{2}{*}{$N_\mathrm{eval}$}
+  & \multirow{2}{*}{$N_\mathrm{GT}$}
+  & \multirow{2}{*}{$N_\mathrm{GT}$/img}
+  & \multicolumn{4}{c}{GT boxes per class}
+  & $w_{\mathrm{MA}}$
+  & preds/img \\
+\cmidrule(lr){6-9}
+  & & & & & MA & HE & Hard\_EX & Soft\_EX & (med, px) & \\
+\midrule
+\textbf{OIA-DDR} & & & & & & & & & & \\
+\quad train & 383 & 383 & 58{,}200 & 152.0 & 11{,}566 & 9{,}478 & 35{,}696 & 1{,}460 & 8 & 254.5 \\
+\quad valid & 149 & 149 & 6{,}167 & 41.4 & 2{,}556 & 1{,}342 & 1{,}920 & 349 & 8 & 266.5 \\
+\quad test & 225 & 225 & 17{,}032 & 75.7 & 2{,}041 & 6{,}457 & 8{,}320 & 214 & 8 & 285.4 \\
+\midrule
+\textbf{IDRiD} & & & & & & & & & & \\
+\quad train & 54 & 54 & 10{,}583 & 196.0 & 2{,}223 & 1{,}428 & 6{,}833 & 99 & 4 & 296.5 \\
+\quad test & 27 & 27 & 5{,}774 & 213.9 & 1{,}085 & 535 & 4{,}116 & 38 & 16 & 297.9 \\
+\midrule
+\textbf{TJDR} & & & & & & & & & & \\
+\quad train & 448 & 400 & 6{,}911 & 15.4 & 1{,}223 & 2{,}517 & 2{,}783 & 388 & 13 & 215.6 \\
+\quad test & 113 & 113 & 1{,}646 & 14.6 & 284 & 678 & 569 & 115 & 13 & 205.1 \\
+\midrule
+\textbf{FGADR} & & & & & & & & & & \\
+\quad train & 1{,}842 & 1{,}842 & 102{,}915 & 55.9 & 11{,}216 & 37{,}807 & 51{,}813 & 2{,}079 & 9 & 292.6 \\
+\bottomrule
+\end{tabular}}
+\end{table}

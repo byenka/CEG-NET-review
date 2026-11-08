@@ -2,6 +2,12 @@
 refine.py
 KG-guided bounding-box refinement for tier R3 detections — LGov-Net Contribution 2.
 
+LEGACY MODULE, NOT USED FOR THE REPORTED RESULTS.
+--------------------------------------------------
+CEG-Net as reported is post-hoc and never changes a box or a class; no reported number
+passes through this refinement. It is kept because the earlier training scripts still
+import it.
+
 Applies a four-step pipeline to each R3 bbox:
 
   Step 1 — Cross-head box aggregation

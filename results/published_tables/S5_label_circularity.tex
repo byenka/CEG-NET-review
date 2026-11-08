@@ -1,0 +1,21 @@
+\begin{table}[htbp]
+\centering
+\caption{Gating on a label that does not use $\mathrm{SDM}_{\mathrm{norm}}$. The clinically close and unsafe-mismatch detections are removed from OIA-DDR test, leaving 62{,}906 of 64{,}214 detections and 23{,}312 positives. The first block keeps the gates of the main results and the second refits them on this label. AUPRC is mean $\pm$ SD over five seeds.}
+\label{tab:label_circularity}
+\footnotesize
+\setlength{\tabcolsep}{4pt}
+\resizebox{\textwidth}{!}{%
+\begin{tabular}{@{}llccc@{}}
+\toprule
+Model & Gate fit & AUPRC & $\Delta$AUPRC vs.\ $M_0$ & Seeds $\Delta>0$ \\
+\midrule
+Detector score threshold ($M_0$) & -- & 0.638 & -- & -- \\
+\midrule
+Knowledge-graph gate (B4) & as in the main results & 0.667 $\pm$ 0.003 & $+$0.029 $\pm$ 0.003 & 5/5 \\
+Full gate, CEG-Net (B6) & as in the main results & 0.682 $\pm$ 0.002 & $+$0.045 $\pm$ 0.002 & 5/5 \\
+\midrule
+Knowledge-graph gate (B4) & refitted on this label & 0.667 $\pm$ 0.004 & $+$0.029 $\pm$ 0.004 & 5/5 \\
+Full gate, CEG-Net (B6) & refitted on this label & 0.682 $\pm$ 0.002 & $+$0.044 $\pm$ 0.002 & 5/5 \\
+\bottomrule
+\end{tabular}}
+\end{table}

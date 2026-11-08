@@ -17,10 +17,21 @@ import json
 from decimal import ROUND_HALF_UP, Decimal
 from pathlib import Path
 
-ROOT = Path(__file__).resolve().parents[2]
-ISO = ROOT / "_septem/scripts_optionB/net_benefit_isotonic_check.json"
-BS = ROOT / "_septem/scripts_optionB/net_benefit_bootstrap.json"
-V2 = ROOT / "_septem/scripts_optionB/net_benefit_v2.json"
+def _resolve(*candidates):
+    """Find the input in the research workspace layout or in the repository layout."""
+    for base in Path(__file__).resolve().parents:
+        for rel in candidates:
+            p = base / rel
+            if p.exists():
+                return p, base
+    raise SystemExit("input not found: " + " or ".join(candidates))
+
+
+ISO, ROOT = _resolve("_septem/scripts_optionB/net_benefit_isotonic_check.json",
+                     "results/experiments/net_benefit_isotonic_check.json")
+_DIR = ISO.parent
+BS = _DIR / "net_benefit_bootstrap.json"
+V2 = _DIR / "net_benefit_v2.json"
 OUT = ROOT / "_FINAL_Latex/tables/S8_net_benefit.tex"
 
 SYS = [("detector_score", "Detector score"), ("score_fusion", "Score fusion"),
