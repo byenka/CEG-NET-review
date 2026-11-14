@@ -1,19 +1,4 @@
-"""annotation_endpoint_experiment.py — validasi prior terhadap endpoint anotasi ahli.
 
-Protokol dikunci di _NATIVE/PROTOCOL_LOCK_annotation_endpoint.md SEBELUM dijalankan.
-Ringkasnya: outcome berasal dari anotasi ahli (kelas prediksi != kelas GT pada deteksi
-terlokalisasi), prediktor hanya dari keluaran model dan prior. SDM tidak dipakai untuk
-mendefinisikan outcome, sehingga uji ini tidak sirkular seperti Tabel 13.
-
-Kriteria lolos: A1 AUROC SDCA > 0.5 (CI tidak memuat 0.5) di OIA-DDR test dan >=2/3 eksternal;
-A2 SDCA > kontrol permutasi (CI berpasangan > 0) di OIA-DDR test; A3 AUROC(MARGIN+SDCA) >
-AUROC(MARGIN) (CI berpasangan > 0) di OIA-DDR test dan >=2/3 eksternal.
-
-CPU saja. Hanya membaca CSV dan graf di lokasi asli; menulis ke _NATIVE/results/.
-
-Jalankan dari root repositori:
-  python _NATIVE/scripts/annotation_endpoint_experiment.py
-"""
 import csv
 import hashlib
 import json
@@ -60,7 +45,7 @@ def md5(p):
 
 # ----------------------------------------------------------------------- SDM prior
 def load_sdm():
-    """Matriks jarak semantik dari field clinical_cost (BUKAN weight yang berlantai epsilon)."""
+
     g = json.loads(GRAPH.read_text(encoding="utf-8"))
     idx = {n: i for i, n in enumerate(LESIONS)}
     raw = np.zeros((4, 4))
@@ -71,7 +56,7 @@ def load_sdm():
 
 
 def permuted_sdm(sdm, seed):
-    """Permutasi 6 nilai off-diagonal antar pasangan; himpunan nilai dipertahankan."""
+
     pairs = [(i, j) for i in range(4) for j in range(i + 1, 4)]
     vals = np.random.default_rng(seed).permutation([sdm[i, j] for i, j in pairs])
     out = np.zeros((4, 4))
@@ -122,7 +107,7 @@ def image_boot_idx(image_id, n_boot, seed):
 
 
 def auc_ci(y, s, image_id):
-    """AUROC dengan CI bootstrap berklaster-citra; draw degenerate dilewati."""
+
     point = float(roc_auc_score(y, s))
     vals = []
     for idx in image_boot_idx(image_id, N_BOOT, BOOT_SEED):

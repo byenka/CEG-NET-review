@@ -1,4 +1,4 @@
-"""Schematic: keep score aggregation, optional gating and audit paths explicit."""
+
 from pathlib import Path
 import matplotlib
 matplotlib.use('Agg')

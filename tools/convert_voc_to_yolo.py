@@ -1,29 +1,5 @@
 #!/usr/bin/env python
-"""convert_voc_to_yolo.py — convert OUR OIA-DDR Pascal-VOC XML annotations into
-YOLO/ultralytics format for the OPTIONAL modern comparators (YOLOv8 / RT-DETR).
 
-Fairness contract (critical): this reuses ``DRDetectionDataset`` directly, so the
-images, the raw->canonical class mapping (``map_raw_to_kg``), and the box-validity
-filtering are BYTE-FOR-BYTE the same samples the torchvision comparison detectors
-(E1) train on. No re-implementation of parsing => no protocol drift => the YOLO
-comparison stays on the SAME split with the SAME labels.
-
-Class id mapping (YOLO is 0-indexed; torchvision was 1-indexed):
-    0 = MA      1 = HE      2 = Hard_EX     3 = Soft_EX
-(YOLO_id = torchvision_label - 1.)
-
-Output layout (ultralytics convention; ``valid`` -> ``val``):
-    <out>/images/{train,val,test}/<stem>.jpg
-    <out>/labels/{train,val,test}/<stem>.txt   # "cls cx cy w h" normalised [0,1]
-    <out>/data.yaml
-
-NEVER overwrites a previous conversion: refuses if <out> already has data.yaml
-unless --overwrite is passed (see tools/_safe_output.py).
-
-Usage (server):
-    python tools/convert_voc_to_yolo.py \
-        --data_root data/oiaddr --out data/oiaddr_yolo --link
-"""
 from __future__ import annotations
 
 import argparse

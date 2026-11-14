@@ -1,69 +1,5 @@
 #!/usr/bin/env python
-"""
-train_stage5_mode2.py
-Phase 19N — Stage 5: Mode 2 / C3 / SDGL Governance-Centric Training.
 
-Architecture spec (architecture-lgov-net-v3_realistic.txt, §C3):
-  L_SDGL  = λ1·L_det^R1  +  λ2·L_soft^R2  +  λ3·Σ_j w_j·L_det^R3
-  L_KG    = Σ_{(i,j) ∈ E_fixed} (SDM(c_i, c_j) − w_target)²
-  L_total = L_SDGL + λ_gate·L_gate + λ_KG·L_KG
-
-What this script trains:
-  This script now supports two execution paths:
-  1) Proxy path (default, Phase 1.5):
-      - KG encoder + LGG + SDGL re-classifier over Stage 3C governance records.
-      - Detector scores are frozen inputs.
-  2) Full-detector path (--full_mode2_detector):
-      - Loads the real Faster R-CNN checkpoint.
-      - Replaces torchvision ROI classification loss with SDGL-shaped loss.
-      - Fine-tunes detector parameters end-to-end on real detection batches.
-
-Architecture note:
-  The --full_mode2_detector path closes Mode 2 condition (i): SDGL loss is
-  applied directly in detector training instead of proxy re-classification.
-  The default proxy path remains available for continuity of existing Stage 5
-  experiments and legacy ablation comparisons.
-
-Mandatory ablations for C3 claim (architecture §C3 conditional rule):
-  (i)  Standard run: full SDGL with SDM-temp, closed-loop KG, with L_KG.
-  (ii) --uniform_temp: τ=1 for all classes (SDM-temp vs uniform-temp ablation).
-  (iii) --freeze_kg: freeze KG encoder (closed-loop vs frozen-KG ablation).
-  (iv) --lambda_kg 0.0: remove L_KG anchor (with vs without L_KG ablation).
-
-Usage:
-  # Smoke test
-  python tools/train_stage5_mode2.py \\
-    --detector_checkpoint outputs/detector_stage1/stage1c_fasterrcnn_r5b_ext25/fasterrcnn_best.pt \\
-    --lgg_checkpoint outputs/stage3d_lgg/lgg_models.pkl \\
-    --kg_dir outputs/stage3_audit \\
-    --stage3c_dir outputs/stage3c_audit \\
-    --data_root data/oiaddr \\
-    --epochs 1 --smoke_test \\
-    --output_dir outputs/mode2/smoke
-
-  # Full standard run
-  python tools/train_stage5_mode2.py \\
-    --detector_checkpoint outputs/detector_stage1/stage1c_fasterrcnn_r5b_ext25/fasterrcnn_best.pt \\
-    --lgg_checkpoint outputs/stage3d_lgg/lgg_models.pkl \\
-    --kg_dir outputs/stage3_audit \\
-    --stage3c_dir outputs/stage3c_audit \\
-    --data_root data/oiaddr \\
-    --epochs 20 --batch_size 128 --lr 5e-5 \\
-    --lambda1 1.0 --lambda2 0.5 --lambda3 0.3 \\
-    --lambda_kg 0.1 --lambda_gate 0.05 \\
-    --tau_start 1.0 --tau_end 0.1 \\
-    --seed 42 \\
-    --output_dir outputs/mode2/standard
-
-  # Ablation: uniform temperature (no SDM modulation)
-  python tools/train_stage5_mode2.py ... --uniform_temp --output_dir outputs/mode2/ablation_uniform_temp
-
-  # Ablation: frozen KG (no co-adaptation)
-  python tools/train_stage5_mode2.py ... --freeze_kg --output_dir outputs/mode2/ablation_frozen_kg
-
-  # Ablation: no L_KG anchor
-  python tools/train_stage5_mode2.py ... --lambda_kg 0.0 --output_dir outputs/mode2/ablation_no_lkg
-"""
 
 from __future__ import annotations
 
@@ -328,7 +264,7 @@ def _compute_false_positive_pressure(
 
 
 def load_governance_csv(csv_path: Path) -> List[Dict]:
-    """Load Stage 3C governance_features CSV into list of row dicts."""
+
     rows = []
     if not csv_path.exists():
         raise FileNotFoundError(f"Stage 3C CSV not found: {csv_path}")
@@ -349,10 +285,7 @@ def _safe_float(row: Dict, key: str, default: float = 0.5) -> float:
 
 
 def parse_governance_row(row: Dict) -> Optional[Dict]:
-    """Extract training-relevant fields from one Stage 3C CSV row.
 
-    Returns None for R4 rows (no gradient contribution) or malformed rows.
-    """
     tier_str = row.get("tier_target", "R4").strip()
     tier_idx = TIER_NAME_TO_IDX.get(tier_str, 3)
 
@@ -427,7 +360,7 @@ def load_sdm_norm(kg_dir: Path) -> Dict:
 
 
 def load_kg_graph(kg_dir: Path) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
-    """Load KG graph tensors for LGovNetEncoder (nodes, edges, edge_types)."""
+
     nodes_path = kg_dir / "nodes.json"
     edges_path = kg_dir / "edges.json"
     if not nodes_path.exists() or not edges_path.exists():
@@ -485,14 +418,7 @@ def load_lgg_from_pkl(
     device: torch.device,
     require_state_dict: bool = True,
 ) -> LGG:
-    """Load LGG MLP weights from Stage 3D lgg_models.pkl.
 
-    The pickle contains {"B2_MLP": {"weights": ..., "config": ...}} or similar.
-    Initialises a fresh LGG and loads the best MLP variant weights.
-
-    When require_state_dict=True (default), this loader enforces a real PyTorch
-    LGG warm-start and will fail if no state_dict-backed key is available.
-    """
     if not pkl_path.exists():
         raise FileNotFoundError(
             f"LGG models not found: {pkl_path}. Run STEP 12 (train_stage3d_lgg.py) first."
@@ -567,12 +493,7 @@ def load_lgg_from_pkl(
 
 
 def _probe_lgg_state_dict(pkl_path: Optional[Path]) -> Dict[str, object]:
-    """Probe an LGG pkl WITHOUT instantiating the model.
 
-    Used by B2 provenance contract to record whether ``B3_LGG_TORCH`` carries a
-    real ``state_dict``, even in the full-detector path where LGG is not loaded
-    into the training loop.
-    """
     info: Dict[str, object] = {
         "pkl_path": str(pkl_path) if pkl_path else None,
         "exists": False,
@@ -606,7 +527,7 @@ def _probe_lgg_state_dict(pkl_path: Optional[Path]) -> Dict[str, object]:
 def _resolve_baseline_metrics(
     baseline_audit_path: Optional[str],
 ) -> Dict[str, Optional[float]]:
-    """Best-effort read of baseline detector metrics from stage1a_raw.json."""
+
     out: Dict[str, Optional[float]] = {
         "mAP_50": None,
         "mAP_medium": None,
@@ -655,7 +576,7 @@ def _eval_detector_metrics_full_mode(
     device: torch.device,
     detections_per_img: int,
 ) -> Dict[str, float]:
-    """Evaluate detector metrics required by v2 composite checkpoint scoring."""
+
     was_training = model.training
     model.eval()
 
@@ -735,7 +656,7 @@ def _compute_v2_composite_score(
     metrics: Dict[str, float],
     baseline_metrics: Dict[str, Optional[float]],
 ) -> float:
-    """Lower-is-better v2 checkpoint score balancing detection and FP behavior."""
+
 
     def _norm_ratio(value: float, baseline: Optional[float], fallback: float) -> float:
         if baseline is not None and baseline > 0:
@@ -777,7 +698,7 @@ _FULL_MODE2_CLAIM_SCOPE = "full_detector_lgg_evidence_closed_loop"
 
 
 class SDGLReClassifier(nn.Module):
-    """Trainable proxy head that restores a real gradient path for L_SDGL."""
+
 
     def __init__(self, embedding_dim: int, hidden_dim: int = 64):
         super().__init__()
@@ -1055,14 +976,7 @@ def _load_lgg_b3_warmstart(
     embedding_dim: int = 64,
     hidden_dim: int = 64,
 ) -> Tuple[LGG, bool, Optional[str]]:
-    """Build an LGG instance, warm-started from Mode 1 B3_LGG_TORCH where shape-compatible.
 
-    Returns:
-        (lgg, warmstart_loaded, reason)
-        - warmstart_loaded=True iff state_dict actually loaded from B3_LGG_TORCH.
-        - reason: 'mode1_b3_lgg_torch' on success, else a short failure reason
-          ('missing_pkl' | 'missing_key' | 'no_state_dict' | 'shape_mismatch:...').
-    """
     lgg = LGG(
         evidence_dim=4,
         embedding_dim=embedding_dim,
@@ -1123,27 +1037,7 @@ def _train_detector_epoch_closed_loop(
     use_real_class_probs_bridge: bool = True,
     secondary_cache: Optional[Dict[str, List[Dict]]] = None,
 ) -> Dict[str, float]:
-    """Mode 2 closed-loop training step (B4 + B5 wired; REV-7 Sprint 1+2 patch).
 
-    Per batch:
-      1. KG encoder forward → lesion_embeddings (grad through KG if not frozen).
-      2. Detector forward (train, grad) → loss_dict (incl. patched ROI SDGL).
-      3. Detector forward (eval, no_grad) → final detections per image.
-         REV-7: when ``use_real_class_probs_bridge`` is True, the eval pass uses
-         ``predict_with_class_probs`` so per-box real ROI softmax flows into the
-         online evidence builder; SDCA + soft e_pred become claim-valid
-         (architecture §EVIDENCE-FIDELITY CONTRACT).
-      4. Build per-detection online evidence + IoU-tier supervision target.
-         REV-7: when ``secondary_cache`` is provided, per-image SAS uses real
-         cross-detector agreement (Stage 5B prerequisite).
-      5. LGG.forward(gate_input) → tier_logits; GateLoss vs tier_targets.
-      6. L_total = sum(loss_dict) + λ_kg L_KG + λ_gate L_gate; backprop.
-
-    Gradient pathways exercised:
-      - Detector params (from loss_dict)
-      - KG encoder (from L_KG anchor + via e_pred → gate_input → LGG forward)
-      - LGG params (from L_gate)
-    """
     model.train()
     lgg.train()
     if kg_encoder is not None:
@@ -2548,7 +2442,7 @@ def eval_gate_accuracy(
     edge_types: torch.Tensor,
     device: torch.device,
 ) -> float:
-    """Compute gate tier-prediction accuracy on val records."""
+
     encoder.eval()
     gate.eval()
 
@@ -2589,21 +2483,7 @@ def eval_reclassifier(
     sdm_norm: Dict,
     device: torch.device,
 ) -> Dict[str, float]:
-    """Measure what L_SDGL actually trains — the re-classifier head.
 
-    Until this exists, val_gate_acc reflects only L_gate; the SDGL branch
-    (re-classifier output) is a dead-end and the four C3 ablations cannot
-    be distinguished. This evaluates the re-classifier directly on R1–R3
-    val records:
-      - reclass_acc: argmax-class prediction accuracy.
-      - reclass_sdm_cost_mean: average clinical-SDM cost per record
-        (0 for correct predictions; SDM(pred,gt) for misclassifications).
-      - reclass_sdm_cost_misclass: SDM cost averaged over MISCLASSIFIED
-        records only — interpretable as 'severity of typical error'.
-        THIS is the H2-aligned proxy metric: SDM-temp / freeze_kg /
-        lambda_kg ablations must be compared on this, NOT val_gate_acc.
-      - reclass_per_class_acc: per-lesion-class accuracy.
-    """
     encoder.eval()
     reclassifier.eval()
 

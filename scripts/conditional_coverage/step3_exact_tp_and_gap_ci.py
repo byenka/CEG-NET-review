@@ -1,10 +1,5 @@
 #!/usr/bin/env python
-"""step3_exact_tp_and_gap_ci.py - exact-TP sensitivity, paired coverage-gap intervals, pointwise risk dominance.
 
-Protocol locked before the run: _LGOVNET_NEW_SEP/PROTOCOL_LOCK_step3_exact_tp_and_gap_ci.md
-Output: _LGOVNET_NEW_SEP/results/step3_exact_tp_and_gap_ci.json
-Run from the repository root with the project environment.
-"""
 from __future__ import annotations
 
 import json
@@ -37,7 +32,7 @@ def ci(v):
 
 
 def w_curve_stats(order, label, w):
-    """Expand the resample along a fixed score order; return (AURC, all-points trapezoid AUPRC)."""
+
     idx = np.repeat(order, w[order])
     y = label[idx].astype(np.float64)
     k = np.arange(1, y.size + 1, dtype=np.float64)

@@ -1,15 +1,4 @@
-"""detector_anchor.py
-Teacher-student anchor regularizer utilities for Mode 2 full-detector training.
 
-This module captures ROI head logits/box regression tensors during Faster R-CNN
-forward passes and computes a lightweight distillation loss:
-
-    L_anchor = alpha * KL(teacher_cls || student_cls)
-             + beta  * SmoothL1(teacher_box, student_box)
-
-The loss is intentionally conservative and can be used as a small stabilizing
-term to prevent regression while adding governance losses.
-"""
 
 from __future__ import annotations
 
@@ -24,12 +13,7 @@ import torch.nn.functional as F
 def capture_roi_head_outputs(
     model: torch.nn.Module,
 ) -> Generator[Dict[str, Optional[torch.Tensor]], None, None]:
-    """Capture ROI box_predictor outputs for one forward pass.
 
-    Returns a dict with keys:
-      - "cls_logits": Tensor[N, C] or None
-      - "box_regression": Tensor[N, 4*C] or None
-    """
     state: Dict[str, Optional[torch.Tensor]] = {
         "cls_logits": None,
         "box_regression": None,
@@ -59,14 +43,7 @@ def compute_anchor_loss(
     alpha: float = 1.0,
     beta: float = 0.5,
 ) -> Dict[str, torch.Tensor]:
-    """Compute anchor distillation loss from captured ROI outputs.
 
-    Returns a dict with scalar tensors:
-      - l_anchor
-      - l_anchor_cls
-      - l_anchor_box
-      - n_aligned (number of aligned proposal rows)
-    """
     ref = student_cls_logits
     if ref is None:
         ref = student_box_regression

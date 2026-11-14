@@ -1,28 +1,4 @@
-"""fusion_external.py — apakah gating masih menambah nilai DI ATAS fusi skor, di luar OIA-DDR?
 
-Lanjutan dari baselines_nokg.py dan gate_on_fusion.py, yang menjawab pertanyaan itu hanya pada
-OIA-DDR. Reviewer akan menyebut hasil satu dataset sebagai kebetulan, jadi perbandingan yang sama
-diulang pada tiga kohort eksternal dengan protokol zero-shot naskah.
-
-Protokol (sama persis dengan T12 dan naskah):
-  * gate dipasang SEKALI pada OIA-DDR valid (fit_mlp, 16 tanh, 1500 iterasi, lr 0.1), 5 seed,
-    lalu diterapkan tanpa perubahan ke setiap kohort. Tidak ada refit per kohort.
-  * AUPRC = average precision (sklearn), bebas urutan skor kembar.
-  * bootstrap berpasangan image-clustered, 2.000 resampel, bootstrap_seed 0, per seed gate.
-  * tidak ada titik kerja (tau*) untuk kohort eksternal: naskah melaporkan kohort eksternal
-    sebagai hasil PERINGKAT saja, karena tau* dari domain sumber tidak transfer.
-
-Batas keras yang ditemukan pada cache, BUKAN pilihan desain:
-  * secondary_v2 (detektor kedua) hanya ada untuk oiaddr, idrid dan tjdr. FGADR tidak punya.
-    Karena itu FGADR hanya bisa fusi DUA pass (primer + flip), dan skor fusi di sana bukan
-    besaran yang sama dengan yang dipakai memasang gate_fused pada OIA-DDR valid (tiga pass).
-    gate_fused karena itu TIDAK dilaporkan untuk FGADR; yang dilaporkan hanya baseline fusi
-    dua pass dan gate penuh, sebagai deskriptif.
-  * split cache mengikuti CSV resmi tiap kohort: FGADR memakai split train (seluruh kohort
-    dipakai sebagai evaluasi zero-shot), tiga kohort lain memakai test.
-
-Keluaran: _septem/scripts_optionB/fusion_external.json. Hanya membaca.
-"""
 import csv
 import json
 import statistics
@@ -80,7 +56,7 @@ def cache_entries(root: Path, split: str, image_id: str):
 
 
 def fused_scores(csv_path: Path, key: str, split: str, use_v2: bool):
-    """Skor fusi per baris CSV. Kotak primer dicocokkan lewat bbox_id, sumber lain lewat IoU."""
+
     with open(csv_path, newline="", encoding="utf-8") as fh:
         rows = [(r["bbox_id"], r["image_id"], float(r["pred_score"])) for r in csv.DictReader(fh)]
     by_img = {}

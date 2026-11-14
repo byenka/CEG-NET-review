@@ -1,41 +1,5 @@
 #!/usr/bin/env python
-"""eval_fp_reduction_benchmark.py — controlled FP-reduction benchmark (>=5 methods).
 
-CAS Tier-1 rigour: compare the KG-evidence governance gate against several
-RECOGNISED false-positive-reduction / confidence / uncertainty baselines, ALL on
-the SAME frozen detector outputs, SAME per-box set, SAME splits. No new detector
-runs — everything is derived from the Stage3C governance_features CSVs that
-already contain per-box detector score, class-uncertainty signals (MSP, margin,
-entropy-confidence), KG evidence, and the TP/FP label.
-
-Protocol (matches the Mode-1 governance evaluation):
-  - label = 1 : box localises a real lesion (IoU>=0.1 with GT)  -> keep (TP-side)
-  - label = 0 : background false positive                       -> reject (FP-side)
-  - For each method, the per-box "keep-score" s is higher for boxes to keep.
-  - Operating point: choose the threshold on VALID that retains >= target TP
-    fraction (default 0.80); apply that threshold to TEST.
-  - Report on TEST: TP-retention, FP-suppression, precision-after, and the
-    threshold-free AUPRC of the keep-score for TP-vs-FP separation.
-  - Learned methods (temperature scaling, logistic regression) are fit on VALID
-    only (no test leakage).
-
-Methods (>=5):
-  M0_score        : detector score                       (threshold baseline)
-  MSP             : max-softmax prob (unc_msp)           [Hendrycks&Gimpel'17]
-  Entropy         : entropy-confidence (unc_entconf)     [predictive entropy]
-  Margin          : top1-top2 margin (unc_margin)        [margin confidence]
-  TempScale       : temperature-scaled score             [Guo et al. 2017]
-  Evidence-LogReg : logistic reg. on [SAS,SDCA,APS,PSS]  (learned-linear gate)
-  KG-gate (ours)  : LGG governance gate                  (provide via --ours_*)
-
-Usage:
-  python tools/eval_fp_reduction_benchmark.py \
-    --valid_csv <stage3c>/governance_features_valid.csv \
-    --test_csv  <stage3c>/governance_features_test.csv \
-    --tp_ret_target 0.80 \
-    --output_json outputs/fp_reduction_benchmark.json \
-    [--ours_fp_supp 0.5584 --ours_tp_ret 0.7856 --ours_r1_prec 0.1347 --ours_auprc 0.5314]
-"""
 from __future__ import annotations
 
 import argparse
@@ -52,17 +16,14 @@ import numpy as np
 # ---------- data ----------
 
 def open_csv(path: Path):
-    """Open a CSV as text; the repository ships the evidence CSVs gzipped."""
+
     if str(path).endswith(".gz"):
         return gzip.open(path, "rt", newline="", encoding="utf-8")
     return open(path, newline="", encoding="utf-8")
 
 
 def load_csv(path: Path, positive: str = "tp_exact") -> Dict[str, np.ndarray]:
-    """positive='tp_exact' -> label 1 iff category==TP_EXACT (clinically correct
-    detection: correct class + IoU>=0.5); the clinical FP-reduction task aligned
-    with the governance routing claim. positive='near_lesion' -> label 1 iff the
-    CSV `label` column is 1 (IoU>=0.1 with any GT, looser)."""
+
     with open_csv(path) as fh:
         rows = list(csv.DictReader(fh))
     def fcol(c):
@@ -115,7 +76,7 @@ def load_csv(path: Path, positive: str = "tp_exact") -> Dict[str, np.ndarray]:
 # ---------- metrics ----------
 
 def auprc(keep_score: np.ndarray, label: np.ndarray) -> float:
-    """All-points AUPRC for keep-score separating label=1 (pos) from label=0."""
+
     order = np.argsort(-keep_score)
     y = label[order]
     tp = np.cumsum(y)
@@ -131,7 +92,7 @@ def auprc(keep_score: np.ndarray, label: np.ndarray) -> float:
 
 def threshold_for_tp_ret(keep_score: np.ndarray, label: np.ndarray,
                          target: float) -> float:
-    """Highest threshold t such that TP-retention(keep_score>=t) >= target."""
+
     pos = keep_score[label == 1]
     if pos.size == 0:
         return float(np.min(keep_score))
@@ -158,7 +119,7 @@ def eval_at_threshold(keep_score: np.ndarray, label: np.ndarray,
 # ---------- learned baselines ----------
 
 def fit_temperature(score: np.ndarray, label: np.ndarray) -> float:
-    """1-D temperature on logits of score to minimise NLL (grid search)."""
+
     eps = 1e-6
     p = np.clip(score, eps, 1 - eps)
     logit = np.log(p / (1 - p))
@@ -181,7 +142,7 @@ def apply_temperature(score: np.ndarray, T: float) -> np.ndarray:
 
 def fit_logreg(X: np.ndarray, y: np.ndarray, iters: int = 500, lr: float = 0.5
                ) -> np.ndarray:
-    """Tiny logistic regression (numpy GD), standardised features + bias."""
+
     mu, sd = X.mean(0), X.std(0) + 1e-8
     Xs = (X - mu) / sd
     Xb = np.concatenate([Xs, np.ones((Xs.shape[0], 1))], axis=1)
@@ -204,8 +165,7 @@ def apply_logreg(X: np.ndarray, params: np.ndarray) -> np.ndarray:
 
 def fit_mlp(X: np.ndarray, y: np.ndarray, hidden: int = 16, iters: int = 1500,
             lr: float = 0.1, seed: int = 0) -> dict:
-    """Tiny 1-hidden-layer MLP (numpy, tanh + sigmoid), standardised features.
-    Faithful in-protocol proxy of the nonlinear LGG governance gate."""
+
     rng = np.random.default_rng(seed)
     mu, sd = X.mean(0), X.std(0) + 1e-8
     Xs = (X - mu) / sd
@@ -246,9 +206,7 @@ def paired_bootstrap_gain(m0_score: np.ndarray, kg_score: np.ndarray,
                           label: np.ndarray, image_id: np.ndarray,
                           thr_m0: float, thr_kg: float,
                           n_boot: int, seed: int = 0) -> dict:
-    """Image-clustered paired bootstrap of FP-suppression gain (KG − M0) at FIXED
-    thresholds (fit once on full valid). Resamples whole images with replacement so
-    boxes correlated within an image are kept together (honest CI width)."""
+
     rng = np.random.default_rng(seed)
     uniq = np.unique(image_id)
     groups = [np.where(image_id == im)[0] for im in uniq]
@@ -276,8 +234,7 @@ def paired_bootstrap_gain(m0_score: np.ndarray, kg_score: np.ndarray,
 
 def paired_bootstrap_auprc(s_a: np.ndarray, s_b: np.ndarray, label: np.ndarray,
                            image_id: np.ndarray, n_boot: int, seed: int = 0) -> dict:
-    """Image-clustered paired bootstrap of the AUPRC gain auprc(s_a) - auprc(s_b).
-    Threshold-free (no operating point), so no thresholds needed."""
+
     rng = np.random.default_rng(seed)
     uniq = np.unique(image_id)
     groups = [np.where(image_id == im)[0] for im in uniq]
@@ -300,18 +257,7 @@ EVIDENCE_FEATURES: Tuple[str, ...] = ("ev_sas", "ev_sdca", "ev_aps", "ev_pss")
 def build_methods(valid: Dict, test: Dict, mlp_seed: int = 0,
                   drop_features: Sequence[str] = ()
                   ) -> List[Tuple[str, str, np.ndarray, np.ndarray]]:
-    """Return list of (name, family, keep_score_valid, keep_score_test).
 
-    mlp_seed controls the gate (MLP) weight init -> multi-seed robustness checks.
-
-    drop_features removes evidence pillars from the gate input. Motivation
-    (2026-09-14): ev_pss is a real, varying signal on the OIA-DDR split the gate
-    is fitted on (59% 'implemented') but a dead constant 0.5 on every external
-    cohort (100% 'placeholder'). Fitting on a live feature and testing on a
-    constant that lies outside the training range confounds the domain-shift
-    comparison. Dropping ev_pss (and ev_aps, constant everywhere) makes the
-    feature set identical across domains. Default () = unchanged behaviour.
-    """
     ev_used = [f for f in EVIDENCE_FEATURES if f not in set(drop_features)]
     if not ev_used:
         raise SystemExit("[bench] --drop_features membuang SEMUA fitur evidence; "

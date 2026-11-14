@@ -1,24 +1,5 @@
 #!/usr/bin/env python
-"""train_detector_compare.py — train a STOCK comparison detector on OIA-DDR and
-report mAP@0.5 (model-level comparison E1). Self-contained: own training loop +
-own mAP eval. Does NOT touch Mode 1 (no Mode-1 checkpoint/script/audit tool used).
 
-All comparison detectors are stock torchvision architectures (see
-src/models/detector_compare_factory.py). We claim NO detector novelty; this
-positions our (also stock) detector and supports the detector-agnostic
-governance test (E2).
-
-Outputs (under --output_dir):
-  best.pt                 — best-mAP checkpoint (compatible config dict)
-  compare_results.json    — per-class AP50 + mAP_50 on valid (and test if given)
-  train_log.csv           — per-epoch train_loss + val_mAP_50
-
-Usage:
-  python tools/train_detector_compare.py \
-    --model_type fcos --data_root data/oiaddr \
-    --output_dir outputs/detcmp/m3_fcos_r50fpn \
-    --epochs 25 --batch_size 2 --lr 1e-4 --require_cuda
-"""
 from __future__ import annotations
 
 import argparse

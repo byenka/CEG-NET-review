@@ -1,10 +1,4 @@
-"""Locked follow-up: source-matched two-pass fusion input on FGADR.
 
-No detector training or tuning. Existing six evidence columns are retained,
-including historical secondary evidence. Only the fusion input uses primary+flip
-on BOTH source validation and target. This is not a two-pass compute-budget claim.
-All new outputs stay beside this script; historical inputs are read-only.
-"""
 import os
 os.environ.setdefault('OPENBLAS_NUM_THREADS', '1')
 os.environ.setdefault('MKL_NUM_THREADS', '1')

@@ -1,23 +1,5 @@
 #!/usr/bin/env python
-"""step2_honest_calibration.py — re-run the operating-point result with the gate
-fitting data and the threshold calibration data made disjoint.
 
-Protocol locked before execution:
-  _LGOVNET_NEW_SEP/PROTOCOL_LOCK_step2_honest_calibration.md
-
-OIA-DDR validation is split BY IMAGE (never by detection). The gate is fitted on one
-fold and frozen; the threshold is calibrated on the other fold; every method, fitted or
-not, is calibrated on that same held-out fold. The frozen threshold is then applied
-unchanged to OIA-DDR test, IDRiD, TJDR and FGADR.
-
-This is a split by image with a finite-sample quantile correction. It is NOT an exact
-conformal guarantee: detections inside one image are dependent, so the exchangeable unit
-is closer to the image than to the detection.
-
-Output: _LGOVNET_NEW_SEP/results/step2_honest_calibration.json
-Run from the repo root:
-  python _LGOVNET_NEW_SEP/scripts/step2_honest_calibration.py
-"""
 from __future__ import annotations
 
 import hashlib
@@ -45,7 +27,7 @@ AURC_BOOT_MAX_N = 120_000      # same convention as the published tables
 
 
 def fold_of(image_id: str) -> int:
-    """Seed-free deterministic image-level split. Fold A = 0, fold B = 1."""
+
     return int(hashlib.sha256(image_id.encode()).hexdigest()[:8], 16) % 2
 
 
@@ -73,8 +55,7 @@ def coverage_stats(score, label, thr):
 
 
 def image_clustered_boot(image_id, score, label, thr, n_boot=N_BOOT, seed=BOOT_SEED):
-    """CI on the coverage gap by resampling images. Uses per-image sufficient
-    statistics, so it is exact and cheap even on FGADR."""
+
     keep = (score >= thr) & (label == 1)
     pos = label == 1
     uniq, inv = np.unique(image_id, return_inverse=True)
@@ -103,7 +84,7 @@ def aurc_boot(image_id, score, label, n_boot=500, seed=BOOT_SEED):
 
 
 def build_scores(fit_d: dict, targets: dict, seed: int) -> dict:
-    """Fit every parametric method on fit_d only, then score fit_d and each target."""
+
     y = fit_d["label"].astype(np.float64)
     out = {}
     out["S (detector score)"] = {k: v["pred_score"] for k, v in targets.items()}

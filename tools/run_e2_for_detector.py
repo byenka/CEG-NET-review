@@ -1,37 +1,5 @@
 #!/usr/bin/env python
-"""run_e2_for_detector.py — E2 orchestrator for ONE comparison detector.
 
-Chains the detector-agnostic governance pipeline by REUSING the existing,
-proven tools verbatim (no reimplementation, no Mode-1 modification):
-
-  1. export    : tools/export_compare_predictions.py  (checkpoint -> DetectorBox cache)
-  2. stage3c   : tools/audit_stage3c_governance_targets.py  (cache -> governance_features
-                 _{valid,test}.csv)  [run once per split, separate clean dirs]
-  3. benchmark : tools/eval_fp_reduction_benchmark.py  (CSV -> fp_benchmark.json with
-                 KG-gate vs M0 FP-suppression)
-
-Then run tools/aggregate_e2_governance.py across detectors for the verdict.
-
-NO-OVERWRITE: every stage refuses to clobber prior results —
-  * export uses its own guard (export_summary.json sentinel),
-  * stage3c uses --require_clean_output_dir (separate dir per split),
-  * benchmark output is guarded here before the call.
-All under a NEW namespace (outputs/detcmp/<tag>_*), separate from Mode 1.
-
-Use --dry_run to print the exact commands WITHOUT executing (recommended first).
-
-Anatomy/KG/PSS: defaults are the LIGHT 'approximate' provider (no ONNX needed),
-which is internally consistent across detectors. To compare against the Mode-1
-headline number, pass the SAME settings Mode 1 used:
-  --anatomy_provider external_pretrained --anatomy_checkpoint <onnx> \
-  --anatomy_quality_mode strict --pss_dir <tta pss dir>
-
-Usage:
-  python tools/run_e2_for_detector.py --tag retinanet \
-    --checkpoint outputs/detcmp/retinanet/best.pt \
-    --out_root outputs/detcmp --kg_dir outputs/stage3_audit \
-    --data_root data/oiaddr --use_class_probs --dry_run
-"""
 from __future__ import annotations
 
 import argparse

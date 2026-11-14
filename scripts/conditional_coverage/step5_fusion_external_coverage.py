@@ -1,21 +1,4 @@
-"""step5_fusion_external_coverage.py - operating point of score averaging on the external cohorts.
 
-Protocol locked before the run: PROTOCOL_LOCK_step5_fusion_external_coverage.md
-Output: results/conditional_coverage/step5_fusion_external_coverage.json
-
-Repository copy. The executed script read the merged detector caches and two control files at local scratch
-paths. Here only those paths are made repository-relative: the caches under
-results/detector_outputs/unpacked/{primary,flip,v2root}/ (unzip primary_<cohort>.zip, primary_flip_<cohort>.zip
-and secondary_<cohort>.zip into those three folders, or point CEG_DETECTOR_CACHE at another root), and the
-control files under results/finalization/ and results/selective_conformal/. The evidence CSVs are read at the
-workspace paths of tools/eval_selective_conformal_baselines.py (gzipped copies in results/evidence/). The
-result file already exists, so the script refuses to run until it is moved. Nothing else differs.
-
-Measures, on OIA-DDR test, IDRiD, TJDR and FGADR, the split-conformal coverage gap (alpha 0.20, calibrated on OIA-DDR
-validation) and the AURC of the detector score (M0), the full gate (B6), the three-pass score mean (F, two-pass on
-FGADR) and the gate that reads F (F+E). Reproduction controls run first and stop the run when any of them fails.
-Read-only with respect to every existing artifact. Run from the repository root with the project environment.
-"""
 from __future__ import annotations
 
 import csv
@@ -79,8 +62,7 @@ def cache_entries(root: Path, split: str, image_id: str):
 
 
 def best_match(p: np.ndarray, others):
-    """Score of the best-IoU box of another pass for each primary box, 0 when IoU < IOU_MIN.
-    Same arithmetic and tie-breaking (first maximum) as the scalar loop of fusion_external.py."""
+
     n = p.shape[0]
     if not others:
         return np.zeros(n), np.zeros(n, dtype=bool)
@@ -143,7 +125,7 @@ def fe_matrix(d: dict, fused: np.ndarray) -> np.ndarray:
 
 
 def summarize(test_scores, valid_scores, lab):
-    """Mean over seeds of coverage, gap, retained fraction, AURC and AP, plus the thresholds."""
+
     thr = [conformal_threshold(sv, VALID_LABEL, ALPHA) for sv in valid_scores]
     cov, ret, a, ap = [], [], [], []
     for st, t in zip(test_scores, thr):

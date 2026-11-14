@@ -1,12 +1,5 @@
 #!/usr/bin/env python
-"""B10 server acceptance gate verifier (read-only).
 
-This script validates whether a completed Point123 server run is acceptable for
-CAS-quality claim based on explicit PASS/FAIL criteria.
-
-It does not retrain or modify artifacts. It only reads outputs and writes a
-compact acceptance report under run_root/summary.
-"""
 
 from __future__ import annotations
 

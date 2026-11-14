@@ -1,52 +1,5 @@
 #!/usr/bin/env python
-"""
-eval_stage3d3_epred_ablation.py
-Phase 19N — Stage 3D.3: e_pred ablation.
 
-Tests whether KG-derived class embeddings (e_pred) contribute beyond
-simple class one-hot encoding in the LGG.
-
-Architecture v3 specifies LGG input as [SAS, SDCA, APS, PSS, e_pred].
-Currently e_pred is absent from all Stage 3D experiments.
-This ablation fills that gap.
-
-Two e_pred implementations are tested:
-  1. SDM-row embedding (4-dim, deterministic, clinical):
-       e_pred[class] = row of the clinical SDM matrix
-       e.g. e_pred[MA] = [0.0, 0.0, 0.5, 1.0]  (distances to HE, HardEX, SoftEX)
-       Hypothesis: SDM-row encodes CLINICAL ORDERING directly from the KG.
-       Advantage: no PyTorch dependency, reproducible, traceable.
-
-  2. GAT embedding (64-dim, from frozen kg_encoder_init.pt):
-       e_pred[class] = node embedding from 2-layer HeteroGAT on the KG.
-       Hypothesis: GAT embeddings encode KG graph structure (edges + weights).
-       Requires: torch, kg_encoder_init.pt checkpoint, KG builder.
-
-Decision rule:
-  If e_pred_sdmrow > B2_class_only  → SDM-row (clinical ordering) adds value
-  If e_pred_gat    > B2_class_only  → GAT embedding adds value beyond class ID
-  If both ≈ B2_class_only           → KG embedding is not superior to class identity
-
-All experiments use the same operating point protocol as Stage 3D.1/3D.2.
-
-Inputs:
-  outputs/stage3c_audit/governance_features_{train,valid,test}.csv
-  outputs/stage3_audit/sdm_norm_clinical_prior.json   (SDM-row e_pred)
-  outputs/stage3_audit/kg_encoder_init.pt             (GAT e_pred, optional)
-
-Outputs:
-  outputs/stage3d_ablation/epred_ablation_results.csv
-  outputs/stage3d_ablation/bootstrap_epred_fp_supp_gain_ci.csv
-  outputs/stage3d_ablation/epred_ablation_decision.md
-
-Usage:
-    python tools/eval_stage3d3_epred_ablation.py \\
-      --stage3c_dir  outputs/stage3c_audit \\
-      --stage3a_dir  outputs/stage3_audit \\
-      --output_dir   outputs/stage3d_ablation
-
-    python tools/eval_stage3d3_epred_ablation.py --no_gat  # skip GAT embedding
-"""
 
 from __future__ import annotations
 
@@ -99,14 +52,7 @@ _BOOTSTRAP_SEED = 42
 
 
 def _load_sdm_row_embeddings(sdm_path: Path) -> Optional[np.ndarray]:
-    """Load clinical SDM and create 4-dim row embeddings for each class.
 
-    SDM-row embedding for class c = [SDM(c, MA), SDM(c, HE), SDM(c, HardEX), SDM(c, SoftEX)]
-    with SDM(c, c) = 0.
-
-    Returns ndarray shape (4, 4): one 4-dim row per class in _CLASS_ORDER.
-    This is a DETERMINISTIC clinical embedding derived from the grading-aware SDM.
-    """
     if not sdm_path.exists():
         print(f"[Stage3D.3]   SDM file not found: {sdm_path}")
         return None
@@ -159,11 +105,7 @@ def _load_gat_embeddings(
     checkpoint_path: Path,
     stage3a_dir: Path,
 ) -> Optional[np.ndarray]:
-    """Load kg_encoder_init.pt and extract lesion node embeddings (64-dim).
 
-    Returns ndarray shape (4, 64): one 64-dim embedding per lesion class.
-    Returns None if checkpoint or KG artifacts are unavailable.
-    """
     if not _TORCH:
         print("[Stage3D.3]   GAT: torch not available, skipping.")
         return None
@@ -365,9 +307,7 @@ def _build_X(
     class_embeddings: Optional[np.ndarray] = None,
     embed_type: str = "",
 ) -> np.ndarray:
-    """Build feature matrix. Special tokens:
-    'e_pred' → expand class embeddings (class_embeddings must be provided)
-    """
+
     cols = []
     for f in variant_features:
         if f == "e_pred":

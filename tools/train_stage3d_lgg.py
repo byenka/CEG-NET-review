@@ -1,65 +1,5 @@
 #!/usr/bin/env python
-"""
-train_stage3d_lgg.py
-Phase 19N — Stage 3D: Learned Governance Gate (LGG) training and evaluation.
 
-Trains and evaluates LGG baselines B0–B3 using governance target labels
-(from Stage 3C) and evidence features from the current primary-detector pipeline.
-
-Binary action gate:
-  RETAIN  (label=1): TP_EXACT + CLINICALLY_CLOSE_MISMATCH + LOCALIZATION_WEAK
-  SUPPRESS(label=0): BACKGROUND_FP + LOW_CONF_CANDIDATE + UNSAFE_MISMATCH
-
-Baselines:
-  B0:        score-threshold sweep (best-F1 threshold on train)
-  B_msp:     max-softmax-probability threshold   — same-family selective-prediction baseline
-  B_margin:  class-margin (top1-top2) threshold  — same-family selective-prediction baseline
-  B_entropy: predictive-entropy threshold        — same-family selective-prediction baseline
-  B_score:   Logistic Regression + MLP on [pred_score]   — score-as-model control
-  B1:        Logistic Regression + MLP on [ev_sas]
-  B2:        Logistic Regression + MLP on [ev_sas, ev_sdca]
-  B3:        Logistic Regression + MLP on [ev_sas, ev_sdca, ev_aps, ev_pss]
-  B4:        Logistic Regression + MLP on [pred_score, ev_sas, ev_sdca, ev_aps, ev_pss]
-
-Same-family baselines (B_msp/B_margin/B_entropy) require unc_msp/unc_margin/
-unc_entconf columns from Stage 3C. An image-grouped bootstrap reports B4's
-AUPRC gain over each with a 95% CI — the comparison reviewers ask for.
-
-Headline test: B4 (fused score+evidence gate) vs B0 (score threshold) and vs
-B_score (score-only, same model class). B4 > B_score ⇒ KG evidence adds signal
-above the detector score; B4 ≈ B_score ⇒ evidence is redundant given score.
-
-Note on the old placeholder-heavy regime (not universal):
-    In earlier runs with constant APS/PSS and synthetic tie-saturated probabilities,
-    B3 often collapsed to B2, B2 stayed close to B1, and B1 stayed close to B0.
-    This script now audits that regime explicitly instead of hard-coding it into
-    the decision document.
-
-Inputs:
-  outputs/stage3c_audit/governance_features_train.csv
-  outputs/stage3c_audit/governance_features_valid.csv
-  outputs/stage3c_audit/governance_features_test.csv
-
-  (Run audit_stage3c_governance_targets.py --split {train,valid,test} first.)
-
-Outputs:
-  outputs/stage3d_lgg/baseline_results.csv
-  outputs/stage3d_lgg/lgg_train_log.csv
-  outputs/stage3d_lgg/lgg_valid_metrics.json
-  outputs/stage3d_lgg/lgg_test_metrics.json
-    outputs/stage3d_lgg/lgg_models.pkl
-  outputs/stage3d_lgg/stage3d_decision.md
-
-Usage:
-    python tools/train_stage3d_lgg.py \\
-      --stage3c_dir outputs/stage3c_audit \\
-      --output_dir outputs/stage3d_lgg
-
-    python tools/train_stage3d_lgg.py \\
-      --stage3c_dir outputs/stage3c_audit \\
-      --output_dir outputs/stage3d_lgg \\
-      --no_mlp           # skip MLP, LR only (faster)
-"""
 
 from __future__ import annotations
 
@@ -242,7 +182,7 @@ def _detect_suspicious_path(path: Path) -> Optional[str]:
 
 
 def _source_output_root_key(source_output_dir: str, split: str) -> str:
-    """Normalize per-split Stage3C output dirs to one shared source root."""
+
 
     path = Path(source_output_dir)
     if path.name.lower() == split:
@@ -426,10 +366,7 @@ def _extract_arrays(
     records: List[dict],
     feature_cols: List[str],
 ) -> Tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
-    """Extract (X, y, is_unsafe, is_tp_exact) from raw CSV records.
 
-    Skips rows with missing or non-finite feature values.
-    """
     X_rows, y_rows, unsafe_rows, tp_rows = [], [], [], []
     for r in records:
         try:
@@ -454,11 +391,7 @@ def _extract_arrays(
 
 
 def _feature_correlations(records: List[dict]) -> dict:
-    """Compute Pearson correlations between evidence features.
 
-    Key check: r(SAS, SDCA). If ~1.0, SDCA is redundant given SAS.
-    Expected from the current single-head detector bridge: SDCA = deterministic f(SAS, class) → high correlation.
-    """
     cols = ["ev_sas", "ev_sdca", "ev_aps", "ev_pss", "pred_score"]
     data: Dict[str, list] = {c: [] for c in cols}
     for r in records:
@@ -579,7 +512,7 @@ def _governance_metrics(
     is_unsafe: np.ndarray,
     is_tp: np.ndarray,
 ) -> dict:
-    """Compute governance-specific metrics for one (baseline, split) result."""
+
     retain_mask = y_true == 1
     suppress_mask = y_true == 0
 
@@ -640,7 +573,7 @@ def _governance_metrics(
 
 
 def _b0_threshold_sweep(X_train: np.ndarray, y_train: np.ndarray) -> float:
-    """Find the score threshold maximizing F1 on training data."""
+
     scores = X_train[:, 0]
     best_thresh, best_f1 = 0.15, 0.0
     for t in np.linspace(0.05, 0.90, 171):
@@ -724,13 +657,7 @@ def _standardize_apply(X: np.ndarray, mean: np.ndarray, std: np.ndarray) -> np.n
 
 
 def _lgg_targets_from_binary(y: np.ndarray) -> np.ndarray:
-    """Map binary retain/suppress labels to 4-tier targets for LGG training.
 
-    retain(1)   -> R1 index 0
-    suppress(0) -> R4 index 3
-
-    This keeps Stage 3D binary supervision compatible with the 4-tier LGG head.
-    """
     return np.where(y.astype(np.int64) == 1, 0, 3).astype(np.int64)
 
 
@@ -870,11 +797,7 @@ def _bootstrap_auprc_diff(
     n_boot: int = 1000,
     seed: int = 42,
 ) -> dict:
-    """Image-grouped bootstrap of AUPRC(score_a) - AUPRC(score_b).
 
-    Resamples whole images with replacement (boxes within an image are
-    correlated), recomputes the AUPRC difference, returns mean, 95% CI, P(>0).
-    """
     if not _SKLEARN_OK or len(y) != len(image_ids):
         return {"mean": None, "ci_lo": None, "ci_hi": None, "frac_pos": None, "n": 0}
     rng = np.random.default_rng(seed)
@@ -950,13 +873,7 @@ def _build_lgg_models_bundle(
     all_metrics: Dict[Tuple, dict],
     torch_lgg_artifact: Optional[dict] = None,
 ) -> Dict[str, dict]:
-    """Build a portable Stage 5 warm-start bundle.
 
-    Stage 3D trains sklearn baselines, not the full PyTorch LGG used by Stage 5,
-    so there is no honest direct state_dict mapping. The bundle therefore stores
-    the Stage 5 architecture config plus provenance/metrics under the keys
-    expected by train_stage5_mode2.load_lgg_from_pkl().
-    """
     config = {
         "evidence_dim": 4,
         "embedding_dim": 64,

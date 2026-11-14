@@ -1,20 +1,5 @@
 #!/usr/bin/env python
-"""eval_clinical_metrics.py — clinical decision metrics for Mode 2 v2.1 checkpoints.
 
-Loads a Faster R-CNN checkpoint (Mode 1 LOCKED detector, Mode 2 v2 best, or any
-compatible checkpoint), runs inference on the requested split, and computes
-clinical metrics suitable for MedIA submission:
-
-- Per-class AUROC / AUPRC
-- Sensitivity @ specificity = 0.90 / 0.95 / 0.99
-- Recall @ FP-per-image budget = 1 / 3 / 5
-- Brier score + Expected Calibration Error (ECE, 10 bins)
-- Macro aggregates across MA / HE / Hard_EX / Soft_EX
-
-CUDA enforcement: ``--require_cuda`` (default True) hard-fails if cuda is not
-available, since checkpoint inference on large evaluation sets is impractical
-on CPU.
-"""
 
 from __future__ import annotations
 

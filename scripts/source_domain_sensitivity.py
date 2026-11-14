@@ -1,31 +1,4 @@
-"""source_domain_sensitivity.py — apakah hasil gate artefak karena selalu dipasang di OIA-DDR?
 
-Keberatan reviewer yang dijawab: seluruh hasil gating memasang gate pada OIA-DDR validasi. Bila
-pemetaan bukti-ke-keandalan itu khas OIA-DDR, hasilnya tidak berarti banyak. Skrip ini memasang
-gate pada kohort LAIN lalu mengujinya pada OIA-DDR test, memakai CSV bukti yang sudah ada.
-Tidak ada Stage 3C baru, tidak ada server.
-
-KRITERIA DIPATOK DI MUKA, sebelum melihat hasil:
-  BERHASIL bila gate yang dipasang di FGADR mengungguli skor detektor pada OIA-DDR test di
-  sekurangnya 4 dari 5 seed, dengan rerata delta AUPRC di atas nol.
-  HASIL DILAPORKAN APA PUN KELUARANNYA. Hasil negatif TIDAK membantah klaim naskah mana pun:
-  naskah mengklaim lapisan post-hoc yang dipasang pada validasi domain penempatan, bukan
-  pemetaan universal. Negatif berarti keterbatasan yang presisi, yaitu gate berpindah sebagai
-  RESEP dan bukan sebagai objek terlatih.
-
-Sumber yang dipakai dan alasannya:
-  FGADR train  510.825 kotak, 1.737 citra  -> sumber utama, data terbanyak
-  TJDR  test    22.397 kotak,   104 citra  -> sumber kedua
-  IDRiD TIDAK dipakai sebagai sumber: hanya 27 citra, sehingga bootstrap image-clustered terlalu
-  lemah untuk mendukung klaim apa pun. Ia tetap sah sebagai target.
-
-Confound yang WAJIB diungkap bersama hasilnya:
-  prevalensi positif berbeda jauh antar sumber (FGADR 0.175, TJDR 0.143, OIA-DDR valid 0.356),
-  sehingga eksperimen ini menguji pergeseran domain DAN pergeseran prior kelas sekaligus.
-  Prevalensi UJI konstan karena semua dievaluasi pada OIA-DDR test yang sama.
-
-Keluaran: _septem/scripts_optionB/source_domain_sensitivity.json. Hanya membaca.
-"""
 import json
 import statistics
 import sys

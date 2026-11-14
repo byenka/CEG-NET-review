@@ -1,29 +1,5 @@
 #!/usr/bin/env python
-"""fill_t7_governance.py — Point 2: fill the [RUN] cells of T7 (governance vs.
-alternative FP-reduction) from a REAL controlled benchmark JSON produced by
-tools/eval_fp_reduction_benchmark.py.
 
-T7 originally carried [RUN] placeholders for "Temperature scaling" and
-"MC-Dropout uncertainty filter". Two honesty notes baked into this filler:
-
-  * Temperature scaling (Guo'17) IS already one of the benchmark methods
-    (monotonic on score -> at matched TP-retention it equals M0; we report the
-    real measured numbers, not an assumption).
-  * True MC-Dropout is NOT feasible on the LOCKED Faster R-CNN: its ROI head has
-    no dropout, so MC-Dropout would require inserting dropout and RETRAINING the
-    frozen detector (forbidden). The defensible, runnable substitute is the
-    single-pass uncertainty family already in the benchmark (MSP / predictive
-    entropy / margin); we report the BEST of them as the "Uncertainty filter"
-    row and say so explicitly in the caption. This is standard and apples-to-
-    apples on the same detector + data + split.
-
-All numbers come straight from <detector>_fp_benchmark.json — nothing invented.
-
-Usage:
-  python tools/fill_t7_governance.py \
-    --benchmark_json outputs/0506/detcmp_e2/fasterrcnn_fp_benchmark.json \
-    --out_tex outputs/0506/tables/T7_sota_governance_FILLED.tex
-"""
 from __future__ import annotations
 
 import argparse
@@ -32,7 +8,7 @@ from pathlib import Path
 
 
 def _find(results, *prefixes):
-    """First result whose method name starts with any of the given prefixes."""
+
     for r in results:
         for p in prefixes:
             if r["method"].lower().startswith(p.lower()):
@@ -41,7 +17,7 @@ def _find(results, *prefixes):
 
 
 def _best_uncertainty(results):
-    """Highest FP-suppression among the single-pass uncertainty family."""
+
     fam = [r for r in results if r["method"] in ("MSP", "Entropy", "Margin")]
     fam = [r for r in fam if r.get("fp_supp") is not None]
     return max(fam, key=lambda r: r["fp_supp"]) if fam else None

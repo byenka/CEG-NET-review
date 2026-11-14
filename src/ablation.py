@@ -1,49 +1,4 @@
-"""
-ablation.py
-Ablation pack for LGov-Net — Phase 16.
 
-Provides a minimal, runnable, and audit-friendly ablation infrastructure for
-testing Contributions C1, C2, and C3 in isolation.
-
-Design principles:
-  - Re-use existing modules; do NOT copy or re-implement any module logic.
-  - Each ablation is a named configuration/switch, not a new trainer.
-  - Structural overrides (changes that cannot be expressed as cfg keys) are
-    implemented as injection points inside _run_lgovnet_step_structural().
-    That function calls the SAME module functions as run_lgovnet_step, but
-    passes different intermediate values at clearly labelled override points.
-  - Consolidated and unsupported ablations are returned with status="SKIPPED".
-  - Honest caveats are propagated from ablation.yaml to results.
-
-Public API:
-  load_ablation_cases(yaml_path)              -> List[dict]
-  apply_ablation_overrides(base_cfg, case)    -> dict
-  run_single_ablation(case, ...)              -> dict
-  run_ablation_suite(cases, ...)              -> List[dict]
-  summarize_ablation_results(results)         -> dict
-
-Structural override codes (see ablation.yaml):
-  "none"                   pure cfg override, calls run_lgovnet_step directly
-  "without_aps"            compat_scores={} before evidence/routing
-  "without_sdca"           sdm_norm={} before evidence/routing/SDGL
-  "without_gumbel"         gate.forward() instead of gate.gumbel_forward()
-  "without_refinement"     skip refine_r3_batch()
-  "baseline_no_governance" force all routing tier = R1
-  "without_r3_weighting"   uniform consensus=1.0, aps=1.0 for R3 SDGL weights
-
-Dependencies:
-  src/train_step.py          (run_lgovnet_step — used for cfg-based ablations)
-  src/kg/encoder.py          (build_encoder_inputs, compute_sdm, etc.)
-  src/governance/evidence.py (build_evidence_batch)
-  src/governance/gate.py     (LGG, build_pred_embedding, concat_gate_input,
-                              get_gumbel_tau)
-  src/governance/routing.py  (route_bbox_batch)
-  src/governance/refine.py   (refine_r3_batch)
-  src/governance/contracts.py(make_placeholder_pss, LESION_CLASSES)
-  src/losses/sdgl.py         (SDGLLoss, compute_total_loss)
-  src/losses/gate_loss.py    (GateLoss)
-  src/utils/pipeline_metrics.py (compute_pipeline_metrics)
-"""
 
 from __future__ import annotations
 
@@ -118,20 +73,7 @@ _NEUTRAL_SDCA: float = 0.0
 
 
 def load_ablation_cases(yaml_path: str) -> List[dict]:
-    """Load ablation case definitions from configs/ablation.yaml.
 
-    Args:
-        yaml_path: Absolute or relative path to ablation.yaml.
-
-    Returns:
-        List of ablation case dicts.  Each dict has at minimum:
-          name, contribution, description, cfg_overrides,
-          structural_override, supported.
-
-    Raises:
-        FileNotFoundError: if yaml_path does not exist.
-        ImportError: if PyYAML is not installed.
-    """
     if not os.path.exists(yaml_path):
         raise FileNotFoundError(f"ablation.yaml not found: {yaml_path}")
     if not _YAML_AVAILABLE:
@@ -151,17 +93,7 @@ def load_ablation_cases(yaml_path: str) -> List[dict]:
 
 
 def apply_ablation_overrides(base_cfg: dict, case: dict) -> dict:
-    """Return a new cfg dict with ablation overrides applied.
 
-    Does not modify base_cfg.  Merges cfg_overrides on top of base_cfg.
-
-    Args:
-        base_cfg:  Base integration step config (e.g. from train.yaml).
-        case:      Ablation case dict from load_ablation_cases().
-
-    Returns:
-        New dict: copy of base_cfg with case["cfg_overrides"] merged in.
-    """
     merged = deepcopy(base_cfg)
     overrides: dict = case.get("cfg_overrides", {}) or {}
     merged.update(overrides)
@@ -186,28 +118,7 @@ def _run_lgovnet_step_structural(
     cfg: Optional[dict] = None,
     structural_override: str = "none",
 ) -> dict:
-    """Like run_lgovnet_step but with structural ablation injection points.
 
-    Calls the same module functions as run_lgovnet_step in the same 12-step
-    order.  Each injection point is labelled:
-       # ABLATION OVERRIDE: <code> — <rationale>
-
-    Supported structural_override codes:
-      "without_aps"            — compat_scores neutralised before evidence/routing
-      "without_sdca"           — sdm_norm neutralised before evidence/routing
-      "without_gumbel"         — gate.forward() instead of gate.gumbel_forward()
-      "without_refinement"     — refinement_records forced to []
-      "baseline_no_governance" — all routing tiers forced to R1
-      "without_r3_weighting"   — uniform consensus=1.0, aps=1.0 in SDGL
-
-    Args:
-        (same as run_lgovnet_step)
-        structural_override: Ablation override code string.
-
-    Returns:
-        Same StepOutput dict schema as run_lgovnet_step()
-        (including "gate_output" per PATCH-15.5).
-    """
     cfg = cfg or {}
     tau_start: float = float(cfg.get("gumbel_tau_start", 1.0))
     tau_end: float = float(cfg.get("gumbel_tau_end", 0.1))
@@ -464,37 +375,7 @@ def run_single_ablation(
     base_cfg: Optional[dict] = None,
     step: int = 0,
 ) -> dict:
-    """Run one ablation case and return its standardised result dict.
 
-    Handles both cfg-based and structural ablations.  For cases not supported
-    (supported=false), returns immediately with status="SKIPPED".
-
-    Special per-ablation model variants:
-      without_kg_embedding:     new LGG(embedding_dim=0) instantiated here.
-      without_sdm_soft_targets: new SDGLLoss(eta=0.0) instantiated here.
-
-    Args:
-        case:             One dict from load_ablation_cases().
-        image_ids:        List of image IDs in the demo/smoke batch.
-        detector_outputs: {image_id: [DetectorBox, ...]} (may be synthetic).
-        gt_boxes:         {image_id: [{bbox, class_label}, ...]}
-        kg_artifacts:     Output of build_graph_from_artifacts() or synthetic.
-        encoder:          LGovNetEncoder (eval mode for smoke tests).
-        gate:             LGG built for the default configuration.
-        sdgl_fn:          SDGLLoss instance.
-        gate_loss_fn:     GateLoss instance.
-        base_cfg:         Base cfg dict (keys from train.yaml).
-        step:             Global training step index.
-
-    Returns:
-        Ablation result dict with keys:
-          ablation_name, contribution, status, config_overrides,
-          structural_override, caveat (if any),
-          loss_total, loss_sdgl, loss_gate, loss_kg,
-          tier_distribution, fallback_sas_count,
-          mean_sdca, mean_aps, num_certificates,
-          error (if status=="ERROR")
-    """
     abl_name: str = case.get("name", "unnamed")
     contribution: Optional[str] = case.get("contribution")
     supported: bool = bool(case.get("supported", True))
@@ -657,16 +538,7 @@ def run_ablation_suite(
     step: int = 0,
     verbose: bool = True,
 ) -> List[dict]:
-    """Run all ablation cases in sequence and return aggregated results.
 
-    Args:
-        cases:         List from load_ablation_cases().
-        (other args):  Same batch + model args as run_single_ablation().
-        verbose:       Print progress to stdout.
-
-    Returns:
-        List of result dicts, one per case (including SKIPPED cases).
-    """
     results: List[dict] = []
     total = len(cases)
     for idx, case in enumerate(cases, 1):
@@ -711,24 +583,7 @@ def run_ablation_suite(
 
 
 def summarize_ablation_results(results: List[dict]) -> dict:
-    """Compute a simple summary over all ablation results.
 
-    Returns:
-        {
-          "total_cases":   int,
-          "ok_count":      int,
-          "skipped_count": int,
-          "error_count":   int,
-          "by_contribution": {
-              "C1": [loss_total, ...],
-              "C2": [...],
-              "C3": [...],
-              "baseline": [...],
-          },
-          "baseline_full_loss": float | None,
-          "cases_with_caveats": [name, ...],
-        }
-    """
     total = len(results)
     ok_count = sum(1 for r in results if r.get("status") == "OK")
     skipped_count = sum(1 for r in results if r.get("status") == "SKIPPED")

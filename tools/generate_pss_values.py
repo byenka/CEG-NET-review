@@ -1,22 +1,5 @@
 #!/usr/bin/env python
-"""Generate pss_values.json from base + perturbation-view detector caches.
 
-This utility builds PSSResult records that can be consumed directly by:
-  - tools/audit_stage3b_evidence.py --pss_dir <output_dir>
-  - tools/audit_stage3c_governance_targets.py --pss_dir <output_dir>
-
-PSS proxy rule used here:
-  1) For each base bbox, match a bbox from each view cache by IoU.
-  2) Collect predicted lesion labels across [base + matched views].
-  3) pss = majority_vote_count / n_votes.
-  4) status = "implemented" when at least one view is matched,
-     otherwise status = "placeholder" with FALLBACK_PSS.
-
-Notes:
-  - `n_augmentations` follows contract semantics and counts matched views only.
-  - Matching is per image stem and bbox geometry; bbox_id does not need to match
-    across views.
-"""
 
 from __future__ import annotations
 

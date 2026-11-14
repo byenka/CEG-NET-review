@@ -1,21 +1,4 @@
-"""step6_fgadr_three_pass.py - FGADR comparisons with the three-pass score mean.
 
-Protocol locked before the run: PROTOCOL_LOCK_step6_fgadr_three_pass.md
-Output: results/conditional_coverage/step6_fgadr_three_pass.json
-
-Repository copy. The executed script read the merged detector caches and the reference results at local scratch
-paths. Here only those paths are repository-relative: unzip primary_<cohort>.zip, primary_flip_<cohort>.zip and
-secondary_<cohort>.zip of results/detector_outputs/ into results/detector_outputs/unpacked/{primary,flip,v2root}/
-(or point CEG_DETECTOR_CACHE at another root). The evidence CSVs are read at the workspace paths below
-(gzipped copies in results/evidence/). The result file already exists, so the script refuses to run until it is
-moved. Nothing else differs from the executed script.
-
-Recomputes every FGADR comparison against score fusion with the three-pass mean (primary, flip, secondary), now that
-the complete FGADR secondary cache is used: fusion AUPRC (T12, T15), the fusion-input gate with paired intervals
-(T15, Supplementary S4), the grade-shifting AUROC of fusion (Supplementary S1) and the operating point of fusion
-(step 5, Section 5.1). The same code run with the two-pass mean must first reproduce the published two-pass numbers.
-Read-only with respect to every existing artifact. Run from the repository root with the project environment.
-"""
 from __future__ import annotations
 
 import csv
@@ -97,7 +80,7 @@ def best_match(p: np.ndarray, others):
 
 
 def fusion_components(csv_path: Path, cohort: str, split: str, v2_root, d: dict):
-    """Primary, flip and secondary score per CSV row, plus the category column."""
+
     with open(csv_path, newline="", encoding="utf-8") as fh:
         rows = [(r["bbox_id"], r["image_id"], r["category"]) for r in csv.DictReader(fh)]
     assert len(rows) == d["pred_score"].size and all(rows[i][1] == d["image_id"][i] for i in range(len(rows)))
@@ -151,7 +134,7 @@ def weighted_ap(prepared, counts):
 
 
 def boot_auroc(score, y, img, n_boot=N_BOOT, seed=BOOT_SEED):
-    """clinical_cost_external.py, unchanged."""
+
     rng = np.random.default_rng(seed)
     uniq = np.unique(img)
     groups = [np.where(img == im)[0] for im in uniq]

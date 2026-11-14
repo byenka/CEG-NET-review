@@ -1,62 +1,4 @@
-"""
-certificate.py
-Per-detection governance certificate for LGov-Net (Contribution 2 output).
 
-LEGACY MODULE, NOT USED FOR THE REPORTED RESULTS.
---------------------------------------------------
-`build_certificate` and `build_certificate_batch` below are not called by any script in
-this repository. They describe an earlier schema in which the tier came from a four-way
-gate argmax (`predicted_tier`, `tier_confidence`). The manuscript instead defines tiers by
-the two-way rule over (retain decision, SDCA) in Eq. (tier), and `target_tier` here is an
-annotation-derived pseudo-label that the current routing never uses.
-
-The certificates reported in the paper are produced by:
-  tools/emit_certificates.py            emits one record per detection, four cohorts
-  tools/verify_certificates.py          determinism, decision reconstruction, prior
-                                        consistency, ranker independence
-Their schema is recorded in outputs/0506/certificates/manifest.json.
-
-This file is retained because the field definitions below document the original design.
-Read it as documentation, not as the code path behind any reported number.
-
-A governance certificate is a structured audit record produced after the
-integration step completes.  It captures all signals used to make a
-routing/tier decision plus the final outcome, enabling:
-  - Clinical audit trail (who decided what and why)
-  - Paper ablation analysis (field-by-field)
-  - Debugging mis-routed detections
-  - JSON/CSV export for downstream evaluation
-
-Certificate fields (all required):
-  bbox_id             str    — unique bbox identifier
-  image_id            str    — parent image identifier
-  head_votes          dict   — {class_name: vote_count} from head_predictions
-  majority_vote       str    — class with most head votes
-  sas                 float  — Source Agreement Score [0,1]
-  sas_status          str    — "head_agreement" (canonical) or
-                               "fallback_from_ensemble" (degraded proxy)
-  sdca                float  — Semantic Distance Conflict Assessment [0,1]
-  aps                 float  — Anatomical Plausibility Score [0,1]
-  pss                 float  — Perturbation Stability Score [0,1]
-  assigned_zone       str|None — ETDRS zone label
-  target_tier         str    — routing pseudo-label: R1/R2/R3/R4
-  predicted_tier      str|None — gate argmax tier name (None if no gate_output)
-  predicted_tier_index int|None — gate argmax index 0–3 (None if no gate_output)
-  tier_confidence     float|None — gate probability for predicted_tier
-  refinement_outcome  str|None — "upgraded_to_R2"|"downgraded_to_R4"|"kept_as_R3"|None
-  refined_bbox        list|None — [x1,y1,x2,y2] after R3 refinement or None
-  timestamp           str    — ISO-8601 UTC from routing record
-
-Public API:
-  build_certificate(image_id, box, ev_record, routing_record,
-                    gate_output, refine_map) -> dict
-  build_certificate_batch(image_ids_per_box, boxes, evidence_batch,
-                          routing_batch, gate_output, refinement_records) -> list[dict]
-
-Dependencies:
-  - src/governance/contracts.py  (LESION_CLASSES)
-  NO dependency on training loop, losses, or encoder.
-"""
 
 from __future__ import annotations
 
@@ -68,19 +10,7 @@ from typing import Dict, List, Optional, Tuple
 
 
 def _count_head_votes(box: dict) -> Tuple[Dict[str, int], str]:
-    """Count how many heads voted for each class.
 
-    Each head_prediction casts one vote for its argmax class (highest class_prob).
-
-    Args:
-        box: DetectorBox dict with "head_predictions" list.
-
-    Returns:
-        (votes_dict, majority_class)
-        votes_dict: {class_name: count}  — zero counts omitted
-        majority_class: class with the highest vote count; ties broken by
-                        first occurrence in class_probs key order.
-    """
     head_predictions: List[dict] = box.get("head_predictions", [])
     votes: Dict[str, int] = {}
     for hp in head_predictions:
@@ -106,14 +36,7 @@ def _count_head_votes(box: dict) -> Tuple[Dict[str, int], str]:
 
 
 def _refinement_outcome_from_record(refine_record: Optional[dict]) -> Optional[str]:
-    """Extract a human-readable refinement outcome from a refine.py record.
 
-    Args:
-        refine_record: One record from refine_r3_batch(), or None if not R3.
-
-    Returns:
-        "upgraded_to_R2" | "downgraded_to_R4" | "kept_as_R3" | None
-    """
     if refine_record is None:
         return None
     if refine_record.get("upgraded_to") == "R2":
@@ -138,35 +61,7 @@ def build_certificate(
     gate_output: Optional[dict],
     refine_record: Optional[dict],
 ) -> dict:
-    """Build one governance certificate for a single bbox.
 
-    Args:
-        image_id:
-            Identifier of the parent image.
-        box:
-            DetectorBox dict (must contain bbox_id, ensemble_probs,
-            head_predictions, assigned_zone).
-        ev_record:
-            One record from build_evidence_batch() for this bbox.
-            Expected keys: sas, sdca_norm, aps, pss (or pss_value).
-            Optional key: sas_status (str) — "head_agreement" or
-            "fallback_from_ensemble".  Defaults to "head_agreement" when absent.
-        routing_record:
-            One record from route_bbox_batch() for this bbox.
-            Expected keys: target_tier, timestamp.
-        gate_output:
-            Full gate_output dict from gumbel_forward() for the batch,
-            OR None.  If provided, "tier_hard" ([B] tensor) is used to
-            extract the per-bbox predicted tier.  The index into this
-            tensor is *not* passed here — pass None and set
-            predicted_tier_str directly via the batch helper.
-        refine_record:
-            One record from refine_r3_batch() for this bbox (only
-            present if target_tier == "R3"), or None.
-
-    Returns:
-        Governance certificate dict with all required fields.
-    """
     bbox_id: str = box.get("bbox_id", "unknown")
     assigned_zone: Optional[str] = box.get("assigned_zone", None)
 
@@ -242,29 +137,7 @@ def build_certificate_batch(
     gate_output: Optional[dict],
     refinement_records: List[dict],
 ) -> List[dict]:
-    """Build governance certificates for a full bbox batch.
 
-    Args:
-        image_ids_per_box:
-            image_id string for each bbox in the batch (len == B).
-        boxes:
-            Flat list of DetectorBox dicts — same order as evidence_batch /
-            routing_batch.
-        evidence_batch:
-            Output of build_evidence_batch() — one record per bbox.
-        routing_batch:
-            Output of route_bbox_batch() — one record per bbox.
-        gate_output:
-            Dict from LGG.gumbel_forward().  Must contain "tier_hard"
-            ([B] int64 tensor) to populate predicted_tier.  Pass None
-            to skip predicted_tier population.
-        refinement_records:
-            Output of refine_r3_batch() — records ONLY for R3 bboxes.
-            These are matched by bbox_id back to the batch.
-
-    Returns:
-        List of certificate dicts, one per bbox in the same order as boxes.
-    """
     B = len(boxes)
     assert (
         len(evidence_batch) == B

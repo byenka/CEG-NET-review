@@ -1,31 +1,5 @@
 #!/usr/bin/env python
-"""
-audit_stage2_anatomy_provider.py
-Phase 19N — Stage 2 Audit: AnatomyProvider + Evidence Pipeline Validation
 
-Validates:
-  1. AnatomyProvider interface works (ApproximateAnatomyProvider)
-  2. DetectorBox cache (from export_detector_predictions.py) loads correctly
-  3. Evidence computation (SAS, SDCA, APS, PSS) runs end-to-end
-  4. APS fail-safe fires correctly when od_confidence='low'
-  5. Evidence vector is well-formed ([SAS, SDCA_norm, APS, PSS] ∈ [0,1])
-
-This script does NOT evaluate governance gate (LGG) — that is Stage 3.
-Its purpose is to confirm that the Stage 1→Stage 2 bridge is working before
-building C1 KG + C2 LGG training infrastructure.
-
-Expected outputs:
-  - Per-image evidence summary (n_boxes, avg SAS, avg APS, anatomy_uncertain %)
-  - Aggregate stats across split
-  - PASS/FAIL for evidence vector integrity
-
-Usage:
-    python tools/audit_stage2_anatomy_provider.py \\
-    --cache_dir outputs/detector_cache/primary/oiaddr/valid \
-      --split valid \\
-      --max_images 20 \\
-      --output_dir outputs/stage2_audit/anatomy_provider_valid
-"""
 
 from __future__ import annotations
 
@@ -94,7 +68,7 @@ def _audit_image(
     provider: ApproximateAnatomyProvider,
     image_path: Optional[str] = None,
 ) -> dict:
-    """Run evidence computation for one image and return stats."""
+
     if not boxes:
         return {
             "image_id": image_id,

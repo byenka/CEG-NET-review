@@ -1,36 +1,5 @@
 #!/usr/bin/env python
-"""
-train_stage1c_retinanet.py
-Phase 19N Stage 1C — RetinaNet/FPN solid detector integration.
 
-Historical FCOS floor was superseded by Faster R-CNN/FPN `r5b_ext25` as the
-current primary Mode-1 detector. This RetinaNet script remains useful as a
-second established detector for diversity experiments and auxiliary-source runs.
-This script uses torchvision RetinaNet/FPN with pretrained COCO backbone
-as a non-novelty supporting component per architecture v3.
-
-Experiment order (one variable per run):
-  R1a: RetinaNet pretrained, NO hflip  ← this run
-  R1b: RetinaNet pretrained + hflip    ← only if R1a passes mAP50>=0.05
-    R2:  Faster R-CNN/FPN primary path   ← already available if R1a fails
-
-Label mapping (locked, matches coco_adapter.py):
-  ma  → 1 → MA
-  he  → 2 → HE
-  ex  → 3 → Hard_EX
-  se  → 4 → Soft_EX
-  background → 0 (torchvision convention)
-
-Usage:
-  # Smoke test (1 epoch, 8 images)
-  python tools/train_stage1c_retinanet.py --max_images 8 --epochs 1 --smoke_test
-
-  # Stage1C-R1a full run
-  python tools/train_stage1c_retinanet.py \\
-    --epochs 15 --batch_size 2 --lr 1e-4 --seed 42 \\
-    --freeze_backbone_epochs 5 \\
-    --output_dir outputs/detector_stage1/stage1c_retina_r1a
-"""
 
 from __future__ import annotations
 
@@ -90,7 +59,7 @@ CLASS_IDS = list(LABEL_MAP.keys())  # [1, 2, 3, 4]
 
 
 def _build_retinanet(num_classes: int, pretrained: bool) -> torch.nn.Module:
-    """Load pretrained RetinaNet and replace classification head."""
+
     if pretrained:
         if _WEIGHTS_V2:
             weights = RetinaNet_ResNet50_FPN_Weights.COCO_V1
@@ -125,7 +94,7 @@ def _build_retinanet(num_classes: int, pretrained: bool) -> torch.nn.Module:
 
 
 def _set_backbone_frozen(model: torch.nn.Module, frozen: bool) -> None:
-    """Freeze or unfreeze the ResNet50 backbone body."""
+
     requires_grad = not frozen
     for param in model.backbone.body.parameters():
         param.requires_grad = requires_grad
@@ -191,7 +160,7 @@ def _val_loss(
     device: torch.device,
     scaler,
 ) -> float:
-    """Compute validation loss by temporarily switching to train mode."""
+
     model.train()
     total_loss = 0.0
     n_batches = len(loader)
@@ -215,7 +184,7 @@ def _val_det_stats(
     device: torch.device,
     score_thresh: float,
 ) -> Dict:
-    """Quick detection stats for monitoring (no mAP, fast)."""
+
     model.eval()
     total_dets = 0
     max_score = 0.0
@@ -336,11 +305,7 @@ def _val_map50(
     device: torch.device,
     score_thresh: float,
 ) -> Dict:
-    """Compute mAP50 and per-class AP50 on validation set.
 
-    Uses score_thresh=0.01 regardless of training threshold so results
-    are always comparable across runs.
-    """
     model.eval()
     _eval_thresh = 0.01  # fixed low threshold for fair mAP comparison
     all_preds, all_targets = [], []

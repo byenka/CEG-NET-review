@@ -1,26 +1,4 @@
-"""
-zoning.py
-ETDRS-style anatomical zone assignment for retinal bounding box centroids.
 
-Five zones following the ETDRS grid convention (distances in disc diameters, DD):
-
-  Priority  Zone               Condition
-  --------  -----------------  -----------------------------------------------
-     1      Foveal             dist_fovea ≤ 1 DD
-     2      Peripapillary      dist_disc  ≤ 1 DD  (and not Foveal)
-     3      Parafoveal         1 DD < dist_fovea ≤ 2 DD  (and not Peripapillary)
-     4      Vascular_Arcades   within the arcade corridor  (and not above)
-     5      Peripheral         default (all remaining points)
-
-Arcade corridor approximation (no eye laterality needed):
-  - perpendicular distance to the fovea–disc line ≤ arcade_vband_dd DD
-  - dist_fovea in (parafoveal_dd, arcade_outer_dd] DD
-
-Landmark source is caller-supplied — no automatic OD/fovea detector here.
-Use estimate_landmarks_approx() for development/unit testing only (warns).
-
-Reference:  ETDRS Report No. 2 (1991); ICDR scale (Wilkinson 2003).
-"""
 
 import math
 import warnings
@@ -52,16 +30,7 @@ ZONE_COLORS: dict = {
 
 @dataclass
 class AnatomicalLandmarks:
-    """Optic disc and fovea positions required for zone assignment.
 
-    Attributes:
-        fovea:   (x, y) fovea centre in pixels, image coordinate system.
-        disc:    (x, y) optic disc centre in pixels.
-        dd_px:   Disc diameter in pixels. For a 512×512 retinal fundus image
-                 ~45 px is a typical value (1 DD ≈ 1500 µm).
-        image_w: Image width in pixels.
-        image_h: Image height in pixels.
-    """
 
     fovea: "tuple[float, float]"
     disc: "tuple[float, float]"
@@ -72,17 +41,7 @@ class AnatomicalLandmarks:
 
 @dataclass
 class ZoneThresholds:
-    """Distance thresholds for ETDRS zone assignment, all in disc diameters (DD).
 
-    Attributes:
-        foveal_dd:         Max dist from fovea for Foveal zone (default 1.0 DD).
-        parafoveal_dd:     Outer radius from fovea for Parafoveal (default 2.0 DD).
-        peripapillary_dd:  Max dist from optic disc for Peripapillary (default 1.0 DD).
-        arcade_outer_dd:   Max dist from fovea that still counts as Vascular_Arcades
-                           (default 5.0 DD).
-        arcade_vband_dd:   Half-height of the arcade corridor, measured perpendicular
-                           to the fovea–disc line (default 2.0 DD).
-    """
 
     foveal_dd: float = 1.0
     parafoveal_dd: float = 2.0
@@ -103,25 +62,7 @@ def estimate_landmarks_approx(
     dd_px: float = 45.0,
     disc_offset_dd: float = 3.5,
 ) -> AnatomicalLandmarks:
-    """Return a coarse landmark estimate from image dimensions.
 
-    Places fovea at image centre, optic disc offset to the right by
-    ``disc_offset_dd`` disc diameters (nasal side for a right eye in standard
-    fundus orientation).
-
-    WARNING: This is an approximation for development and unit tests only.
-    Eye laterality is ignored.  Use actual annotated landmarks for experiments.
-
-    Args:
-        image_w:         Image width in pixels.
-        image_h:         Image height in pixels.
-        dd_px:           Disc diameter in pixels.
-        disc_offset_dd:  How many DDs to offset the disc from the fovea
-                         (default 3.5 DD, typical nasal offset).
-
-    Returns:
-        AnatomicalLandmarks with approximate fovea and disc positions.
-    """
     warnings.warn(
         "[zoning] estimate_landmarks_approx() is a coarse approximation "
         "(right-eye, disc right of fovea). Provide actual landmark coordinates "
@@ -150,19 +91,7 @@ def assign_point_to_zone(
     landmarks: AnatomicalLandmarks,
     thresholds: "ZoneThresholds | None" = None,
 ) -> str:
-    """Assign a 2D point to one of the 5 ETDRS-style anatomical zones.
 
-    Priority order: Foveal > Peripapillary > Parafoveal > Vascular_Arcades
-    > Peripheral.
-
-    Args:
-        cx, cy:     Point coordinates in pixels.
-        landmarks:  Optic disc and fovea positions.
-        thresholds: Zone distance thresholds (uses defaults if None).
-
-    Returns:
-        One of ZONE_NAMES.
-    """
     th = thresholds or _DEFAULT_THRESHOLDS
     dd = landmarks.dd_px
 
@@ -199,17 +128,7 @@ def assign_bbox_to_zone(
     landmarks: AnatomicalLandmarks,
     thresholds: "ZoneThresholds | None" = None,
 ) -> str:
-    """Assign a bbox annotation dict (from xml_parser) to a zone using its centroid.
 
-    Args:
-        obj:       Object dict from xml_parser.parse_xml_file(), must contain
-                   keys ``cx`` and ``cy``.
-        landmarks: Optic disc and fovea positions.
-        thresholds: Zone distance thresholds (uses defaults if None).
-
-    Returns:
-        One of ZONE_NAMES.
-    """
     return assign_point_to_zone(obj["cx"], obj["cy"], landmarks, thresholds)
 
 
@@ -221,18 +140,7 @@ def compute_zone_distribution(
     landmark_map: dict,
     thresholds: "ZoneThresholds | None" = None,
 ) -> dict:
-    """Compute per-zone bbox count across a list of parsed annotation dicts.
 
-    Args:
-        annotations:  List of dicts from xml_parser.parse_xml_file().
-                      Each dict must have key ``image_name`` and ``objects``.
-        landmark_map: Mapping of image_name -> AnatomicalLandmarks (or dict with
-                      keys ``fovea``, ``disc``, ``dd_px``).
-        thresholds:   Zone thresholds (uses defaults if None).
-
-    Returns:
-        {zone_name: count} for all ZONE_NAMES.
-    """
     counts: dict = {z: 0 for z in ZONE_NAMES}
     missing_landmarks: list = []
 
@@ -275,10 +183,7 @@ def _perp_dist_to_line_dd(
     cy: float,
     landmarks: AnatomicalLandmarks,
 ) -> "float | None":
-    """Return perpendicular distance (in DD) from point to the fovea–disc line.
 
-    Returns None if fovea == disc (degenerate case).
-    """
     fx, fy = landmarks.fovea
     dx, dy = landmarks.disc
     fd_dist = math.hypot(dx - fx, dy - fy)

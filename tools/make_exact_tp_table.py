@@ -1,12 +1,5 @@
 #!/usr/bin/env python
-"""make_exact_tp_table.py — render S23 (exact-true-positive sensitivity) from frozen JSON.
 
-Source: the tp_exact task of step3_exact_tp_and_gap_ci.json, produced under
-PROTOCOL_LOCK_step3_exact_tp_and_gap_ci.md. Nothing is recomputed.
-
-Run from the repository root:
-  python tools/make_exact_tp_table.py
-"""
 from __future__ import annotations
 
 import hashlib

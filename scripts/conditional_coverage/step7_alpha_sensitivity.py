@@ -1,10 +1,5 @@
 #!/usr/bin/env python
-"""step7_alpha_sensitivity.py - sensitivity of the coverage-gap comparison to the miscoverage level alpha.
 
-Protocol locked before the run: _LGOVNET_NEW_SEP/PROTOCOL_LOCK_step7_alpha_sensitivity.md
-Output: _LGOVNET_NEW_SEP/results/step7_alpha_sensitivity.json
-Run from the repository root with the project environment.
-"""
 from __future__ import annotations
 
 import hashlib

@@ -1,17 +1,5 @@
 #!/usr/bin/env python
-"""eval_ensemble_external.py — ensemble multi-detektor lawan gate, keempat kohort.
 
-Menutup keberatan yang belum terjawab: ensemble enam detektor mengalahkan gate di OIA-DDR;
-apakah itu bertahan di bawah pergeseran domain?
-
-Protokol nol-tembak, identik naskah: gate dipasang pada OIA-DDR validasi, lima benih,
-diterapkan tanpa perubahan. Skor ensemble didefinisikan pada kotak kandidat detektor PRIMER;
-tiap anggota dicocokkan pada IoU minimal 0,15, anggota tanpa kotak cocok menyumbang nol.
-
-Keluaran: _LGOVNET_NEW_SEP/results/ensemble_external.json
-Jalankan dari root repo:
-  python _LGOVNET_NEW_SEP/scripts/eval_ensemble_external.py
-"""
 from __future__ import annotations
 
 import csv
@@ -63,7 +51,7 @@ def bbox_ids_of(path: Path) -> list:
 
 
 def member_scores(prim_dir: Path, suffix: str, split: str, csv_ids: list) -> dict:
-    """Skor tiap anggota pada kotak primer, selaras urutan csv_ids."""
+
     prim = load_boxes(prim_dir)
     loc = {}
     for img, (ids, _, _) in prim.items():

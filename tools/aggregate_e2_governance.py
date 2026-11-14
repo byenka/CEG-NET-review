@@ -1,33 +1,5 @@
 #!/usr/bin/env python
-"""aggregate_e2_governance.py — E2 verdict: collect per-detector FP-reduction
-benchmark JSONs (produced by tools/eval_fp_reduction_benchmark.py on each
-comparison detector's governance_features) and decide the DETECTOR-AGNOSTIC
-governance claim.
 
-Per detector we extract, at matched TP-retention:
-    M0          = M0_score      fp_supp   (score-only baseline)
-    KG-gate     = KG-gate-MLP   fp_supp   (governance, "ours")
-    gain        = KG-gate - M0              (the model-level contribution)
-
-Verdict: governance is DETECTOR-AGNOSTIC if gain > 0 on >= MIN_AGNOSTIC
-detectors (default 2). This is the E2 gate from the runbook.
-
-Outputs (fresh timestamped dir — never overwrites a prior aggregation):
-    e2_governance_summary.json
-    T11_e2_governance.tex        (copy into journal/tables/ when satisfied)
-    e2_detector_agnostic.md
-
-Reads ONLY benchmark JSONs; does not touch Mode 1.
-
-Usage:
-    # explicit name=path (recommended; names control the table rows):
-    python tools/aggregate_e2_governance.py \
-        --bench "Faster R-CNN (ours)=outputs/detcmp/fasterrcnn_fp_benchmark.json" \
-        --bench "RetinaNet=outputs/detcmp/retinanet_fp_benchmark.json" \
-        --bench "FCOS=outputs/detcmp/fcos_fp_benchmark.json"
-    # or glob (detector name derived from filename <name>_fp_benchmark.json):
-    python tools/aggregate_e2_governance.py --glob "outputs/detcmp/*_fp_benchmark.json"
-"""
 from __future__ import annotations
 
 import argparse

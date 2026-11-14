@@ -1,10 +1,4 @@
-"""linear_gate_transfer.py — bentuk linear gate B4/B6 pada keempat kohort (bahan saran poin 1).
 
-Regresi logistik (fit_logreg, 500 iterasi, lr 0.5) dipasang sekali pada OIA-DDR valid dengan
-masukan yang sama dengan gate MLP, lalu diterapkan tanpa perubahan ke OIA-DDR test, IDRiD, TJDR
-dan FGADR. Dibandingkan dengan rerata lima seed MLP (average precision) dari
-_septem/scripts_optionB/t12_tie_audit.json. Hanya membaca; tidak mengubah naskah.
-"""
 import json
 import statistics
 import sys

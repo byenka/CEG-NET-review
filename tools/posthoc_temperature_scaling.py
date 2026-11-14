@@ -1,36 +1,5 @@
 #!/usr/bin/env python
-"""posthoc_temperature_scaling.py — REV-7C safety-net calibration tool.
 
-Fit a single global temperature parameter T to recalibrate Faster R-CNN
-detection scores on the OIA-DDR valid split. Output:
-
-  - calibration_table.json   (mapping original_score → calibrated_score)
-  - calibrated_clinical_metrics.json  (full re-run of compute_all with new scores)
-  - posthoc_summary.json     (T, ECE_before, ECE_after, FPpr_before/after)
-
-This is a SUPPORTING ABLATION tool per architecture REV-7 §EXPLICIT
-REJECTIONS list ("Calibration-only revision is treated as supporting
-ablation, NOT as C3 novelty"). Use it to recover marginal ECE / FPpr at
-audit time when the Mode 2A REAL run is close to the non-regression gate
-but not perfectly calibrated.
-
-Method:
-  - Run frozen-checkpoint inference on the valid split.
-  - For each detection, label it TP/FP via greedy per-class IoU=0.5 match.
-  - Grid-search T over [0.1, 0.2, ..., 5.0] to minimise overall ECE (10 bins).
-  - Apply T: new_score = sigmoid(logit(p) / T)  where logit(p) = log(p/(1-p)).
-  - Re-evaluate clinical metrics with calibrated scores; record both.
-
-CUDA enforcement: --require_cuda hard-fails if CUDA is unavailable.
-
-Usage:
-  python tools/posthoc_temperature_scaling.py \\
-      --checkpoint outputs/mode2_r4_*/audit_topk/selected_best.pt \\
-      --data_root data/oiaddr \\
-      --split valid \\
-      --output_dir outputs/mode2_r4_*/posthoc_temp \\
-      --require_cuda
-"""
 
 from __future__ import annotations
 
@@ -61,11 +30,7 @@ FRCNN_LABEL_TO_CLASS: Dict[int, str] = {
 
 
 def _build_model(ckpt_path: Path, device: torch.device) -> torch.nn.Module:
-    """Construct a Faster R-CNN model and load the given checkpoint state.
 
-    Mirrors the construction used by ``tools/eval_clinical_metrics.py`` so
-    that calibrated inference is consistent with the un-calibrated baseline.
-    """
     from torchvision.models.detection import fasterrcnn_resnet50_fpn
     from torchvision.models.detection.faster_rcnn import FastRCNNPredictor
     from torchvision.models.detection.rpn import AnchorGenerator
@@ -128,11 +93,7 @@ def _flag_tp_per_class(
     targets: List[Dict],
     match_iou: float = 0.5,
 ) -> Tuple[np.ndarray, np.ndarray]:
-    """Build (scores, tp_flags) flat arrays across all classes for calibration.
 
-    For each predicted box, find the best-IoU GT box of the SAME class
-    (greedy, per-image, descending score). TP=1 if matched at IoU>=match_iou.
-    """
     all_scores: List[float] = []
     all_tp: List[int] = []
     for det, tgt in zip(detections, targets):
@@ -193,13 +154,7 @@ def _ece(scores: np.ndarray, tp: np.ndarray, n_bins: int = 10) -> float:
 
 
 def _apply_temperature(scores: np.ndarray, T: float, eps: float = 1e-6) -> np.ndarray:
-    """T-scaled scores via logit-divide.
 
-    new_score = sigmoid(logit(p) / T) where logit(p) = log(p / (1-p)).
-    T > 1 makes scores less confident (pull toward 0.5).
-    T < 1 makes scores more confident (push away from 0.5).
-    T = 1 is identity.
-    """
     if T <= 0:
         raise ValueError(f"Temperature must be > 0; got {T}")
     p = np.clip(scores, eps, 1.0 - eps)
@@ -213,7 +168,7 @@ def _fit_temperature(
     tp: np.ndarray,
     grid: Optional[List[float]] = None,
 ) -> Tuple[float, float, float]:
-    """Grid-search T to minimize ECE. Returns (T_best, ECE_before, ECE_after)."""
+
     if grid is None:
         # Two-pass grid: coarse then fine.
         coarse = [round(0.1 * i, 2) for i in range(1, 51)]  # 0.1..5.0

@@ -1,50 +1,5 @@
 #!/usr/bin/env python
-"""
-audit_stage3a_kg.py
-Phase 19N — Stage 3A: KG / C1 Readiness Audit
 
-Validates the clinical knowledge graph (Contribution 1) before governance
-gate training (Stage 3D). This audit must PASS before SDCA and compat_scores
-are used in any governance experiment.
-
-Pipeline executed:
-  1. Build static KG from schema.py (clinical priors only)
-  2. Initialize LGovNetEncoder (2-layer HeteroGAT)
-  3. Run forward pass → node embeddings [9, 64]
-  4. Compute SDM (pairwise lesion L2 distances)
-  5. Normalize via normalize_sdca() → sdm_norm in [0,1]
-  6. Compute compat_scores → {(lesion, zone): float ∈ (0,1)}
-  7. Validate against gate criteria (professor Stage 3 acceptance spec)
-  8. Save frozen KG state for Stage 3B evidence recomputation
-
-Gate criteria (professor, 4diskgpt1.txt §5):
-  1. All 4 lesion nodes present: MA, HE, Hard_EX, Soft_EX
-  2. SDM_norm: shape 4×4 equivalent (6 unique pairs), diagonal=0, in [0,1], no NaN, not all same
-  3. compat_scores: in [0,1], not all 0.5, high-affinity pairs clearly distinct
-     Hard_EX↔Foveal > Hard_EX↔Peripheral (compat_prior biases this at init)
-     Soft_EX↔Peripapillary > Soft_EX↔Peripheral (compat_prior biases this at init)
-  4. Evidence vector re-run with real KG (replaces Stage 2 stubs)
-  5. Report saved: outputs/stage3_audit/kg_evidence_audit.json
-
-NOT in scope here:
-  - LGG training (Stage 3D)
-  - Mode 1 governance claims (Stage 3D+)
-  - Dataset co-occurrence update (build_dataset_stats.py — can run before Stage 3D)
-
-Outputs:
-  outputs/stage3_audit/
-    kg_evidence_audit.json      — full audit report with gate result
-    sdm_norm.json               — frozen sdm_norm for Stage 3B evidence
-    compat_scores.json          — frozen compat_scores for Stage 3B evidence
-    kg_encoder_init.pt          — encoder init state_dict (reproducibility)
-    nodes.json                  — 9 node specs (saved for traceability)
-    edges.json                  — edge specs (saved for traceability)
-
-Usage:
-    python tools/audit_stage3a_kg.py
-    python tools/audit_stage3a_kg.py --output_dir outputs/stage3_audit
-    python tools/audit_stage3a_kg.py --seed 42
-"""
 
 from __future__ import annotations
 
@@ -144,29 +99,26 @@ _SDM_CLINICAL_ORDER_CHECKS = [
 
 
 def _key_to_str(pair: tuple) -> str:
-    """Convert (ci, cj) tuple to JSON-safe key string."""
+
     return f"{pair[0]}__{pair[1]}"
 
 
 def _save_sdm_norm(sdm_norm: dict, path: Path) -> None:
-    """Save sdm_norm as JSON with string keys."""
+
     serializable = {_key_to_str(k): v for k, v in sdm_norm.items()}
     with open(path, "w", encoding="utf-8") as f:
         json.dump(serializable, f, indent=2)
 
 
 def _save_compat_scores(compat: dict, path: Path) -> None:
-    """Save compat_scores as JSON with string keys."""
+
     serializable = {_key_to_str(k): round(v, 6) for k, v in compat.items()}
     with open(path, "w", encoding="utf-8") as f:
         json.dump(serializable, f, indent=2)
 
 
 def _validate_sdm_norm(sdm_norm: dict) -> Tuple[bool, List[str], List[str]]:
-    """Check gate criteria 2: SDM_norm validity.
 
-    Returns (passed, errors, notes).
-    """
     errors: List[str] = []
     notes: List[str] = []
 
@@ -232,10 +184,7 @@ def _validate_sdm_norm(sdm_norm: dict) -> Tuple[bool, List[str], List[str]]:
 
 
 def _validate_compat_scores(compat: dict) -> Tuple[bool, List[str], List[str]]:
-    """Check gate criteria 3: compat_scores validity.
 
-    Returns (passed, errors, notes).
-    """
     errors: List[str] = []
     notes: List[str] = []
 
@@ -289,14 +238,7 @@ def _validate_compat_scores(compat: dict) -> Tuple[bool, List[str], List[str]]:
 
 
 def _validate_sdm_clinical_ordering(sdm: dict) -> Tuple[bool, List[str], List[str]]:
-    """Check C2b: SDM values are clinically ordered per ICDR grading scale.
 
-    This gate is meaningless on random-init encoder SDM (expected to WARN/FAIL).
-    It should always PASS on build_clinical_prior_sdm() output by construction.
-    Used here to confirm the clinical-prior SDM is correctly built.
-
-    Returns (passed, errors, notes).
-    """
     errors: List[str] = []
     notes: List[str] = []
 
@@ -593,23 +535,7 @@ def run_kg_audit(args) -> dict:
 
 
 def _sanity_check_evidence(sdm_norm: dict, compat_scores: dict) -> bool:
-    """Evidence vector format check with two synthetic DetectorBoxes.
 
-    Checks (C4 spec):
-      1. evidence_vector exists and has length 4
-      2. all components are finite
-      3. all components are in [0.0, 1.0]
-      4. APS = 0.5 when anatomy_context=None (od_confidence='n/a' fail-safe)
-      5. anatomy_uncertain = True under no anatomy context
-
-    NOTE: SDCA = 0.0 is VALID for clinical-prior SDM when majority=MA and
-    runner_up=HE (SDM_clinical_prior(MA,HE) = 0.0 by ICDR design — zero-cost
-    confusion pair). Do NOT treat SDCA=0.0 as a format error.
-
-    Two boxes are tested:
-      box_A: MA(0.70) vs HE(0.10) runner-up → SDCA should be 0.0 (MA↔HE cost)
-      box_B: MA(0.70) vs Soft_EX(0.20) runner-up → SDCA should be 1.0 (MA↔Soft_EX cost)
-    """
     import math
 
     try:

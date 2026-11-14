@@ -1,24 +1,10 @@
-"""make_s8_net_benefit.py — tabel suplemen S8 dari net_benefit_isotonic_check.json + net_benefit_bootstrap.json.
 
-Isi: manfaat bersih (decision curve analysis, Vickers dan Elkin) pada tugas triase
-retain-versus-suppress, menjawab keberatan "nilai klinisnya belum ditunjukkan" tanpa studi pembaca.
-
-DUA HAL YANG WAJIB DIJAGA DI SINI.
-1. JANGAN memakai net_benefit.json (v1). Ambangnya kuantil sehingga fraksi retensi terpaku pada
-   p_t dan NB terkunci <= p_t; kemenangan retain-semua pada p_t <= 0.20 di sana DIPAKSA aritmetika.
-   Tabel ini memakai aturan baku p_hat >= p_t atas probabilitas TERKALIBRASI.
-2. Setiap sistem diberi kalibrator TERKUAT yang wajar (isotonik, dipasang pada OIA-DDR validasi),
-   termasuk skor fusi. Tanpa itu gate menang hanya karena ia satu-satunya keluaran terlatih-NLL,
-   dan klaimnya akan runtuh begitu reviewer menjalankan isotonik sendiri.
-
-Keluaran: _FINAL_Latex/tables/S8_net_benefit.tex. Jalankan dari root repo.
-"""
 import json
 from decimal import ROUND_HALF_UP, Decimal
 from pathlib import Path
 
 def _resolve(*candidates):
-    """Find the input in the research workspace layout or in the repository layout."""
+
     for base in Path(__file__).resolve().parents:
         for rel in candidates:
             p = base / rel

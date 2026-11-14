@@ -1,71 +1,4 @@
-"""
-gate.py
-Learned Governance Gate (LGG) for LGov-Net (Contribution 2).
 
-LEGACY MODULE, NOT USED FOR THE REPORTED RESULTS.
---------------------------------------------------
-This four-way gate (LayerNorm/ReLU/Dropout, Gumbel-Softmax over tiers R1-R4, a
-knowledge-graph embedding e_pred as input) is an earlier design. The gate reported in
-the paper is a binary retain model with one hidden layer of 16 tanh units, fitted by
-full-batch gradient descent on OIA-DDR validation: `fit_mlp` and `apply_mlp` in
-tools/eval_fp_reduction_benchmark.py, with the retain threshold from
-`threshold_for_tp_ret` in the same file. Tiers are not predicted by a network; they are
-the two-way rule over (retain decision, SDCA) of Algorithm 1, `assign` in
-tools/make_tier_routing.py. This module is kept because the earlier detector-training
-scripts (tools/train_stage3d_lgg.py, tools/train_stage5_mode2.py, src/experiment_runner.py)
-still import it.
-
-Takes per-bbox evidence and routes each bbox to one of 4 governance tiers
-(R1–R4) using a 2-layer MLP with optional Gumbel-Softmax for differentiable
-routing during training.
-
-Architecture:
-  input:   g(b_j) = [SAS, SDCA_norm, APS, PSS, e_pred]  ∈ R^{4 + d}
-  hidden:  Linear(4+d → hidden_dim) → LayerNorm → ReLU → Dropout
-  output:  Linear(hidden_dim → 4)  →  tier logits  ∈ R^4
-  routing: softmax(logits)                           →  tier probs  ∈ Δ³
-           Gumbel-Softmax(logits) during training    →  soft one-hot ∈ Δ³
-           argmax(logits) during inference            →  hard tier ∈ {0,1,2,3}
-
-Tier semantics (interpretation only — not enforced here):
-  R1 — Accept: high SAS + high APS + stable PSS → accepted as-is
-  R2 — Soft-correct: moderate evidence → apply KG-guided correction
-  R3 — Escalate: conflicted evidence → defer to radiologist / second head
-  R4 — Reject: very low SAS + low APS → suppress / discard bbox
-
-  NOTE: which tier does what is defined in the paper / downstream postprocessing.
-  This module only produces the routing distribution. It does NOT implement
-  any correction, filtering, or escalation logic.
-
-e_pred construction:
-  e_pred(b_j) = Σ_c  ensemble_probs[c] · e_c
-  where e_c is the KG embedding of lesion class c (from LGovNetEncoder).
-  This soft-weighted embedding encodes the distributional class evidence in
-  the KG embedding space.  Helper: build_pred_embedding().
-
-Usage:
-  from src.governance.gate import LGG, build_pred_embedding, concat_gate_input
-
-  # Full model (default — Contribution 2 as designed):
-  gate = LGG(evidence_dim=4, embedding_dim=64)
-  e_pred = build_pred_embedding(ensemble_probs_batch, lesion_embeddings)  # [B, 64]
-  gate_input = concat_gate_input(evidence_vectors, e_pred)                # [B, 68]
-  out = gate(gate_input)
-
-  # Ablation: gate without KG embedding (C2 ablation "gate without KG"):
-  gate_no_kg = LGG(evidence_dim=4, embedding_dim=0)
-  gate_input_no_kg = concat_gate_input(evidence_vectors, e_pred, use_kg_embedding=False)
-  out_ablation = gate_no_kg(gate_input_no_kg)                             # [B, 4]
-
-  # out["tier_probs"]  → Tensor[B, 4]
-  # out["tier_hard"]   → Tensor[B]   (inference)
-
-Dependencies:
-  - PyTorch   (no PyG)
-  - evidence.py supplies evidence_vector=(SAS, SDCA_norm, APS, PSS)
-  - encoder.py supplies lesion embeddings and e_pred
-  - contracts.py is NOT imported here (gate is contract-agnostic)
-"""
 
 from __future__ import annotations
 
@@ -94,29 +27,7 @@ def build_pred_embedding(
     ensemble_probs_batch: torch.Tensor,
     lesion_embeddings: torch.Tensor,
 ) -> torch.Tensor:
-    """Compute the soft-weighted predicted class embedding e_pred for a batch.
 
-    e_pred(b_j) = Σ_c  P(c | b_j) · e_c
-
-    where e_c is the KG embedding for lesion class c and P(c | b_j) comes
-    from the detector's ensemble_probs (averaged over all heads).
-
-    This produces a single embedding in the KG space that is a convex
-    combination of the 4 lesion embeddings, weighted by how confident the
-    detector is in each class.  It encodes distributional evidence rather
-    than committing to a hard class before the gate decision.
-
-    Args:
-        ensemble_probs_batch: Tensor[B, C] — per-class probabilities, C=4.
-                              Must sum to 1 per row.
-                              Row ordering must match _LESION_CLASSES.
-        lesion_embeddings:    Tensor[C, d] — KG embeddings for the 4 lesion
-                              nodes, in _LESION_CLASSES order.
-                              Typically rows 0–3 of LGovNetEncoder output.
-
-    Returns:
-        Tensor[B, d] — one predicted embedding per bbox in the batch.
-    """
     # [B, C] @ [C, d] → [B, d]
     return ensemble_probs_batch @ lesion_embeddings
 
@@ -126,34 +37,7 @@ def concat_gate_input(
     e_pred: torch.Tensor,
     use_kg_embedding: bool = True,
 ) -> torch.Tensor:
-    """Concatenate scalar evidence signals and (optionally) predicted embedding.
 
-    Produces the full gate input vector:
-        use_kg_embedding=True  (default):
-            gate_input = [SAS, SDCA_norm, APS, PSS, e_pred]  ∈ R^{4 + d}
-        use_kg_embedding=False  (ablation — C2 "gate without KG"):
-            gate_input = [SAS, SDCA_norm, APS, PSS]          ∈ R^4
-
-    The ablation mode is used to test whether the KG embedding component
-    (e_pred) contributes meaningfully to routing beyond the scalar signals.
-    It corresponds to the "gate without KG" condition in the C2 ablation table.
-
-    IMPORTANT: when use_kg_embedding=False, the LGG must be instantiated with
-    embedding_dim=0  (i.e. LGG(embedding_dim=0)) so that gate_dim = 4 matches
-    the input width.  Using a model with embedding_dim > 0 against this output
-    will raise a shape mismatch at the first linear layer.
-
-    Args:
-        evidence_vectors:  Tensor[B, 4] — [SAS, SDCA_norm, APS, PSS] per bbox.
-        e_pred:            Tensor[B, d] — predicted embedding per bbox.
-                           Ignored when use_kg_embedding=False.
-        use_kg_embedding:  If True (default), append e_pred.
-                           If False, return evidence_vectors only (ablation).
-
-    Returns:
-        Tensor[B, 4+d] when use_kg_embedding=True,
-        Tensor[B, 4]   when use_kg_embedding=False.
-    """
     if use_kg_embedding:
         return torch.cat([evidence_vectors, e_pred], dim=-1)
     return evidence_vectors
@@ -164,22 +48,7 @@ def gumbel_soft_routing(
     temperature: float = 1.0,
     hard: bool = False,
 ) -> torch.Tensor:
-    """Differentiable soft routing via Gumbel-Softmax.
 
-    During training, Gumbel noise injected into logits allows gradients to
-    flow through the discrete tier selection.  Lower temperature sharpens
-    the distribution toward one-hot.
-
-    Args:
-        logits:      Tensor[B, 4] — raw gate output scores.
-        temperature: Gumbel-Softmax temperature τ > 0.  Typically annealed
-                     from 1.0 → 0.1 during training.  1.0 = soft; 0.1 ≈ hard.
-        hard:        If True, use straight-through estimator: forward pass
-                     returns one-hot, backward pass uses soft gradients.
-
-    Returns:
-        Tensor[B, 4] — soft (or straight-through hard) routing probabilities.
-    """
     return F.gumbel_softmax(logits, tau=temperature, hard=hard, dim=-1)
 
 
@@ -189,24 +58,7 @@ def get_gumbel_tau(
     tau_end: float = 0.1,
     tau_anneal_steps: int = 10_000,
 ) -> float:
-    """Return the Gumbel-Softmax temperature τ at a given training step.
 
-    Uses linear annealing from tau_start down to tau_end over tau_anneal_steps.
-    After tau_anneal_steps the temperature is clamped at tau_end.
-
-    Formula:
-        τ(t) = tau_start + (tau_end - tau_start) * min(t / tau_anneal_steps, 1)
-
-    Args:
-        step:             Current training step (0-indexed).
-        tau_start:        Initial temperature (default 1.0 — soft).
-        tau_end:          Final temperature after annealing (default 0.1 — near-hard).
-        tau_anneal_steps: Number of steps over which to anneal (default 10 000).
-                          Must be > 0.
-
-    Returns:
-        float in [tau_end, tau_start].
-    """
     if tau_anneal_steps <= 0:
         raise ValueError(f"tau_anneal_steps must be > 0, got {tau_anneal_steps}")
     progress = min(step / tau_anneal_steps, 1.0)
@@ -217,19 +69,7 @@ def predict_tier(
     tier_probs: torch.Tensor,
     tier_names: Optional[List[str]] = None,
 ) -> dict:
-    """Convert tier probabilities to hard tier assignments for inference.
 
-    Args:
-        tier_probs:  Tensor[B, 4] — softmax probabilities per tier.
-        tier_names:  List of tier label strings. Defaults to TIER_NAMES.
-
-    Returns:
-        {
-            "tier_hard":    Tensor[B] int64 — argmax tier index per bbox.
-            "tier_labels":  list[str] length B — tier name per bbox.
-            "confidence":   Tensor[B] — max prob per bbox (gate confidence).
-        }
-    """
     if tier_names is None:
         tier_names = TIER_NAMES
 
@@ -250,28 +90,7 @@ def predict_tier(
 
 
 class LGG(nn.Module):
-    """Learned Governance Gate — 2-layer MLP routing bbox to tier R1–R4.
 
-    Takes the concatenated gate input [evidence_vector || e_pred] and
-    produces a routing distribution over 4 governance tiers.
-
-    Architecture:
-        fc1:   Linear(gate_dim → hidden_dim)
-        norm1: LayerNorm(hidden_dim)
-        act:   ReLU
-        drop:  Dropout(dropout)
-        fc2:   Linear(hidden_dim → 4)
-
-    gate_dim = evidence_dim + embedding_dim = 4 + d (default 4 + 64 = 68).
-
-    Args:
-        evidence_dim:   Dimension of the scalar evidence vector (default 4).
-                        Must match len(evidence_vector) from evidence.py.
-        embedding_dim:  Dimension of e_pred (= LGovNetEncoder.embedding_dim,
-                        default 64).
-        hidden_dim:     Width of the hidden layer (default 128).
-        dropout:        Dropout rate applied after activation (default 0.1).
-    """
 
     def __init__(
         self,
@@ -295,22 +114,7 @@ class LGG(nn.Module):
         nn.init.zeros_(self.fc2.bias)
 
     def forward(self, gate_input: torch.Tensor) -> Dict[str, object]:
-        """Standard forward pass — produces logits and softmax probabilities.
 
-        Use this during training (with Gumbel routing) or for computing loss.
-
-        Args:
-            gate_input: Tensor[B, evidence_dim + embedding_dim]
-                        Built via concat_gate_input(evidence_vectors, e_pred).
-
-        Returns:
-            {
-                "tier_logits": Tensor[B, 4]  — raw pre-softmax scores.
-                "tier_probs":  Tensor[B, 4]  — softmax probabilities.
-                "tier_hard":   Tensor[B]     — argmax tier index (int64).
-                "tier_names":  list[str]     — ["R1","R2","R3","R4"].
-            }
-        """
         h = F.relu(self.norm1(self.fc1(gate_input)))  # [B, hidden_dim]
         h = self.drop(h)
         logits = self.fc2(h)  # [B, 4]
@@ -330,23 +134,7 @@ class LGG(nn.Module):
         temperature: float = 1.0,
         hard: bool = False,
     ) -> Dict[str, object]:
-        """Forward pass with Gumbel-Softmax for differentiable routing.
 
-        Use during training when gradients must flow through the discrete
-        tier assignment.  Set hard=True for straight-through estimator.
-
-        Args:
-            gate_input:  Tensor[B, gate_dim].
-            temperature: Gumbel-Softmax temperature τ.  Anneal toward 0 to
-                         approximate hard argmax while keeping gradients.
-            hard:        Straight-through mode: forward = one-hot,
-                         backward = soft gradient.
-
-        Returns:
-            Same keys as forward(), with "tier_probs" replaced by Gumbel
-            soft/hard one-hot.  Additionally includes:
-                "gumbel_soft": Tensor[B, 4] — raw Gumbel-Softmax output.
-        """
         h = F.relu(self.norm1(self.fc1(gate_input)))
         h = self.drop(h)
         logits = self.fc2(h)  # [B, 4]
@@ -375,17 +163,7 @@ def build_lgg(
     hidden_dim: int = 128,
     dropout: float = 0.1,
 ) -> LGG:
-    """Return a freshly initialised LGG module.
 
-    Args:
-        evidence_dim:   Length of scalar evidence vector (default 4).
-        embedding_dim:  Dimension of e_pred from LGovNetEncoder (default 64).
-        hidden_dim:     Hidden layer width (default 128).
-        dropout:        Dropout rate (default 0.1).
-
-    Returns:
-        LGG in training mode.
-    """
     return LGG(
         evidence_dim=evidence_dim,
         embedding_dim=embedding_dim,

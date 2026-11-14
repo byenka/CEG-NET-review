@@ -1,36 +1,4 @@
-"""
-builder.py
-Assemble the LGov-Net Knowledge Graph for the encoder.
 
-Combines:
-  - Static structural schema (schema.py) — node/edge topology + clinical priors
-  - Dataset statistics (outputs of build_dataset_stats.py) — co-occurrence
-    and zone-affinity data to initialize trainable edge weights
-
-Two modes:
-  static_only  — clinical priors only, no dataset required, trainable edges
-                 keep uniform init_weight=1.0 placeholders.
-  dataset_init — trainable co_occurrence_pattern and spatial_distribution
-                 edges are re-initialized from dataset statistics.
-
-Output contract  (all functions return the same BuiltGraph named-tuple-like dict):
-    {
-        "nodes":    list[dict]        — 9 entries, ordered by idx
-        "edges":    dict[str, list]   — keyed by edge_type, each list sorted by (src, dst)
-        "node_features": dict[str, list[float]]  — {node_name: feature_vector}
-        "meta":     dict              — build provenance and counts
-    }
-
-    Edge dicts per type:
-        {"src": int, "dst": int, "weight": float,
-         "trainable": bool, "directed": bool}
-
-Node feature vector contract (matches NodeSpec.feat_dim):
-    lesion node (feat_dim=17):  one_hot(9) + clinical_attr(8)   — all floats
-    zone node   (feat_dim=9):   one_hot(9)                       — all floats
-
-GAT, SDM, Compat, and training are NOT in scope for this module.
-"""
 
 import csv
 import json
@@ -45,11 +13,7 @@ def _load_json(path: "str | Path") -> "dict | list":
 
 
 def _load_cooccurrence_csv(csv_path: "str | Path") -> "dict[str, dict[str, int]]":
-    """Read cooccurrence_matrix.csv → {cls_a: {cls_b: int}}.
 
-    The CSV has a header row like: ,MA,HE,Hard_EX,Soft_EX
-    and data rows like:            MA,314,230,199,99
-    """
     result: dict = {}
     csv_path = Path(csv_path)
     with open(csv_path, "r", encoding="utf-8", newline="") as f:
@@ -67,11 +31,7 @@ def _load_cooccurrence_csv(csv_path: "str | Path") -> "dict[str, dict[str, int]]
 def _load_zone_affinity_csv(
     csv_path: "str | Path",
 ) -> "dict[str, dict[str, float]]":
-    """Read lesion_zone_affinity.csv → {lesion: {zone: float}} for observed only.
 
-    Rows with observed==False (conceptual-only nodes) are skipped — their
-    zone values are blank by design (no fake statistics).
-    """
     result: dict = {}
     csv_path = Path(csv_path)
     with open(csv_path, "r", encoding="utf-8", newline="") as f:
@@ -89,7 +49,7 @@ def _load_zone_affinity_csv(
 
 
 def _build_one_hot(idx: int, n: int = 9) -> "list[float]":
-    """Return a length-n one-hot vector with 1.0 at position idx."""
+
     vec = [0.0] * n
     vec[idx] = 1.0
     return vec
@@ -99,20 +59,7 @@ def _build_one_hot(idx: int, n: int = 9) -> "list[float]":
 
 
 def get_node_features(nodes: "list[dict]") -> "dict[str, list[float]]":
-    """Build the feature vector for each KG node.
 
-    Lesion nodes (feat_dim=17):  one_hot(9) + CLINICAL_ATTRS(8)
-    Zone nodes   (feat_dim=9):   one_hot(9)
-
-    Args:
-        nodes: List of node dicts as stored in nodes.json (keys: idx, name,
-               node_type, feat_dim).
-
-    Returns:
-        OrderedDict-compatible plain dict {node_name: [float, ...]} with
-        deterministic ordering (sorted by node idx).  All values are floats
-        so the dict can be fed directly into numpy/torch without conversion.
-    """
     from lgovnet.src.data.ontology import CLINICAL_ATTRS_NORMALIZED
 
     features: dict = {}
@@ -134,20 +81,7 @@ def get_edge_index_by_type(
     edge_type: str,
     include_reverse: bool = False,
 ) -> "list[list[int]]":
-    """Return [[src_indices], [dst_indices]] for a given edge type.
 
-    Args:
-        edges:           Output of build_graph_from_artifacts()["edges"].
-        edge_type:       One of the 5 LGov-Net edge type strings.
-        include_reverse: If True, also append the reverse direction for
-                         undirected edges (gives symmetric adjacency).
-                         Directed edges (pathophysiological_mechanism) are
-                         never reversed regardless of this flag.
-
-    Returns:
-        [src_list, dst_list] — two parallel integer lists, suitable for
-        use as edge_index in PyTorch Geometric.
-    """
     edge_list = edges.get(edge_type, [])
     src_list: list = []
     dst_list: list = []
@@ -165,17 +99,7 @@ def get_edge_weight_by_type(
     edge_type: str,
     include_reverse: bool = False,
 ) -> "list[float]":
-    """Return weight list aligned with get_edge_index_by_type().
 
-    Args:
-        edges:           Output of build_graph_from_artifacts()["edges"].
-        edge_type:       Target edge type string.
-        include_reverse: Mirror of the same flag in get_edge_index_by_type().
-
-    Returns:
-        List of floats, same length as each src/dst list returned by
-        get_edge_index_by_type() with the same arguments.
-    """
     edge_list = edges.get(edge_type, [])
     weights: list = []
     for e in edge_list:
@@ -194,40 +118,7 @@ def build_graph_from_artifacts(
     cooccurrence_csv: "str | Path | None" = None,
     zone_affinity_csv: "str | Path | None" = None,
 ) -> dict:
-    """Assemble the KG dict from pre-built artifact files.
 
-    Two operational modes depending on which CSVs are supplied:
-
-    static_only (both CSV paths are None):
-        Loads nodes + edges from nodes.json / edges.json.
-        Trainable edges keep the init_weight values from schema.py.
-        No dataset access required.
-
-    dataset_init (one or both CSV paths supplied):
-        co_occurrence_pattern weights are re-initialized from the
-        co-occurrence matrix (normalized by max pair count).
-        spatial_distribution weights are re-initialized from the
-        normalized zone-affinity matrix.
-        Fixed edges (morphological_confusability, severity_transition)
-        are NEVER modified by dataset statistics.
-
-    Args:
-        nodes_json:       Path to outputs/graphs/nodes.json (from build_static_kg.py).
-        edges_json:       Path to outputs/graphs/edges.json (from build_static_kg.py).
-        cooccurrence_csv: Path to outputs/stats/cooccurrence_matrix.csv.
-                          If None, co_occurrence_pattern weights are unchanged.
-        zone_affinity_csv: Path to outputs/stats/lesion_zone_affinity.csv.
-                           If None, spatial_distribution weights are unchanged.
-
-    Returns:
-        {
-          "nodes": list[dict],
-          "edges": dict[str, list[dict]],   # keyed by edge_type
-          "node_features": dict[str, list[float]],
-          "meta": dict,
-        }
-        Output is fully deterministic — same inputs produce identical dicts.
-    """
     nodes_json = Path(nodes_json)
     edges_json = Path(edges_json)
 
@@ -370,14 +261,7 @@ def build_graph_from_artifacts(
 
 
 def save_kg(kg: dict, output_path: "str | Path") -> None:
-    """Save the built KG dict to JSON for audit and reproducibility.
 
-    Creates parent directory if it does not exist.
-
-    Args:
-        kg:          Output of build_graph_from_artifacts().
-        output_path: Destination .json path.
-    """
     output_path = Path(output_path)
     output_path.parent.mkdir(parents=True, exist_ok=True)
     with open(output_path, "w", encoding="utf-8") as f:
@@ -386,13 +270,6 @@ def save_kg(kg: dict, output_path: "str | Path") -> None:
 
 
 def load_kg(kg_path: "str | Path") -> dict:
-    """Load a previously saved KG dict from JSON.
 
-    Args:
-        kg_path: Path to a .json file written by save_kg().
-
-    Returns:
-        KG dict matching the contract in build_graph_from_artifacts().
-    """
     with open(kg_path, "r", encoding="utf-8") as f:
         return json.load(f)

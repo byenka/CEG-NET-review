@@ -1,21 +1,5 @@
 #!/usr/bin/env python
-"""step0_conditional_coverage.py — Langkah 0 dari rancangan ulang CEG.
 
-Menguji apakah ambang conformal yang dikalibrasi MARGINAL pada OIA-DDR validasi memberi
-cakupan mendekati nominal DI DALAM tiap stratum korroborasi pada OIA-DDR test.
-
-Protokol dikunci sebelum eksekusi:
-  _LGOVNET_NEW_SEP/PROTOCOL_LOCK_step0_conditional_coverage.md
-
-Kriteria (dikunci):
-  MATI   : setiap metode |selisih| <= 0,05 di setiap stratum
-  LANJUT : sekurangnya satu metode |selisih| > 0,15 pada stratum dengan >= 200 positif
-  ABU-ABU: selisih maksimum di antara keduanya
-
-Keluaran: _LGOVNET_NEW_SEP/results/step0_conditional_coverage.json
-Jalankan dari root repo:
-  python _LGOVNET_NEW_SEP/scripts/step0_conditional_coverage.py
-"""
 from __future__ import annotations
 
 import json
@@ -45,7 +29,7 @@ PROCEED = 0.15
 
 
 def strata(scores: dict) -> np.ndarray:
-    """k = jumlah anggota detcmp yang mencocokkan kotak (skor > 0)."""
+
     return np.sum([(scores[m] > 0).astype(int) for m in MEMBERS], axis=0)
 
 

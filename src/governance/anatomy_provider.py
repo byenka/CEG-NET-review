@@ -1,43 +1,4 @@
-"""
-anatomy_provider.py
-AnatomyProvider interface for LGov-Net governance pipeline.
 
-Architecture v3 Stage 2: AnatomyProvider is a swappable interface.
-The governance pipeline does NOT depend on a specific OD detection method.
-
-Interface:
-    class AnatomyProvider:
-        def __call__(self, image, image_id: str) -> AnatomyContext: ...
-
-AnatomyContext carries optic disc and fovea estimates with confidence metadata.
-The od_confidence field drives the APS fail-safe in evidence.py:
-    od_confidence == "low" or "n/a"  →  APS = 0.5 (neutral), anatomy_uncertain=True
-    od_confidence == "moderate"      →  APS computed from zone, anatomy_uncertain=False
-    od_confidence == "high"          →  APS computed from zone, anatomy_uncertain=False
-
-Source preference (architecture v3 §AnatomyProvider):
-    1. Dataset OD/fovea annotations (best) — NOT available in IDRiD detection split
-    2. Validated pretrained model (REFUGE/RIGA U-Net) — ExternalPretrainedProvider stub
-    3. Pseudo-GT from one-time manual labelling of val set
-    4. Heuristic luminance estimator (B3c.8.1, valid_rate=69.1%) — last resort, od_confidence="low"
-    5. ApproximateAnatomyProvider (geometry only) — placeholder until real provider
-
-Empirical record (paper Limitations):
-    B3c.8   heuristic OD estimator: valid_rate=16.8%
-    B3c.8.1 revised multi-candidate: valid_rate=69.1% (PARTIAL, below 80% gate)
-    Conclusion: OD localization is NOT a methodological contribution.
-
-Usage:
-    from src.governance.anatomy_provider import (
-        AnatomyContext,
-        ApproximateAnatomyProvider,
-        make_anatomy_context,
-    )
-
-    provider = ApproximateAnatomyProvider()
-    ctx = provider(image, image_id="img001")
-    # ctx.od_confidence == "low" → evidence.py sets APS = 0.5
-"""
 
 from __future__ import annotations
 
@@ -69,26 +30,7 @@ _LOW_CONFIDENCE_LEVELS = frozenset({"low", "n/a"})
 
 @dataclass
 class AnatomyContext:
-    """Optic disc and fovea information for one retinal image.
 
-    This is the output contract of AnatomyProvider.__call__().
-    All downstream modules (evidence.py, certificate.py) consume this
-    directly without accessing the provider's internals.
-
-    Fields (from architecture v3 §AnatomyProvider):
-        od_center:          (cx, cy) of optic disc centre in pixel coordinates,
-                            or None if not estimated.
-        od_radius:          Estimated optic disc radius in pixels, or None.
-        od_confidence:      Confidence tier: "high" | "moderate" | "low" | "n/a".
-                            Determines APS fail-safe behaviour in evidence.py.
-        fovea_center:       (cx, cy) of fovea centre, or None.
-        vessel_map:         Optional np.ndarray vessel segmentation (H×W binary).
-        etdrs_zone_map:     Optional np.ndarray per-pixel zone labels (H×W int).
-        eye_side:           "left" | "right" | "unknown".
-        provider_name:      Human-readable provider identifier (recorded in cert).
-        provider_validation: Provider-specific QC numbers (e.g., valid_rate).
-        image_id:           Image stem used to generate this context.
-    """
 
     od_center: Optional[Tuple[float, float]]
     od_radius: Optional[float]
@@ -114,11 +56,11 @@ class AnatomyContext:
 
     @property
     def aps_should_be_neutral(self) -> bool:
-        """True when od_confidence is too low to trust APS computation."""
+
         return self.od_confidence in _LOW_CONFIDENCE_LEVELS
 
     def to_dict(self) -> dict:
-        """Serializable dict for certificate recording."""
+
         return {
             "od_center": list(self.od_center) if self.od_center else None,
             "od_radius": self.od_radius,
@@ -135,32 +77,17 @@ class AnatomyContext:
 
 
 class AnatomyProvider(ABC):
-    """Abstract base class for optic disc / fovea providers.
 
-    All concrete providers must implement __call__(image, image_id) → AnatomyContext.
-
-    Image can be any format the concrete provider supports:
-        PIL.Image, numpy array [H, W, 3], or torch.Tensor [3, H, W].
-    The provider is responsible for handling the format it expects.
-    """
 
     @abstractmethod
     def __call__(self, image: Any, image_id: str = "") -> AnatomyContext:
-        """Return anatomy context for one fundus image.
 
-        Args:
-            image:     Fundus image in provider-specific format.
-            image_id:  Image stem or identifier for logging and certificate.
-
-        Returns:
-            AnatomyContext with od_confidence indicating reliability.
-        """
         ...
 
     @property
     @abstractmethod
     def provider_name(self) -> str:
-        """Human-readable provider name, recorded in governance certificates."""
+
         ...
 
 
@@ -168,35 +95,7 @@ class AnatomyProvider(ABC):
 
 
 class ApproximateAnatomyProvider(AnatomyProvider):
-    """Heuristic provider based on image geometry only.
 
-    Places fovea at image centre and optic disc offset to the right
-    by ``disc_offset_dd`` disc diameters (right-eye convention).
-
-    This is a placeholder for experiments where no real OD detector is
-    available. It always returns od_confidence='low', which triggers the
-    APS neutral fail-safe in evidence.py.
-
-    WARNING: Eye laterality is IGNORED (right-eye assumed).
-    Use ExternalPretrainedProvider with a REFUGE/RIGA checkpoint for real
-    governance experiments.
-
-    Empirical context: B3c.8.1 showed that even the revised luminance
-    heuristic achieves only 69.1% valid_rate. Pure geometry (this class)
-    is expected to be worse — hence od_confidence='low' always.
-
-    Args:
-        dd_px:           Disc diameter in pixels. Only accurate for the
-                         specific image resolution it was calibrated for.
-                         Default 45px is calibrated for ~512px images.
-                         For IDRiD originals (~4288px), use ~107px.
-                         Use auto_scale_dd=True to scale by image width.
-        disc_offset_dd:  Disc offset from fovea in disc diameters (default 3.5).
-        auto_scale_dd:   If True, scale dd_px proportionally to image width
-                         assuming 45px ≈ calibrated for 512px width.
-                         This makes zone assignment more consistent across
-                         different image resolutions.
-    """
 
     _NAME = "ApproximateAnatomyProvider (geometry, od_confidence=low)"
 
@@ -215,16 +114,7 @@ class ApproximateAnatomyProvider(AnatomyProvider):
         return self._NAME
 
     def __call__(self, image: Any, image_id: str = "") -> AnatomyContext:
-        """Return approximate anatomy context for one fundus image.
 
-        Args:
-            image:     PIL.Image, np.ndarray [H,W,C], or torch.Tensor [C,H,W].
-                       Used only to determine image dimensions.
-            image_id:  Image identifier for logging.
-
-        Returns:
-            AnatomyContext with od_confidence='low'.
-        """
         W, H = self._get_image_dims(image)
 
         dd = self._dd_px
@@ -257,7 +147,7 @@ class ApproximateAnatomyProvider(AnatomyProvider):
 
     @staticmethod
     def _get_image_dims(image: Any) -> Tuple[int, int]:
-        """Extract (width, height) from PIL, numpy, or torch tensor."""
+
         try:
             # PIL Image
             if hasattr(image, "size") and hasattr(image, "mode"):
@@ -297,29 +187,7 @@ class ApproximateAnatomyProvider(AnatomyProvider):
 
 
 class RadialZoneAnatomyProvider(AnatomyProvider):
-    """Provider that does NOT need accurate OD localisation.
 
-    Architecture v3 (baris 269-272) lets APS fall back to Compat using
-    AnatomyContext.od_* when only OD information is available. In practice no
-    reliable OD localiser exists for our DR-heavy fundus images (B3c.8.1
-    valid_rate = 69.1%), so ApproximateAnatomyProvider always returns
-    od_confidence='low' → APS forced to 0.5 (dead constant).
-
-    This provider treats the image centre as an APPROXIMATE fovea and reports
-    od_confidence='moderate' so the APS-neutral fail-safe does NOT fire.
-    APS is then computed from radial ring bins instead of a precise ETDRS grid.
-
-    Radial bins (normalised distance from image centre, r in [0, ~1.4]):
-        r < 0.20  → Foveal
-        r < 0.40  → Parafoveal
-        r < 0.65  → Vascular_Arcades
-        r >= 0.65 → Peripheral
-
-    Rationale: the centre of an OIA-DDR / IDRiD / TJDR fundus image is
-    approximately the macular region to first order. DR lesions have distinct
-    epidemiological distributions across these zones, so Compat(class, ring)
-    carries real anatomical signal even without an OD detector.
-    """
 
     _NAME = "RadialZoneAnatomyProvider (centre-based, od_confidence=moderate)"
 
@@ -358,7 +226,7 @@ class RadialZoneAnatomyProvider(AnatomyProvider):
     def assign_radial_zone(
         cls, box_cx: float, box_cy: float, image_w: int, image_h: int
     ) -> str:
-        """Radial-zone bin for one box centroid (pixel coords)."""
+
         cx, cy = image_w / 2.0, image_h / 2.0
         dx = (box_cx - cx) / (image_w / 2.0)
         dy = (box_cy - cy) / (image_h / 2.0)
@@ -376,20 +244,7 @@ class RadialZoneAnatomyProvider(AnatomyProvider):
 
 
 class ExternalPretrainedProvider(AnatomyProvider):
-    """OD/fovea provider backed by an external pretrained segmentation model.
 
-    Supported checkpoint formats:
-      1) ONNX model (*.onnx) via onnxruntime
-      2) TorchScript model (*.pt/*.pth) via torch.jit.load
-      3) Serialized torch.nn.Module via torch.load
-
-    Expected model output:
-      - Binary OD logits/probabilities: [1,1,H,W] or [1,H,W], or
-      - Multi-class logits/probabilities: [1,C,H,W] where channel index 1 is OD.
-
-    The provider extracts a largest connected OD component from the mask,
-    estimates disc centre/radius, and derives fovea by a fixed DD offset.
-    """
 
     _NAME = "ExternalPretrainedProvider"
 
@@ -886,21 +741,7 @@ def make_anatomy_context(
     provider_validation: Optional[Dict[str, Any]] = None,
     image_id: str = "",
 ) -> AnatomyContext:
-    """Convenience constructor for AnatomyContext from keyword arguments.
 
-    Use this when landmarks come from a pre-computed dict (e.g., a JSON
-    landmark file or pseudo-GT annotations).
-
-    Example:
-        ctx = make_anatomy_context(
-            od_center=(256.0, 256.0),
-            od_radius=45.0,
-            od_confidence="high",
-            fovea_center=(100.0, 256.0),
-            eye_side="right",
-            provider_name="IDRiD_localization_GT",
-        )
-    """
     return AnatomyContext(
         od_center=od_center,
         od_radius=od_radius,

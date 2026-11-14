@@ -1,21 +1,4 @@
-"""gate_on_fusion.py — apakah evidence masih menambah nilai DI ATAS ensembling skor?
 
-Latar: baselines_nokg.py menunjukkan fusi skor tiga pass (primer + flip + detektor kedua, kotak
-tanpa pasangan dianggap 0) mencapai AUPRC lebih tinggi daripada gate penuh. Pertanyaan lanjutan
-yang akan diajukan reviewer: apakah gate hanya menduplikasi ensembling, atau tetap menambah nilai
-bila skor fusi itu sendiri yang menjadi masukannya?
-
-Varian yang diuji (protokol sama dengan naskah: fit pada OIA-DDR valid, 5 seed, AP, bootstrap
-image-clustered 2.000 seed 0; tau* dari valid pada retensi TP 0.80):
-  fused              skor fusi tiga pass saja (pembanding)
-  gate_fused         MLP pada [SAS, SDCA, APS, PSS, ev_sds, ev_sds_nsrc, skor fusi]
-  gate_fused_raw     idem, ditambah skor detektor mentah
-Pembanding bootstrap: setiap varian gate vs skor fusi, per seed.
-
-Fungsi pencocokan kotak disalin dari baselines_nokg.py supaya skrip ini berdiri sendiri
-(mengimpor modul itu akan menjalankan ulang seluruh perhitungannya).
-Keluaran: _septem/scripts_optionB/gate_on_fusion.json. Hanya membaca.
-"""
 import csv
 import json
 import statistics
@@ -68,7 +51,7 @@ def cache_entries(root, split, image_id):
 
 
 def fused_three(csv_path, split):
-    """Rata-rata skor primer, flip, dan detektor kedua; kotak tanpa pasangan dianggap 0."""
+
     with open(csv_path, newline="", encoding="utf-8") as fh:
         rows = [(r["bbox_id"], r["image_id"], float(r["pred_score"])) for r in csv.DictReader(fh)]
     by_img = {}

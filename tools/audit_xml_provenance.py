@@ -1,17 +1,5 @@
 #!/usr/bin/env python
-"""audit_xml_provenance.py — audit provenans anotasi XML untuk keempat kohort.
 
-Memeriksa apa yang dapat diverifikasi dari berkas itu sendiri, tanpa mengakses penyedia
-dataset: jumlah berkas dan objek, kosakata kelas, validitas koordinat terhadap ukuran citra
-yang dideklarasikan, kotak berukuran nol, duplikat persis, varian skema XML, kebocoran path
-absolut, tumpang tindih citra antar-split, dan rekonsiliasi dengan laporan konversi bila ada.
-
-Skrip ini TIDAK mengubah apa pun. Ia hanya membaca.
-
-Keluaran: outputs/0506/xml_provenance/audit.json
-Jalankan dari root repo:
-  python tools/audit_xml_provenance.py
-"""
 from __future__ import annotations
 
 import csv
@@ -31,7 +19,7 @@ FGADR_REPORT = ROOT / "data/fgadr/fgadr_xml_conversion_report.csv"
 
 
 def audit_file(p: Path):
-    """Kembalikan (objek, masalah) untuk satu berkas XML."""
+
     root = ET.parse(p).getroot()
     size = root.find("size")
     W = int(size.find("width").text) if size is not None else None

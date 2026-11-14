@@ -1,14 +1,5 @@
 #!/usr/bin/env python
-"""multiseed_aggregator.py — REV-7D α-prime multi-seed result aggregator.
 
-Aggregate clinical_metrics.json + pareto_summary.json across multiple seed
-runs (e.g., 42, 101, 202) into a single summary table per run group.
-
-Output:
-  - CSV with seed-level metrics (one row per seed per group)
-  - JSON with mean/std/min/max per metric per group
-  - Cross-group comparison row (e.g., R4 KG-on mean vs R4.1 no-KG mean)
-"""
 
 from __future__ import annotations
 
@@ -46,7 +37,7 @@ def _read_json(path: Path) -> Optional[dict]:
 
 
 def _gather_metrics_one_seed(run_dir: Path) -> Dict[str, float]:
-    """Return metric_key → value dict for a single seed run."""
+
     out: Dict[str, float] = {}
 
     # Pareto summary holds winner metrics (mAP_50, MA_AP50, FPpr, mAP_medium).
@@ -103,7 +94,7 @@ def _aggregate_group(
     seeds: List[int],
     metrics: List[str],
 ) -> Tuple[Dict[str, Dict[str, float]], List[Dict[str, object]]]:
-    """Aggregate across seeds. Returns (per_metric_stats, per_seed_rows)."""
+
     per_seed_rows: List[Dict[str, object]] = []
     collected: Dict[str, List[float]] = {m: [] for m in metrics}
     for seed in seeds:

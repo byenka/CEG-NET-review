@@ -1,37 +1,4 @@
-"""clinical_cost_external.py — apakah kebutaan biaya klinis fusi bertahan di luar OIA-DDR?
 
-Latar. clinical_cost_fusion.py menunjukkan pada OIA-DDR bahwa rata-rata skor tiga pass
-mengungguli setiap varian gate pada AUPRC, tetapi memisahkan konfusi grade-shifting dari
-within-grade hanya pada tingkat kebetulan (AUROC 0.483, CI memuat 0.5), sementara SDCA memisahkan
-0.994. Klaim itu kini bertumpu pada SATU dataset. Reviewer akan menyebutnya kebetulan.
-
-Skrip ini mengulang uji yang sama pada tiga kohort eksternal dengan protokol zero-shot naskah.
-
-Protokol, identik dengan Tabel 13:
-  * kelas positif  = UNSAFE_MISMATCH (grade-shifting, seharusnya disupres)
-  * kelas negatif  = CLINICALLY_CLOSE_MISMATCH (within-grade, seharusnya dipertahankan)
-  * AUROC dengan UNSAFE sebagai positif; 0.5 = tanpa informasi ke arah mana pun
-  * CI: bootstrap image-clustered 2.000 resampel, seed 0
-
-Arah tiap sinyal berbeda dan harus dibaca hati-hati:
-  * SDCA          tinggi = berbahaya   -> informatif mendekati 1
-  * skor detektor tinggi = pertahankan -> sadar klinis berarti mendekati 0
-  * skor fusi     sama dengan di atas
-Karena itu yang dilaporkan juga |AUROC - 0.5|, yaitu banyaknya informasi biaya klinis yang dibawa
-sinyal itu, bebas arah.
-
-DAYA STATISTIK BERBEDA JAUH ANTAR KOHORT, dan ini wajib ikut dilaporkan:
-  FGADR 360 positif (lebih kuat dari OIA-DDR), TJDR 45, IDRiD hanya 25.
-  Satu kohort kecil bukan bukti; yang bermakna adalah POLA di ketiganya ditambah daya FGADR.
-
-Batas keras cache, bukan pilihan desain: secondary_v2 hanya ada untuk idrid dan tjdr, sehingga
-FGADR hanya bisa fusi DUA pass (primer + flip). Jumlah pass dicatat per kohort.
-
-Efisiensi: skor fusi hanya dihitung untuk citra yang memuat sekurangnya satu baris terpilih,
-bukan seluruh split. FGADR 510.825 baris tetapi hanya 1.941 yang dipakai.
-
-Keluaran: _septem/scripts_optionB/clinical_cost_external.json. Hanya membaca.
-"""
 import csv
 import json
 import sys
@@ -86,7 +53,7 @@ def cache_entries(root, split, image_id):
 
 
 def select_rows(csv_path):
-    """Baris dari dua kategori itu saja. Mengembalikan daftar dict ringkas."""
+
     rows = []
     with open(csv_path, newline="", encoding="utf-8") as fh:
         for r in csv.DictReader(fh):
@@ -100,7 +67,7 @@ def select_rows(csv_path):
 
 
 def fused_for_rows(rows, key, split, use_v2):
-    """Skor fusi hanya untuk citra yang memuat baris terpilih."""
+
     by_img = {}
     for i, r in enumerate(rows):
         by_img.setdefault(r["image_id"], []).append(i)

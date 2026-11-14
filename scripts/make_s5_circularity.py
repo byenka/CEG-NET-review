@@ -1,17 +1,10 @@
-"""make_s5_circularity.py — tabel suplemen S5 dari circularity_check.json.
 
-Isi: gating pada subset test yang labelnya TIDAK memakai matriks jarak semantik (kategori
-clinically-close dan unsafe-mismatch dibuang), untuk dua cara pemasangan gate:
-  A. gate dipasang seperti hasil utama (target deployed pada valid), dievaluasi pada label bersih;
-  B. gate dipasang ulang pada target bersih, dievaluasi pada label bersih.
-Keluaran: _FINAL_Latex/tables/S5_label_circularity.tex. Jalankan dari root repo.
-"""
 import json
 from decimal import ROUND_HALF_UP, Decimal
 from pathlib import Path
 
 def _resolve(*candidates):
-    """Find the input in the research workspace layout or in the repository layout."""
+
     for base in Path(__file__).resolve().parents:
         for rel in candidates:
             p = base / rel

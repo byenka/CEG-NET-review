@@ -1,26 +1,4 @@
-"""
-multiclass_inference.py
-Phase 19N Pilar 1 — REAL CLASS PROBABILITIES (gap G1)
 
-Standard torchvision Faster R-CNN inference discards the per-class probability
-vector and keeps only `(box, label, score)` after per-class NMS. Downstream
-SDCA then reads a runner-up class that is purely synthetic (the export pipeline
-fills non-predicted classes with an equal residual `(1-score)/(C-1)`).
-
-Result (see target_gap_implementasi_01.md §2A/2B): SDCA collapses to a
-4-valued quantized lookup, and the C1/C2 ablations cannot find KG signal.
-
-This module provides `predict_with_class_probs(model, images, device)` which
-runs Faster R-CNN and returns, for each kept box, the FULL multinomial
-probability vector over the lesion classes — recovered by tracking which
-proposal index each kept box came from through filtering and NMS.
-
-The recovered `class_probs` is what SDCA / e_pred / the LGG need to read to
-produce a real, continuous-resolution signal.
-
-Scope: Faster R-CNN (torchvision FasterRCNN, weights >= 0.13). RetinaNet keeps
-the synthetic fallback (it is the secondary detector; its impact is small).
-"""
 
 from __future__ import annotations
 
@@ -42,21 +20,7 @@ def _frcnn_postprocess_with_probs(
     proposals: List[Tensor],
     image_shapes: List[Tuple[int, int]],
 ) -> Tuple[List[Tensor], List[Tensor], List[Tensor], List[Tensor]]:
-    """Reimplements RoIHeads.postprocess_detections and ALSO returns, for every
-    kept box, the full per-lesion-class probability vector.
 
-    The trick: every (proposal, class) candidate is flattened with its proposal
-    index tracked in `prop_idx_flat`. After score-threshold + small-box removal
-    + per-class NMS, `prop_idx_kept` tells us which proposal each surviving box
-    came from. We then index the softmax matrix `scores` by that proposal index
-    to recover the full multinomial row.
-
-    Returns four per-image lists:
-        boxes_list       [N_kept, 4]
-        scores_list      [N_kept]
-        labels_list      [N_kept]                 (1-indexed lesion class id)
-        class_probs_list [N_kept, num_lesion_classes]   (background col dropped)
-    """
     device = class_logits.device
     num_classes = class_logits.shape[-1]  # lesion + background
 
@@ -130,7 +94,7 @@ def _frcnn_postprocess_with_probs(
 def _resize_boxes(
     boxes: Tensor, src_size: Tuple[int, int], dst_size: Tuple[int, int]
 ) -> Tensor:
-    """Linear box rescale from src_size (h, w) → dst_size (h, w)."""
+
     if boxes.numel() == 0:
         return boxes
     ratio_h = float(dst_size[0]) / float(src_size[0])
@@ -145,21 +109,7 @@ def predict_with_class_probs(
     images: List[Tensor],
     device: Optional[torch.device] = None,
 ) -> List[Dict[str, Tensor]]:
-    """Faster R-CNN inference that retains the full per-class probability
-    vector for every kept detection.
 
-    Replicates the standard pipeline (transform → backbone → RPN → ROI head)
-    but swaps `roi_heads.postprocess_detections` for the probs-retaining
-    variant above.
-
-    Returns one dict per image:
-        {
-          "boxes":       [N, 4]   in ORIGINAL image space,
-          "labels":      [N]      1-indexed lesion class id,
-          "scores":      [N],
-          "class_probs": [N, num_lesion_classes]  (background col dropped),
-        }
-    """
     if device is None:
         device = next(model.parameters()).device
     if model.training:
@@ -211,13 +161,7 @@ def predict_with_class_probs_tta_hflip(
     images: List[Tensor],
     device: Optional[torch.device] = None,
 ) -> List[Dict[str, Tensor]]:
-    """Horizontal-flip TTA for Faster R-CNN real class probabilities.
 
-    The model runs on horizontally flipped images, then box coordinates are
-    inverse-flipped back to the original image frame. This produces a second
-    view with high structural overlap for multi-source matching while keeping
-    real ROI-head softmax vectors.
-    """
     flipped_images: List[Tensor] = []
     widths: List[float] = []
     for img in images:
@@ -254,14 +198,7 @@ def predict_retinanet_with_class_probs(
     images: List[Tensor],
     device: Optional[torch.device] = None,
 ) -> List[Dict[str, Tensor]]:
-    """RetinaNet variant — secondary detector. Full per-anchor extraction is
-    not implemented; this returns the standard output with a synthetic
-    class_probs (predicted class = score, others share the residual).
 
-    Faster R-CNN (predict_with_class_probs) is the primary path; RetinaNet's
-    synthetic residual has limited downstream impact because the native
-    bridge uses Faster R-CNN as the primary source.
-    """
     if device is None:
         device = next(model.parameters()).device
     if model.training:

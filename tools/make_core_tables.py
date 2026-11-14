@@ -1,29 +1,5 @@
 #!/usr/bin/env python
-"""make_core_tables.py — render T11, T12 and T13 from frozen results; no model fitting.
 
-These three tables of the main article were maintained by hand. Every number is now
-read from the files below, in the research-workspace layout or, when that is absent,
-in the repository layout.
-
-  T11  eight-detector panel
-       outputs/0506/{detcmp_e2,rtdetr_e2,yolo_e2}/<det>_fp_benchmark.json
-       (repository: results/tables_source/<det>_fp_benchmark.json)
-       M0 = AUPRC of M0_score, Gate = AUPRC of the B4 gate (KG-gate-MLP), gain and
-       interval = bootstrap_auprc.kg_minus_m0 (2,000 image resamples, seed 0).
-  T12  ranking in domain and under shift
-       domain_shift_5seed.json   M0, B4 and B6 per seed; gains are per-seed differences,
-                                 mean and SAMPLE SD (ddof 1) over the five seeds
-       fusion_external.json      F, F+E and (F+E)-F for OIA-DDR, IDRiD and TJDR
-       step6_fgadr_three_pass    the same for FGADR, with the three-pass mean
-       evidence CSVs             PSS cov. = share of detections whose ev_pss_status is
-                                 'implemented'
-  T13  clinical-cost separability
-       clinical_cost_fusion.json mean and population SD (ddof 0), AUROC with its interval;
-                                 '(chance)' marks an interval that contains 0.5
-
-Run from the repository root:
-    python tools/make_core_tables.py
-"""
 from __future__ import annotations
 
 import csv
@@ -38,7 +14,7 @@ TAB = ROOT / "_FINAL_Latex/tables"
 
 
 def _first(*rels: str) -> Path:
-    """Research-workspace path first, repository path second."""
+
     for r in rels:
         if (ROOT / r).exists():
             return ROOT / r
@@ -46,7 +22,7 @@ def _first(*rels: str) -> Path:
 
 
 def q(v: float, nd: int = 3) -> str:
-    """Round half up, as the other table generators do."""
+
     return str(Decimal(repr(float(v))).quantize(Decimal(1).scaleb(-nd), rounding=ROUND_HALF_UP))
 
 

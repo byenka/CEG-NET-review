@@ -1,24 +1,4 @@
-"""
-build_static_kg.py
-Build and save the static LGov-Net Knowledge Graph from clinical priors only.
 
-Does NOT require dataset access. Uses ontology.py + schema.py exclusively.
-Trainable edges are included with their placeholder init_weight values
-(1.0 uniform, or 2.0 for high-affinity spatial_distribution pairs).
-
-The co_occurrence_pattern and spatial_distribution edges will be updated
-with real dataset statistics by tools/build_dataset_stats.py.
-
-Outputs:
-  outputs/graphs/nodes.json   — 9 NodeSpec dicts
-  outputs/graphs/edges.json   — all EdgeSpec dicts (37 total)
-
-Usage:
-    python tools/build_static_kg.py
-    python tools/build_static_kg.py \\
-        --nodes_out outputs/graphs/nodes.json \\
-        --edges_out outputs/graphs/edges.json
-"""
 
 import argparse
 import sys
@@ -45,7 +25,7 @@ EXPECTED_TOTAL_EDGES: int = sum(EXPECTED_EDGE_COUNTS.values())  # 38
 
 
 def run(nodes_out: str, edges_out: str) -> None:
-    """Build the static KG and save to nodes_out / edges_out."""
+
 
     nodes_dicts, edges_dicts = export_nodes_edges(
         nodes_path=nodes_out,

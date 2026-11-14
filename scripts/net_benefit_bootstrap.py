@@ -1,24 +1,4 @@
-"""net_benefit_bootstrap.py — apakah margin manfaat bersih bertahan terhadap ketidakpastian?
 
-MENGAPA SKRIP INI WAJIB. Setelah fusi skor diberi kalibrasi isotonik yang adil,
-keunggulan gate menyusut ke desimal KETIGA (+0.0006 sampai +0.0078). Seluruh
-naskah menopang klaimnya dengan bootstrap berklaster-citra 2.000 resample.
-Margin sekecil itu TIDAK BOLEH masuk naskah tanpa selang kepercayaan.
-
-Protokol disamakan dengan naskah: resample CITRA dengan pengembalian (bukan
-kotak, karena kotak dalam satu citra berkorelasi), 2.000 resample, benih 0,
-selang persentil 95%.
-
-Tiga kontras, masing-masing pada seluruh grid p_t:
-  A KONSERVATIF  gate_on_fusion MENTAH  -  score_fusion ISOTONIK
-                 (isotonik gate bersifat in-sample sehingga menguntungkan gate;
-                  kontras ini menolak keuntungan itu dan karenanya dijadikan
-                  kesimpulan yang dilaporkan)
-  B SIMETRIS     gate_on_fusion ISOTONIK - score_fusion ISOTONIK
-  C GATE TERPASANG full_gate MENTAH      - score_fusion ISOTONIK
-
-Hanya membaca cache. Keluaran: net_benefit_bootstrap.json.
-"""
 import json
 import sys
 from pathlib import Path

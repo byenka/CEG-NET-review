@@ -1,50 +1,5 @@
 #!/usr/bin/env python
-"""select_final_by_audit.py — Mode 2 v2.1 Pareto-front final selector.
 
-Reads the top-k candidate checkpoints written by ``TopKCheckpointManager``,
-runs ``audit_detector_stage1a.py`` on each, then selects the final winner
-using either a Pareto-front criterion (default) or a priority-ordered tiebreak.
-
-Usage::
-
-    python tools/select_final_by_audit.py \\
-        --run_dir outputs/mode2_v2_1_<RUN_TAG>/v2_standard_seed42 \\
-        --data_root data/oiaddr --split valid --score_thresh 0.02 \\
-        --baseline_audit outputs/detector_eval/r5b_baseline/stage1a_raw.json \\
-        --strategy pareto_then_rank \\
-        --output_dir <run_dir>/audit_topk \\
-        [--prune_losers]
-
-Result (under ``--output_dir``)::
-
-    audit_<criterion>/stage1a_raw.json         (one per candidate)
-    pareto_summary.json                        (Pareto front + selection)
-    selected_best.pt                           (copy of winner)
-    selected_best.json                         (winner metadata)
-
-Selection strategies::
-
-    pareto_then_rank   : keep only non-dominated checkpoints on
-                          {mAP_50, mAP_medium, MA_AP50, -FPpr}; among them
-                          pick the one with lowest sum-of-ranks across the
-                          same axes. (default)
-    map50_only         : pick highest audit mAP_50.
-    composite_v2       : pick lowest baseline-centered composite score
-                          (mirror of training-time selection but on audit).
-    mode2a_primary     : (REV-7) Mode 2A primary-metric-family selection per
-                          architecture §C3 gate (v)+(vi). Filter candidates by
-                          non-regression bounds vs baseline:
-                            mAP_50 Δ >= -0.020,  FPpr Δ <= +0.20.
-                          Among survivors, rank by MA_AP50 descending; tiebreak
-                          by FPpr ascending. If no candidate passes the non-
-                          regression filter, the run is INELIGIBLE for a
-                          positive Mode 2A claim and the strategy falls back to
-                          ``pareto_then_rank`` with the verdict flag
-                          ``mode2a_nonreg_pass=false`` so downstream auditors
-                          can reject the run automatically.
-
-Exit code 0 on success; 1 if no candidate completed audit.
-"""
 
 from __future__ import annotations
 
@@ -118,7 +73,7 @@ def _run_audit(
     detections_per_img: int,
     require_cuda: bool,
 ) -> Optional[Dict]:
-    """Invoke audit_detector_stage1a.py and return parsed stage1a_raw.json."""
+
     out_dir.mkdir(parents=True, exist_ok=True)
     cmd = [
         sys.executable,
@@ -179,10 +134,7 @@ def _pareto_front(
     candidates: List[Dict[str, object]],
     axes: List[Tuple[str, str]],
 ) -> List[int]:
-    """Return indices of non-dominated candidates on ``axes``.
 
-    Each axis is ``(metric_name, direction)`` where direction in {"higher","lower"}.
-    """
     keep: List[int] = []
     for i, ci in enumerate(candidates):
         mi = ci["metrics"]
@@ -218,7 +170,7 @@ def _rank_sum(
     candidates: List[Dict[str, object]],
     axes: List[Tuple[str, str]],
 ) -> List[float]:
-    """Compute sum-of-ranks per candidate (lower = better)."""
+
     n = len(candidates)
     rank_sums = [0.0] * n
     for name, direction in axes:
@@ -234,10 +186,7 @@ def _rank_sum(
 
 
 def _composite_score(metrics: Dict[str, float], baseline: Dict[str, float]) -> float:
-    """Baseline-centered composite: LOWER is better.
 
-    score = -mAP_50 + 0.5 * (FPpr / baseline_FPpr) + 0.3 * (-mAP_medium)
-    """
     fp = float(metrics.get("false_positive_pressure", 0.0))
     fp_base = float(baseline.get("false_positive_pressure", 1.0) or 1.0)
     return (

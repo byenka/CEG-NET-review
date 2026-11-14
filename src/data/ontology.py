@@ -1,35 +1,4 @@
-"""
-ontology.py
-Clinical class definitions, fixed attributes, and label mapping for LGov-Net.
 
-Two layers are kept strictly separated:
-  Layer 1 — KG NODES (canonical): the 9 nodes of G = (V, E).
-            These never change regardless of dataset.
-  Layer 2 — DATASET LABELS (raw): whatever strings appear in XML <name> tags.
-            These are dataset-specific and may vary across sources.
-
-Between layers sits the MAPPING:
-  raw XML label  →  normalize_raw_label()  →  map_raw_to_kg()  →  canonical KG node
-
-Key design decision — Soft_EX as a confirmed-observed node:
-  Soft_EX is a defined KG lesion node (idx=3) with full clinical attributes,
-  edges, and ICDR weight. It MUST remain in the KG regardless of whether it
-  appears in the training dataset, because:
-    (a) pathophysiological_mechanism edges (MA→Soft_EX) and
-        severity_transition edges (MA↔Soft_EX:2.0, HE↔Soft_EX:2.0) define
-        the geometric structure of SDM_learned that governs the SDGL loss.
-    (b) absence from labeled data ≠ absence from clinical knowledge.
-  Confirmed via visual audit (seed=42, 20-sample): `se` in OIA-DDR labels
-  fluffy/ill-defined cotton-wool type lesions → Soft_EX. FROZEN 2025.
-  Use get_observed_kg_nodes() to find which nodes appear in actual XML files.
-
-Fixed clinical knowledge sourced from:
-  - ICDR 5-level grading scale
-  - Inter-observer kappa studies
-  - Architecture spec: architecture-lgov-net-v2_rev.txt (Contribution 1)
-
-Do NOT modify numeric values without clinical justification.
-"""
 
 # ── Node Indices ─────────────────────────────────────────────────────────────
 # Order must be consistent across schema.py, kg.yaml, and all downstream code.
@@ -93,19 +62,7 @@ def normalize_clinical_attrs(
     raw_attrs: dict,
     bounds: "list | None" = None,
 ) -> "dict[str, list[float]]":
-    """Min-max normalize clinical attribute vectors per dimension.
 
-    Formula per dimension d: (x - min_d) / (max_d - min_d).
-    If max_d == min_d (degenerate), result is 0.0 for that dimension.
-    All output values are in [0.0, 1.0].
-
-    Args:
-        raw_attrs: {node_name: [raw_value, ...]} e.g. CLINICAL_ATTRS.
-        bounds:    Per-dim (min, max) list. Defaults to _CLINICAL_ATTR_BOUNDS.
-
-    Returns:
-        {node_name: [normalized_float, ...]} — same keys, all values in [0, 1].
-    """
     if bounds is None:
         bounds = _CLINICAL_ATTR_BOUNDS
     result: dict = {}
@@ -220,24 +177,7 @@ CONCEPTUAL_ONLY_NODES: frozenset = frozenset()
 
 
 def normalize_raw_label(label: str) -> str:
-    """Normalize a raw XML label string to a consistent intermediate form.
 
-    Steps: strip → lowercase → replace [ -./] with underscore.
-
-    Args:
-        label: raw string from XML <name> tag, e.g. "Hard EX", "SOFT-EX".
-
-    Returns:
-        Normalized string, e.g. "hard_ex", "soft_ex".
-
-    Examples:
-        >>> normalize_raw_label("Hard EX")
-        'hard_ex'
-        >>> normalize_raw_label("  MA  ")
-        'ma'
-        >>> normalize_raw_label("Cotton-Wool")
-        'cotton_wool'
-    """
     result = label.strip().lower()
     for ch in (" ", "-", ".", "/"):
         result = result.replace(ch, "_")
@@ -248,26 +188,7 @@ def map_raw_to_kg(
     label: str,
     custom_map: "dict[str, str] | None" = None,
 ) -> "str | None":
-    """Map a raw XML label to its canonical KG lesion node name.
 
-    Applies normalize_raw_label() first, then looks up in RAW_TO_KG_MAP
-    (or custom_map if provided). Emits a RuntimeWarning for ambiguous labels.
-
-    Args:
-        label:      Raw label string from XML <name> tag.
-        custom_map: Optional override mapping (normalized_str -> canonical_name).
-                    Merged over RAW_TO_KG_MAP; custom_map takes precedence.
-
-    Returns:
-        Canonical KG node name (e.g. "MA", "HE", "Hard_EX", "Soft_EX"),
-        or None if the normalized label is not found in any map.
-
-    Examples:
-        >>> map_raw_to_kg("hard_ex")
-        'Hard_EX'
-        >>> map_raw_to_kg("unknown_lesion") is None
-        True
-    """
     import warnings
 
     norm = normalize_raw_label(label)
@@ -290,38 +211,12 @@ def map_raw_to_kg(
 
 
 def get_all_kg_lesion_nodes() -> list:
-    """Return ordered list of all C=4 canonical KG lesion node names.
 
-    Includes conceptual-only nodes (e.g. Soft_EX) even if unobserved in data.
-    Order matches LESION_NODES index assignment.
-
-    Returns:
-        ['MA', 'HE', 'Hard_EX', 'Soft_EX']
-    """
     return sorted(LESION_NODES.keys(), key=lambda n: LESION_NODES[n])
 
 
 def get_observed_kg_nodes(raw_labels: "list[str]") -> list:
-    """Return canonical KG lesion node names that appear in the dataset.
 
-    Maps each raw label to a KG node; deduplicates and sorts by node index.
-    Unmappable labels are silently ignored (caller should audit separately).
-
-    Args:
-        raw_labels: List of raw label strings from XML audit output,
-                    e.g. from xml_parser.collect_all_labels().
-
-    Returns:
-        Sorted list of canonical KG node names present in the dataset.
-        Conceptual-only nodes (e.g. Soft_EX) are included ONLY if at least
-        one raw label maps to them.
-
-    Examples:
-        >>> get_observed_kg_nodes(["MA", "HE", "hard_ex"])
-        ['MA', 'HE', 'Hard_EX']
-        >>> get_observed_kg_nodes(["MA", "HE"])  # Soft_EX absent
-        ['MA', 'HE']
-    """
     observed: set = set()
     for raw in raw_labels:
         canonical = map_raw_to_kg(raw)

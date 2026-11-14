@@ -1,40 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-"""export_rtdetr_predictions.py — RT-DETR (HuggingFace) -> DetectorBox cache.
 
-Menjembatani checkpoint hasil ``agustus/scripts/finetune_rtdetr_oiaddr.py`` ke
-cache DetectorBox yang sama dengan yang dipakai Mode-1 / E2, sehingga RT-DETR
-bisa masuk panel detector-agnostic (Tabel 11) lewat jalur yang sudah ada:
-
-    export_rtdetr_predictions.py  ->  audit_stage3c_governance_targets.py
-                                  ->  eval_fp_reduction_benchmark.py
-
-KEBIJAKAN SIGMOID vs SOFTMAX (terkunci, DECISION_sigmoid_vs_softmax_2026-07-29.md,
-sama dengan ``extract_evidence_outputs()`` di skrip fine-tune):
-
-  * skor deteksi  s_i = logits.sigmoid().max(-1)   <- NATIVE, dipakai box/threshold/M0.
-                                                      JANGAN di-softmax; itu merusak
-                                                      kalibrasi deteksi dan baseline M0.
-  * distribusi    p_i = softmax(4 logit kelas)     <- simpleks Delta^4 untuk SAS, SDCA,
-                                                      PSS, dan JSD multi-sumber. JSD
-                                                      hanya sahih pada distribusi yang
-                                                      berjumlah 1, jadi sigmoid tidak bisa.
-
-Karena RT-DETR punya logit kelas per-query yang NYATA, cache ditandai
-``probs_source="real_roi_softmax"`` (bukan proxy sintetis seperti YOLO/FCOS).
-Inilah yang membuat RT-DETR berguna sebagai titik uji fidelitas evidence.
-
-RT-DETR bersifat end-to-end tanpa NMS. Setiap query menghasilkan paling banyak satu
-deteksi (kelas = argmax atas 4 logit), sehingga satu kotak memetakan tepat ke satu
-distribusi kelas. Itu sesuai kontrak DetectorBox.
-
-Contoh:
-    python tools/export_rtdetr_predictions.py \\
-      --checkpoint outputs/rtdetr_oiaddr_r18/best.pt \\
-      --splits valid test --data_root data/oiaddr \\
-      --score_thresh 0.05 --detections_per_img 300 \\
-      --output_dir outputs/0506/rtdetr_e2/rtdetr_r18_cache --device cuda
-"""
 from __future__ import annotations
 
 import argparse
@@ -66,7 +32,7 @@ CANON = ["MA", "HE", "Hard_EX", "Soft_EX"]
 
 
 def _load_rtdetr(checkpoint: str, base_model: Optional[str], device: str):
-    """Muat checkpoint fine-tune -> (model eval, processor, meta provenance)."""
+
     try:
         from transformers import AutoImageProcessor, AutoModelForObjectDetection
     except ImportError as exc:
@@ -125,12 +91,7 @@ def _load_rtdetr(checkpoint: str, base_model: Optional[str], device: str):
 def _queries_to_detections(logits: torch.Tensor, pred_boxes: torch.Tensor,
                            width: int, height: int, score_thresh: float,
                            max_det: int):
-    """Satu query -> paling banyak satu deteksi. Tanpa NMS (RT-DETR end-to-end).
 
-    logits      [Q, 4] logit kelas mentah
-    pred_boxes  [Q, 4] cxcywh ternormalisasi [0,1]
-    return      (boxes_xyxy [N,4] px, labels [N] 1-indexed, scores [N], probs [N,4])
-    """
     # Kebijakan terkunci: skor = sigmoid NATIVE, distribusi = softmax Delta^4.
     sig = logits.sigmoid()
     scores, cls0 = sig.max(dim=-1)

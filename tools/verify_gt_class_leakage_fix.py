@@ -1,38 +1,5 @@
 #!/usr/bin/env python
-"""verify_gt_class_leakage_fix.py
 
-Read-only verifier for the P0 gt_class leakage fix (2026-05-28/29).
-
-Background
-----------
-Stage 3C used to assign ``gt_class = best_gt_class or majority_class`` and the
-Stage 5 parser inherited ``gt_class = row.get("gt_class", majority_class)``.
-Because ``majority_class == argmax(ensemble_probs) == detector label``, every
-box WITHOUT a real IoU>=0.5 GT match silently received the detector's own
-prediction as its "ground truth" — a circular supervision leak measured at
-95.8% on 2026-05-28.
-
-The fix:
-  * Stage 3C writes ``gt_class=""`` (and ``gt_supervised=0``) for any box that
-    is not a valid IoU>=0.5 GT match (categories BACKGROUND_FP,
-    LOW_CONF_CANDIDATE, LOCALIZATION_WEAK).
-  * Stage 5 ``parse_governance_row`` EXCLUDES rows whose gt_class is not a valid
-    lesion class instead of falling back to majority_class.
-
-What PASS means
----------------
-A regenerated governance_features_*.csv is clean iff NO box in a non-matched
-category carries a fabricated (non-empty) gt_class. The high gt==majority rate
-that remains among TP_EXACT rows is LEGITIMATE (a correct detection whose class
-genuinely equals the matched GT), not leakage.
-
-This script never trains and never writes; it only reads the CSVs and prints a
-verdict. Run it on the server AFTER regenerating Stage 3C (STEP 11).
-
-Usage:
-    python tools/verify_gt_class_leakage_fix.py --stage3c_dir outputs/stage3c_audit
-    python tools/verify_gt_class_leakage_fix.py --stage3c_dir outputs/stage3c_audit/idrid
-"""
 
 from __future__ import annotations
 

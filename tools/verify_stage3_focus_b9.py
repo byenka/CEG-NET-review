@@ -1,17 +1,5 @@
 #!/usr/bin/env python
-"""Focused local verification for B9 (lightweight, no heavy compute).
 
-This verifier is intentionally read-only for Stage3 hardening checks before
-server execution. It performs:
-1) static validation (py_compile on critical scripts),
-2) import/path guard validation (required guard tokens still present),
-3) schema + provenance validation for governance_features/audit files,
-4) dry-run split isolation checks (no training/eval workload).
-
-Usage:
-    python tools/verify_stage3_focus_b9.py
-    python tools/verify_stage3_focus_b9.py --stage3c_dir outputs/stage3c_audit
-"""
 
 from __future__ import annotations
 

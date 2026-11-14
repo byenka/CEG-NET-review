@@ -1,59 +1,4 @@
-"""
-governed_adapter.py
-FASE 19D.2 — Minimal adapter: MultiHeadSequentialDetector outputs → SDGL/L_gate/L_KG inputs.
 
-This module converts the raw outputs of the multi-head sequential detector,
-combined with governance records from evidence.py and routing.py, into the
-tensor contract expected by:
-  - SDGLLoss  (src/losses/sdgl.py)         — L_SDGL + L_KG
-  - GateLoss  (src/losses/gate_loss.py)    — L_gate
-  - compute_total_loss (src/losses/sdgl.py)
-
-No training logic, no warmstart, no model changes.
-All functions are pure tensor/Python — safe to call inside or outside autocast.
-
-Output contract (GovernedBatch):
-  {
-    "class_logits"    : Tensor[B, C]        — mean cls logits across heads (fp32)
-    "log_probs"       : Tensor[B, C]        — F.log_softmax(class_logits)
-    "bbox_preds"      : Tensor[B, 4]        — mean bbox predictions across heads
-    "target_classes"  : Tensor[B]  int64    — GT class index per bbox
-    "target_bboxes"   : Tensor[B, 4]        — GT bbox (normalised [0,1])
-    "tier_indices"    : Tensor[B]  int64    — 0=R1 1=R2 2=R3 3=R4
-    "sdca"            : Tensor[B]  float32  — SDCA_norm per bbox
-    "aps"             : Tensor[B]  float32  — APS per bbox
-    "sas"             : Tensor[B]  float32  — SAS per bbox
-    "pss"             : Tensor[B]  float32  — PSS per bbox
-    "consensus"       : Tensor[B]  float32  — num_heads_correct/4
-    "ensemble_probs"  : list[dict]           — original {class: float} per bbox
-    "majority_classes": list[str]            — argmax of ensemble_probs per bbox
-    "n_r1" : int    — number of R1 boxes in batch
-    "n_r2" : int    — number of R2 boxes in batch
-    "n_r3" : int    — number of R3 boxes in batch
-    "n_r4" : int    — number of R4 boxes in batch
-  }
-
-Lesion embedding sub-contract for L_KG:
-  extract_lesion_embeddings(node_embeddings, node_names) -> Tensor[4, d]
-
-Gate input sub-contract for L_gate:
-  build_gate_input_tensors(governed_batch, lesion_embeddings, node_names)
-    -> Tensor[B, evidence_dim] and optional Tensor[B, d]
-
-Public API:
-  build_governed_batch(
-      head_outputs, target_classes, target_bboxes,
-      det_boxes, evidence_batch, routing_batch, device
-  ) -> dict   (GovernedBatch)
-
-  extract_lesion_embeddings(node_embeddings, node_names) -> Tensor[4, d]
-
-  build_gate_tensors(governed_batch, lesion_embeddings, node_names)
-    -> {"evidence_vectors": Tensor[B,4], "e_pred": Tensor[B,d],
-        "tier_indices": Tensor[B]}
-
-  LESION_NAMES : List[str]  — canonical order ["MA","HE","Hard_EX","Soft_EX"]
-"""
 
 from __future__ import annotations
 
@@ -92,38 +37,7 @@ def build_governed_batch(
     routing_batch: List[dict],
     device: Optional[torch.device] = None,
 ) -> dict:
-    """Build the GovernedBatch tensor dict from multi-head detector outputs.
 
-    Converts per-head outputs and governance records into the unified tensor
-    contract required by SDGLLoss, GateLoss, and compute_total_loss.
-
-    Args:
-        head_outputs:   List of (cls_logits [B,C], bbox_pred [B,4]) — one tuple
-                        per head. Comes from MultiHeadSequentialDetector.forward().
-                        Tensors must be detached (no grad needed for adapter logic).
-        target_classes: Tensor[B] int64 — GT class index per item in the batch.
-        target_bboxes:  Tensor[B, 4] float — GT bbox (normalised [0,1]).
-        det_boxes:      List[dict] length B — DetectorBox dicts from
-                        build_detector_output_for_image() (one per batch item).
-                        Must be in the same order as target_classes.
-        evidence_batch: List[dict] length B — output of build_evidence_batch().
-                        Each record must have "evidence_vector" [SAS,SDCA,APS,PSS].
-                        If a record is None/missing, fallback 0.5 is used.
-        routing_batch:  List[dict] length B — output of route_bbox_batch().
-                        Each record must have "target_tier_index", "aps",
-                        "sdca_norm", "num_heads_correct", "majority_class".
-        device:         Target device for output tensors. Inferred from
-                        head_outputs[0][0] if None.
-
-    Returns:
-        GovernedBatch dict (see module docstring).
-
-    Notes:
-        - When all bboxes are R4, class_logits and log_probs are still valid
-          tensors; SDGLLoss will produce l_sdgl=0 (no gradient from SDGL).
-        - Mean logits are cast to fp32 explicitly (safe under AMP).
-        - B is inferred from head_outputs[0][0].shape[0].
-    """
     if device is None:
         device = head_outputs[0][0].device
 
@@ -228,19 +142,7 @@ def extract_lesion_embeddings(
     node_embeddings: torch.Tensor,
     node_names: List[str],
 ) -> torch.Tensor:
-    """Slice lesion node rows from the full KG node embedding matrix.
 
-    Args:
-        node_embeddings: Tensor[N, d] — all 9 KG node embeddings from encoder.
-        node_names:      Ordered list of node names matching row indices
-                         (from build_encoder_inputs()["node_names"]).
-
-    Returns:
-        Tensor[4, d] — rows for ["MA","HE","Hard_EX","Soft_EX"] in that order.
-
-    Raises:
-        ValueError: if any lesion class is missing from node_names.
-    """
     indices: List[int] = []
     for lesion in LESION_NAMES:
         if lesion not in node_names:
@@ -264,29 +166,7 @@ def build_gate_tensors(
     node_names: List[str],
     use_kg_embedding: bool = True,
 ) -> dict:
-    """Build gate input tensors from a GovernedBatch and KG embeddings.
 
-    Produces all tensors needed to call LGG.forward() + GateLoss.forward().
-
-    Args:
-        governed_batch:   Output of build_governed_batch().
-        node_embeddings:  Tensor[N, d] — KG node embeddings from encoder.
-        node_names:       Node name ordering from build_encoder_inputs()["node_names"].
-        use_kg_embedding: If True (default), compute e_pred per bbox by
-                          indexing the majority class lesion embedding.
-                          If False, e_pred is zeros[B, 0] (ablation mode;
-                          matches LGG(embedding_dim=0)).
-
-    Returns:
-        {
-          "evidence_vectors": Tensor[B, 4]      — [SAS, SDCA, APS, PSS]
-          "e_pred"           : Tensor[B, d]      — majority-class KG embedding
-                               or Tensor[B, 0]   when use_kg_embedding=False
-          "gate_input"       : Tensor[B, 4+d]    — concat for LGG.forward()
-                               or Tensor[B, 4]   when use_kg_embedding=False
-          "tier_indices"     : Tensor[B] int64   — supervision target for GateLoss
-        }
-    """
     device = governed_batch["sas"].device
     B = governed_batch["sas"].shape[0]
 
@@ -331,26 +211,7 @@ def build_gate_tensors(
 
 
 def build_sdgl_inputs(governed_batch: dict) -> dict:
-    """Extract the exact keyword arguments needed for SDGLLoss.forward().
 
-    Bridges GovernedBatch → SDGLLoss argument names, handling types.
-    Call as: sdgl_loss(**build_sdgl_inputs(gb), sdm_norm=sdm_norm,
-                       lesion_embeddings=lesion_emb)
-
-    Args:
-        governed_batch: Output of build_governed_batch().
-
-    Returns:
-        {
-          "log_probs_batch"      : Tensor[B, C]
-          "tier_targets"         : List[int]       — 0..3 per bbox
-          "target_class_indices" : List[int]       — GT class index per bbox
-          "ensemble_probs_batch" : List[dict]      — {class: float} per bbox
-          "consensus_batch"      : List[float]
-          "aps_batch"            : List[float]
-          # caller must add: sdm_norm, lesion_embeddings, (fixed_edges)
-        }
-    """
     B = governed_batch["log_probs"].shape[0]
     return {
         "log_probs_batch": governed_batch["log_probs"],  # [B, C]
@@ -386,24 +247,7 @@ def inject_warmstart_tiers(
     majority_classes: Optional[List[str]] = None,
     tier_schedule: Optional[List[int]] = None,
 ) -> List[dict]:
-    """[DIAGNOSTIC] Override routing_batch to inject controlled tier assignments.
 
-    Replaces tier assignments so that non-R4 tiers (R1/R2/R3) appear in the
-    batch. Uses a round-robin schedule by default: [R1, R2, R3, R4, R1, ...].
-    The original routing result is preserved under 'natural_tier_index'.
-
-    Args:
-        routing_batch:   List[dict] from route_bbox_batch() — length B.
-        B:               Batch size.
-        majority_classes: Optional class names to use as majority_class.
-                         Falls back to routing_batch values if not provided.
-        tier_schedule:   Explicit tier indices [0..3] per batch item, length B.
-                         Default: round-robin [0, 1, 2, 3, 0, 1, ...].
-
-    Returns:
-        New List[dict] with warmstart tier assignments.
-        Each record has 'warmstart_injected': True and 'natural_tier_index'.
-    """
     if tier_schedule is None:
         tier_schedule = [i % 4 for i in range(B)]
     if len(tier_schedule) != B:
@@ -441,19 +285,7 @@ def inject_warmstart_evidence(
     evidence_batch: List[dict],
     tier_indices: List[int],
 ) -> List[dict]:
-    """[DIAGNOSTIC] Override evidence vectors to match warmstart tier values.
 
-    Replaces SAS/SDCA/APS/PSS in evidence_batch[i]["evidence_vector"] with
-    values consistent with tier_indices[i] from _WARMSTART_TIER_VALUES.
-
-    Args:
-        evidence_batch:  List[dict] from build_evidence_batch() — length B.
-        tier_indices:    Warmstart tier index per batch item (0..3).
-
-    Returns:
-        New evidence_batch with injected evidence vectors.
-        Each record has 'warmstart_injected': True.
-    """
     result: List[dict] = []
     for i, ev in enumerate(evidence_batch):
         tier = int(tier_indices[i]) if i < len(tier_indices) else 3
@@ -471,7 +303,7 @@ def inject_warmstart_evidence(
 
 
 def _smoke_test(device_str: str = "cpu") -> None:
-    """Dummy smoke test — creates synthetic inputs and validates output shapes."""
+
     import torch.nn.functional as F  # noqa: F811
 
     device = torch.device(device_str)

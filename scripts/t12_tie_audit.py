@@ -1,10 +1,4 @@
-"""Audit estimator AUPRC untuk Tabel 12 (domain shift): trapezoid vs average precision.
 
-Pertanyaan: (1) apakah sel Tabel 12 (tiga desimal) bergantung pada urutan skor kembar;
-(2) apakah sel itu berubah bila AUPRC dihitung sebagai average precision.
-Mereplikasi journal/figures/scripts/_figdata_domain_shift.py: gate B4 dan B6 (build_methods)
-dipasang pada OIA-DDR valid untuk seed 0..4 lalu diterapkan pada tiap kohort.
-"""
 import json
 import statistics
 import sys

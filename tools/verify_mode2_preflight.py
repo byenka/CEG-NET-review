@@ -1,17 +1,5 @@
 #!/usr/bin/env python
-"""verify_mode2_preflight.py — Mode 2 preflight verifier (B1).
 
-Read-only predicate gate that MUST pass before any Mode 2 training run.
-Encodes the canonical Mode 2 implementation checks from the locked checklist
-under §B1.
-
-Mode 2 may only be started against a Mode 1 LOCKED baseline:
-``outputs/point123_2026-05-30_point123_external_pss_stage3d_final_clean``.
-Inputs from ``outputs/artefak/`` are refused unless ``--allow_historical_inputs``
-is set (which is intended for OLD-baseline compare only, not active Mode 2 input).
-
-Exit code 0 = GO, 1 = NO-GO.
-"""
 from __future__ import annotations
 
 import argparse

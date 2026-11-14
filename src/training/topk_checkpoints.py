@@ -1,51 +1,4 @@
-"""topk_checkpoints.py — Mode 2 v2.1 top-k checkpoint manager.
 
-Replaces the legacy "best by single composite score" + "final" pattern with a
-small set of best-by-X candidates plus an always-overwritten latest.pt for
-recovery. Rationale (from 1-Juni audit): the val_loss / single-composite
-criterion can pick a checkpoint that is dominated on clinical-relevant axes
-(mAP_medium, MA_AP50) by an earlier or later epoch. Preserving top-k
-candidates lets the audit-based selector (tools/select_final_by_audit.py)
-pick the final winner from full external audit, not from training-time val.
-
-Contract:
-    manager = TopKCheckpointManager(
-        out_dir,
-        criteria=[
-            ("composite",  "lower"),    # baseline-centered composite score
-            ("map50",      "higher"),   # val mAP_50
-            ("map_medium", "higher"),   # val mAP_medium
-            ("ma_ap50",    "higher"),   # val MA AP_50 (per-class)
-        ],
-    )
-
-    # per epoch, after computing val metrics + composite:
-    manager.update(
-        epoch=epoch,
-        metrics={
-            "composite":  composite_score,
-            "map50":      val_metrics["mAP_50"],
-            "map_medium": val_metrics["mAP_medium"],
-            "ma_ap50":    val_metrics["MA_AP50"],
-        },
-        payload_builder=lambda: {  # built only when actually saving
-            "epoch": epoch,
-            "model_state_dict": model.state_dict(),
-            ...
-        },
-    )
-
-    # at the end (every epoch is fine; cheap):
-    manager.save_latest(payload_builder=...)
-
-    # produces:
-    #   out_dir/best_by_composite.pt
-    #   out_dir/best_by_map50.pt
-    #   out_dir/best_by_map_medium.pt
-    #   out_dir/best_by_ma_ap50.pt
-    #   out_dir/latest.pt
-    #   out_dir/topk_candidates_index.json   (which epoch is in which file)
-"""
 
 from __future__ import annotations
 
@@ -74,16 +27,7 @@ def _worst(direction: str) -> float:
 
 
 class TopKCheckpointManager:
-    """Maintain best-by-X checkpoints + latest.pt for Mode 2 training runs.
 
-    The manager does NOT build the payload itself — it asks the caller for it
-    only when actually saving, so per-epoch metric updates that do not improve
-    any criterion are O(1) (no state_dict copy).
-
-    Attributes:
-        out_dir: directory under which all candidate files are written.
-        criteria: ordered list of ``(name, direction)`` to track.
-    """
 
     def __init__(
         self,
@@ -131,10 +75,7 @@ class TopKCheckpointManager:
         metrics: Dict[str, float],
         payload_builder: Callable[[], Dict[str, Any]],
     ) -> List[str]:
-        """Check each criterion; save candidates that improved.
 
-        Returns the list of criteria whose best was updated in this call.
-        """
         updated: List[str] = []
         cached_payload: Optional[Dict[str, Any]] = None
         for name, direction in self.criteria:
@@ -164,7 +105,7 @@ class TopKCheckpointManager:
         self,
         payload_builder: Callable[[], Dict[str, Any]],
     ) -> None:
-        """Always-overwrite latest.pt for recovery."""
+
         payload = dict(payload_builder())
         _safe_save(payload, self.latest_path)
 
@@ -221,10 +162,7 @@ class TopKCheckpointManager:
     # Disk pruning (called after audit-based selection picks the winner)
     # ------------------------------------------------------------------
     def prune_losers(self, keep_paths: Iterable[Path]) -> List[str]:
-        """Delete candidates not in ``keep_paths``. latest.pt is always kept.
 
-        Returns list of deleted absolute paths (as strings).
-        """
         keep_resolved = {str(Path(p).resolve()) for p in keep_paths}
         keep_resolved.add(str(self.latest_path.resolve()))
         deleted: List[str] = []
@@ -244,7 +182,7 @@ class TopKCheckpointManager:
 
 
 def _safe_save(payload: Dict[str, Any], path: Path) -> None:
-    """torch.save with atomic-ish replace to avoid corrupt files on interruption."""
+
     tmp = path.with_suffix(path.suffix + ".tmp")
     torch.save(payload, tmp)
     os.replace(tmp, path)

@@ -1,9 +1,4 @@
-"""Proof that the memory-leaner aggregation changed no number.
 
-IDRiD is recomputed with the ORIGINAL logic, which holds every seed's score array and reduces them only at the end,
-and the result is compared with the values stored by the leaner run in step4_gate_calibration.json.
-Any difference above 0 is printed. Read-only for the manuscript folders.
-"""
 import json
 import sys
 from pathlib import Path

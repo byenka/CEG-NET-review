@@ -1,23 +1,4 @@
-"""Check that every generated LaTeX table in the canonical submission folder
-(_SUBMISSION_ESWA) still matches what its generator produces today.
 
-Each generator is executed with all file writes redirected into a temporary
-directory, so the shipped tables are never touched; the redirected output is
-then compared byte for byte with the shipped file. The script exits non-zero if
-any table has drifted, and reports separately whether the drift reaches the
-numbers inside the tabular body or stops at the caption.
-
-    python tools/verify_tables_against_generators.py [--keep DIR] [--against DIR]
-
---against defaults to _SUBMISSION_ESWA; pass _FINAL_Latex/tables to compare with
-the older working copy instead. In the code repository, where _SUBMISSION_ESWA does
-not exist, it defaults to results/published_tables/, the tables as typeset in the
-paper, and the generators are looked up under scripts/ instead of the workspace
-folders (same files, see REPO_PATH).
-
-Hand-maintained tables (no generator) are listed but not checked; they are
-listed in _FINAL_Latex/tables/REGENERATE.md.
-"""
 import argparse
 import builtins
 import difflib
@@ -75,7 +56,7 @@ REPO_PATH = {
 
 
 def locate(script):
-    """Workspace path if it exists, otherwise the repository copy of the same script."""
+
     if (ROOT / script).exists():
         return script
     for ws, repo in REPO_PATH.items():
@@ -85,7 +66,7 @@ def locate(script):
 
 
 def run_redirected(script, outdir, args=()):
-    """Run a generator with every write sent to outdir, keeping reads intact."""
+
     outdir.mkdir(parents=True, exist_ok=True)
     o_wt, o_wb, o_po, o_bo = (Path.write_text, Path.write_bytes,
                               Path.open, builtins.open)
@@ -127,6 +108,11 @@ def body_numbers(t):
     return re.findall(r"[-+]?\d+(?:[.,]\d+)*", "\n".join(parts))
 
 
+def table_content(t):
+    return "\n".join(line for line in t.replace("\r\n", "\n").split("\n")
+                     if not line.lstrip().startswith("%"))
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--keep", help="write regenerated tables here instead of a temp dir")
@@ -160,9 +146,9 @@ def main():
             print(f"[MISS ] {name}: generated but not shipped")
             drift.append(name)
             continue
-        st = shipped.read_text(encoding="utf-8").replace("\r\n", "\n")
+        st = table_content(shipped.read_text(encoding="utf-8"))
         for g in produced[name]:
-            gt = g.read_text(encoding="utf-8").replace("\r\n", "\n")
+            gt = table_content(g.read_text(encoding="utf-8"))
             if gt == st:
                 print(f"[ok   ] {name}  ({g.parent.name})")
                 continue

@@ -1,19 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-"""Bangkitkan tabel appendix dari artefak, bukan diketik ulang.
 
-Setiap angka pada ketiga tabel dibaca langsung dari berkas keluaran, sehingga tidak
-ada peluang salah salin. Audit T12 menunjukkan itu bukan kekhawatiran teoretis: dua
-sel di sana meleset satu digit terakhir dari artefaknya.
-
-Keluaran:
-  _FINAL_Latex/tables/S1_kg_edges.tex              daftar 38 sisi knowledge graph
-  _FINAL_Latex/tables/S2_sdm_sensitivity.tex       9 varian prior, nilai per-seed
-  _FINAL_Latex/tables/S3_domain_shift_per_seed.tex AUPRC per-seed keempat kohort
-
-Jalankan dari root repo:
-    python tools/make_supplementary_tables.py
-"""
 from __future__ import annotations
 
 import json
@@ -25,7 +12,7 @@ TAB = ROOT / "_FINAL_Latex/tables"
 
 
 def _first(*rels):
-    """Research-workspace path first, repository path (results/tables_source) second."""
+
     return next((ROOT / r for r in rels if (ROOT / r).exists()), ROOT / rels[0])
 
 
@@ -60,11 +47,7 @@ EDGE_NAME = {
 
 
 def build_s1() -> str:
-    """Daftar sisi. Relasi yang lengkap-menurut-konstruksi dipadatkan, TETAPI hanya
-    setelah keseragaman bobotnya diperiksa di sini. Pemeriksaan itu bukan formalitas:
-    spatial_distribution ternyata TIDAK seragam, 17 sisi pada 1.0 dan 3 pada 2.0, jadi
-    ketiga sisi yang menonjol itu tetap dicantumkan satu per satu.
-    """
+
     edges = json.loads(EDGES.read_text(encoding="utf-8"))
     by_type = {t: [e for e in edges if e["edge_type"] == t] for t in EDGE_ORDER}
     n_total = len(edges)
@@ -216,9 +199,7 @@ def build_s2() -> str:
 # ── S3: AUPRC per-seed lintas domain ─────────────────────────────────────────
 
 def sd_sample(values) -> float:
-    """SD sampel (ddof=1). KOREKSI 2026-09-15: JSON domain_shift_5seed menyimpan SD populasi
-    (ddof=0), sedangkan S2, S4 dan Tabel 2/3 memakai SD sampel. Satu konvensi dipakai di
-    seluruh naskah, jadi SD dihitung ulang di sini dari nilai per-seed."""
+
     import statistics
     return statistics.stdev([float(v) for v in values])
 

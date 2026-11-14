@@ -1,38 +1,5 @@
 #!/usr/bin/env python
-"""make_tier_routing.py — routing empat tier menurut Algorithm 1 dan evaluasinya.
 
-Aturan, tanpa label pada inferensi:
-  keputusan : RETAIN bila keep_score >= tau. tau dipilih pada OIA-DDR valid untuk retensi
-              TP 0.80 dengan threshold_for_tp_ret, protokol yang sama dengan Tabel 8.
-  tier      : R1 accepted    = RETAIN   & SDCA <  delta
-              R2 provisional = RETAIN   & SDCA >= delta
-              R3 contested   = SUPPRESS & SDCA >= delta
-              R4 rejected    = SUPPRESS & SDCA <  delta
-  delta     : 0.30, nilai _SDM_CLOSE_THRESHOLD di tools/audit_stage3c_governance_targets.py.
-              SDM_norm hanya bernilai {0, 0.50, 0.75, 1.00}, sehingga setiap delta di
-              (0, 0.50] memberi partisi yang sama. Skrip ini MEMERIKSA hal itu per kohort.
-
-Gate: KG-evidence gate (B4), fit_mlp atas [SAS, SDCA, APS, PSS, skor detektor], seed 0.
-Identik dengan "KG-gate-MLP (ours)" di tools/eval_fp_reduction_benchmark.py dan dengan gate
-pada sertifikat fig9 (tau* = 0.306140 pada run 2026-09-15).
-M0: skor detektor, dengan tau-nya sendiri yang dipilih pada valid untuk retensi TP 0.80.
-
-Kategori rujukan (dari anotasi, tools/audit_stage3c_governance_targets.py) HANYA dipakai
-untuk mengevaluasi komposisi tier, tidak pernah untuk menugaskan tier.
-
-Masukan (konfigurasi deployed, sama dengan Tabel 12 dan S3):
-  OIA-DDR valid/test : outputs/0506/evsds_v2sec/oiaddr/{valid,test}
-  IDRiD test         : outputs/0506/evsds_pss/idrid/test
-  TJDR test          : outputs/0506/evsds_pss/tjdr/test
-  FGADR train        : outputs/0506/evsds_pss/fgadr/train
-Keluaran:
-  outputs/0506/tier_routing/tier_routing_summary.json
-  outputs/0506/tier_routing/{cohort}_gate_tiers.csv   (tier gate per kotak, untuk atlas)
-  _FINAL_Latex/tables/T_tier_routing.tex
-
-Jalankan dari root repo:
-  python tools/make_tier_routing.py
-"""
 from __future__ import annotations
 
 import csv
@@ -63,7 +30,7 @@ EVIDENCE = ROOT / "results/evidence"
 
 
 def _first(workspace: Path, repo_name: str) -> Path:
-    """Research-workspace CSV first, the repository's gzipped copy second."""
+
     return workspace if workspace.exists() else EVIDENCE / repo_name
 
 
@@ -91,7 +58,7 @@ FUSED_CANDIDATES = (ROOT / "_septem/scripts_optionB/fused_scores_oiaddr.csv",
 
 
 def load_fused() -> dict:
-    """{(split, bbox_id): skor fusi}; berhenti dengan pesan jelas bila berkasnya belum ada."""
+
     for p in FUSED_CANDIDATES:
         if p.is_file():
             out = {}
@@ -105,8 +72,7 @@ def load_fused() -> dict:
 
 
 def fused_vector(fused: dict, split: str, ids) -> np.ndarray:
-    """Vektor sejajar urutan baris CSV. Setiap bbox_id WAJIB ada; kotak yang tidak ditemukan
-    tidak boleh diam-diam menjadi nol, karena nol adalah skor fusi yang sah."""
+
     missing = [b for b in ids if (split, b) not in fused]
     if missing:
         raise SystemExit(f"[tier] {len(missing)} bbox_id {split} tidak ada di skor fusi")
@@ -118,7 +84,7 @@ def rel(p: Path) -> str:
 
 
 def q(v: float, nd: int = 3) -> str:
-    """Pembulatan setengah-ke-atas, konvensi yang sama dengan tabel lain."""
+
     return str(Decimal(repr(float(v))).quantize(Decimal(1).scaleb(-nd), rounding=ROUND_HALF_UP))
 
 

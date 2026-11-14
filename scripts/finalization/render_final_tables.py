@@ -1,4 +1,4 @@
-"""Render finalization tables from archived JSON only; never fit a model."""
+
 from pathlib import Path
 import json
 import statistics

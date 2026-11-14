@@ -1,61 +1,4 @@
-"""
-evidence.py
-Per-bbox evidence computation for LGov-Net Governance Gate (Contribution 2).
 
-Computes an evidence vector  g(b_j) = [SAS, SDCA_norm, APS, PSS]
-for every candidate bounding box before it enters the governance gate.
-
-Four signals:
-  SAS  — Source Agreement Score
-         Measures how consistently the 4 detection heads agree on the
-         predicted class for this bbox.
-         SAS = max(ensemble_probs)  i.e. the winning class probability
-         averaged over all heads.
-         Range: (0.25, 1.0].  SAS = 1.0 → all heads agree perfectly.
-         SAS = 0.25 → maximum disagreement (uniform over 4 classes).
-
-  SDCA — Semantic Distance Conflict Assessment
-         Quantifies how semantically "distant" the predicted class is from
-         the runner-up class in the KG embedding space.
-         A large L2 distance between predicted and second-most-probable class
-         embeddings means the KG representation strongly separates them
-         (the prediction is unambiguous w.r.t. KG knowledge).
-         Uses normalized SDM (log_scaled) so range is [0, 1].
-         sdca_raw is preserved for debugging.
-
-  APS  — Anatomical Plausibility Score
-         Compat(predicted_class, assigned_zone) from the calibrated bilinear
-         compatibility scorer in encoder.py.
-         APS = σ( e_c^T W_compat e_a + prior[c, a] )
-         Range: (0, 1).  APS > 0.5 → plausible; < 0.5 → suspicious.
-         Requires that assigned_zone is a valid ETDRS zone.
-
-  PSS  — Perturbation Stability Score  (Phase 9.3 formal spec)
-         count(majority_class across N augmented predictions) / N
-         In present phase: placeholder value FALLBACK_PSS = 0.5 is accepted
-         and passed through transparently.  When status="implemented" the
-         real value is used.
-
-Evidence vector contract:
-  evidence_vector = [SAS, SDCA_norm, APS, PSS_or_fallback]
-  All 4 values must be in [0.0, 1.0].
-
-Usage:
-  from src.governance.evidence import build_evidence_for_bbox, build_evidence_batch
-
-  ev = build_evidence_for_bbox(
-      box=detector_box,
-      pss_result=make_placeholder_pss(box["bbox_id"]),
-      sdm_norm=sdca_dict,       # from normalize_sdca()
-      compat_scores=compat,     # from compute_compat()
-  )
-  # ev["evidence_vector"] → [SAS, SDCA_norm, APS, PSS]
-
-Dependencies:
-  - src/governance/contracts.py  (DetectorBox, PSSResult, FALLBACK_PSS, …)
-  - src/kg/encoder.py             (normalize_sdca, compute_sdm, compute_compat)
-  NO dependency on governance gate, detector backbone, or training loop.
-"""
 
 from __future__ import annotations
 
@@ -106,61 +49,7 @@ def compute_sas(
     head_predictions: Optional[List[dict]] = None,
     mode: str = "unweighted",
 ) -> Tuple[float, str]:
-    """Compute Source Agreement Score from cross-head agreement.
 
-    OFFICIAL DEFINITION (architecture spec, Contribution 2):
-        SAS = (# detection heads whose argmax == majority_class)
-              ─────────────────────────────────────────────────────
-              (# total valid heads)
-
-        majority_class = argmax(ensemble_probs)
-        Range: (0, 1].  SAS=1.0 → all heads agree; SAS=0.25 → maximal split.
-
-    Three modes are supported:
-
-    ``unweighted`` (default, CANONICAL):
-        SAS = agree_count / total_valid_heads  (as per official definition above).
-        Requires head_predictions to be populated.
-
-    ``confidence_weighted``:
-        SAS = Σ_{h agrees} head.score  /  Σ_{h all} head.score
-        Weights each head vote by detection confidence.  Same range as unweighted.
-        Use when head quality is known to vary significantly.
-
-    ``max_ensemble`` (explicit opt-in):
-        SAS = max(ensemble_probs)  — the probability mass on the majority class.
-        NOT the same as the official head-agreement formula; this is a rougher
-        proxy, appropriate when per-head predictions are unavailable at inference.
-        Range: (0.25, 1.0].
-
-    Fallback (backward-compatible):
-        When head_predictions is None or empty and mode is not ``max_ensemble``,
-        the function automatically returns max(ensemble_probs) and sets
-        used_fallback=True.  This is a DEGRADED PROXY for the true SAS —
-        it uses ensemble output instead of per-head agreement.
-        Callers should treat used_fallback=True as a data-quality warning.
-
-    Args:
-        ensemble_probs:   {class_name: probability} summing to ~1.0.
-                          Must contain at least one entry.
-        head_predictions: List of HeadPrediction dicts (DetectorBox contract).
-                          Each must have ``class_probs`` and optionally
-                          ``score``.  May be None or empty — triggers fallback
-                          unless mode="max_ensemble".
-        mode:             ``"unweighted"`` (default) | ``"confidence_weighted"``
-                          | ``"max_ensemble"``.
-
-    Returns:
-        (sas_value, majority_class, used_fallback)
-        sas_value:      float in (0, 1].
-        majority_class: argmax of ensemble_probs.
-        used_fallback:  bool — True when per-head data was absent and
-                        max(ensemble_probs) was used as a proxy instead.
-                        Always False for mode="max_ensemble".
-
-    Raises:
-        ValueError: if ensemble_probs is empty.
-    """
     if not ensemble_probs:
         raise ValueError("ensemble_probs is empty — cannot compute SAS")
 
@@ -238,7 +127,7 @@ def _kl_div(p: List[float], q: List[float], eps: float = 1e-12) -> float:
 
 
 def _js_div(p: List[float], q: List[float]) -> float:
-    """Jensen–Shannon divergence (log2 -> range [0,1]) between two distributions."""
+
     m = [0.5 * (pi + qi) for pi, qi in zip(p, q)]
     return 0.5 * _kl_div(p, m) + 0.5 * _kl_div(q, m)
 
@@ -247,19 +136,7 @@ def compute_source_disagreement(
     source_dists: List[Dict[str, float]],
     classes: Tuple[str, ...] = ("MA", "HE", "Hard_EX", "Soft_EX"),
 ) -> Tuple[float, int]:
-    """Mean pairwise Jensen–Shannon divergence across heterogeneous source heads.
 
-    Args:
-        source_dists: one class-probability dict per source (primary detector,
-                      secondary detector, TTA views, ...). Each maps class->prob.
-        classes:      canonical class order used to build the probability vectors.
-
-    Returns:
-        (sds, n_sources):
-          sds       — mean pairwise JSD in [0,1]; 0.0 when < 2 valid sources
-                      (no disagreement is measurable). Higher = more disagreement.
-          n_sources — number of valid (non-empty, positive-mass) source dists used.
-    """
     vecs: List[List[float]] = []
     for d in source_dists or []:
         if not isinstance(d, dict) or not d:
@@ -287,36 +164,7 @@ def compute_sdca(
     ensemble_probs: Dict[str, float],
     sdm_norm: Dict[Tuple[str, str], Dict[str, float]],
 ) -> Tuple[float, float]:
-    """Compute Semantic Distance Conflict Assessment (normalized).
 
-    Looks up the KG semantic distance between predicted class and the
-    runner-up class (second-highest probability).  Uses normalized SDM.
-
-    Rationale: if the bbox is ambiguous (high runner-up prob), we want to
-    know whether KG separates the two candidates.  A large SDM_norm between
-    them means the KG treats them as distinct → evidence supports a decision.
-    A small SDM_norm (e.g. MA vs HE) means the KG knows they are similar →
-    the ambiguity is clinically understandable.
-
-    Formula:
-        runner_up  = argmax among all classes except majority_class
-        sdca_raw   = sdm_norm[(majority, runner_up)]["raw"]
-        sdca_norm  = sdm_norm[(majority, runner_up)]["norm"]
-
-    The key in sdm_norm is always the pair with the lower lesion index first
-    (as produced by encoder.compute_sdm / normalize_sdca).
-
-    Args:
-        majority_class: Predicted class name (argmax of ensemble_probs).
-        ensemble_probs: {class_name: probability}.
-        sdm_norm:       Output of normalize_sdca() — keys are (ci, cj) tuples
-                        with ci < cj by LESION_CLASSES index order.
-                        Values are {"raw": float, "norm": float}.
-
-    Returns:
-        (sdca_raw, sdca_norm)  Both floats in [0, ∞) and [0, 1] respectively.
-        Returns (_SDCA_FALLBACK, _SDCA_FALLBACK) if pair not found.
-    """
     # Find runner-up (second highest probability class)
     sorted_classes = sorted(
         ensemble_probs, key=lambda c: ensemble_probs[c], reverse=True
@@ -351,44 +199,13 @@ def compute_aps(
     assigned_zone: str,
     compat_scores: Dict[Tuple[str, str], float],
 ) -> float:
-    """Compute Anatomical Plausibility Score.
 
-    APS = Compat(majority_class, assigned_zone)
-        = σ( e_c^T W_compat e_a + prior[c, a] )
-
-    Looks up the pre-computed calibrated Compat score for this
-    (predicted_class, zone) pair.
-
-    Args:
-        majority_class:  Predicted class name.
-        assigned_zone:   ETDRS zone the bbox was assigned to.
-        compat_scores:   Output of compute_compat() — keys are
-                         (lesion_name, zone_name) tuples, values are floats
-                         in (0, 1).
-
-    Returns:
-        float in (0, 1).  Returns 0.5 (neutral) if pair not in compat_scores.
-    """
     key = (majority_class, assigned_zone)
     return float(compat_scores.get(key, 0.5))
 
 
 def compute_pss(pss_result: dict) -> Tuple[float, str]:
-    """Extract PSS value from a PSSResult dict (Phase 9.3 contract).
 
-    Transparently passes through either the real PSS value (status=
-    "implemented") or the placeholder fallback (status="placeholder").
-    When status="missing" returns FALLBACK_PSS with a warning flag.
-
-    Args:
-        pss_result: A dict conforming to PSSResult from contracts.py.
-                    Must have fields: bbox_id, value, status, n_augmentations.
-
-    Returns:
-        (pss_value, status_string)
-        pss_value:     float in [0, 1].  FALLBACK_PSS for non-implemented.
-        status_string: "implemented" | "placeholder" | "missing".
-    """
     status = pss_result.get("status", "missing")
     value = pss_result.get("value")
 
@@ -410,50 +227,7 @@ def build_evidence_for_bbox(
     compat_scores: Dict[Tuple[str, str], float],
     anatomy_context: Optional[dict] = None,
 ) -> dict:
-    """Compute the full evidence record for one candidate bounding box.
 
-    Assembles all four signals into a single evidence dict that the
-    governance gate will consume.
-
-    Args:
-        box:             DetectorBox dict (Phase 9.3 contract).
-                         Must have: bbox_id, ensemble_probs, assigned_zone.
-        pss_result:      PSSResult dict for this bbox (Phase 9.3 contract).
-                         May be placeholder — status is preserved.
-        sdm_norm:        Output of encoder.normalize_sdca() for the current
-                         image/KG state.  Keys: (ci, cj) with ci < cj.
-                         Values: {"raw": float, "norm": float}.
-        compat_scores:   Output of encoder.compute_compat() with compat_prior.
-                         Keys: (lesion_name, zone_name), Values: float in (0,1).
-        anatomy_context: Optional AnatomyContext.to_dict() for this image.
-                         When provided and od_confidence is "low" or "n/a",
-                         APS is forced to 0.5 (neutral) and anatomy_uncertain=True
-                         is set in the returned record (architecture v3 APS fail-safe).
-                         When None, APS is computed from assigned_zone as usual
-                         but anatomy_uncertain is True (unknown provider).
-
-    Returns:
-        EvidenceRecord dict:
-        {
-            "bbox_id":             str,
-            "majority_class":      str | None,
-            "zone":                str | None,
-            "sas":                 float,         # Source Agreement Score
-            "sdca_raw":            float,         # raw L2 distance (debug)
-            "sdca_norm":           float,         # normalized [0,1]
-            "aps":                 float,         # Anatomical Plausibility
-            "pss":                 float,         # Perturbation Stability
-            "pss_status":          str,           # "implemented"/"placeholder"/"missing"
-            "anatomy_uncertain":   bool,          # True when APS fail-safe was applied
-            "anatomy_provider":    str | None,    # provider_name from AnatomyContext
-            "evidence_vector":     [float]*4,     # [SAS, SDCA_norm, APS, PSS]
-            "warnings":            list[str],     # non-fatal issues found
-        }
-
-    Raises:
-        KeyError:   if bbox_id or ensemble_probs missing from box.
-        ValueError: if ensemble_probs contains no entries.
-    """
     warnings: List[str] = []
 
     bbox_id: str = box.get("bbox_id", "")
@@ -594,28 +368,7 @@ def build_evidence_batch(
     compat_scores: Dict[Tuple[str, str], float],
     anatomy_context: Optional[dict] = None,
 ) -> List[dict]:
-    """Compute evidence records for a batch of bounding boxes.
 
-    A missing PSS entry for a bbox is handled gracefully by generating a
-    placeholder PSS automatically — the absence is recorded in the returned
-    warning field.
-
-    Args:
-        boxes:           List of DetectorBox dicts for one image.
-        pss_results:     {bbox_id: PSSResult dict}.  May be empty or partial.
-        sdm_norm:        Output of normalize_sdca() — shared across all boxes
-                         in the same forward pass (KG state is image-independent).
-        compat_scores:   Output of compute_compat() — shared across all boxes.
-        anatomy_context: AnatomyContext.to_dict() for this image (shared by all
-                         boxes in the image). When od_confidence is "low"/"n/a",
-                         APS is forced to 0.5 for all boxes in the batch.
-                         Pass None to use zone-based APS without provider metadata
-                         (anatomy_uncertain=True will be set for all boxes).
-
-    Returns:
-        List of EvidenceRecord dicts, one per input box.  Same order as input.
-        Failed boxes are included with an "error" key instead of signals.
-    """
     results: List[dict] = []
 
     for box in boxes:

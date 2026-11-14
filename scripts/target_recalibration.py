@@ -1,28 +1,4 @@
-"""target_recalibration.py — apakah sedikit sampel berlabel dari domain target memulihkan titik kerja?
 
-Naskah MENGAKUI keterbatasan ini: tau* yang dipasang pada domain sumber tidak transfer, dan
-rekalibrasi domain target disebut sebagai pekerjaan masa depan. Skrip ini mengukurnya.
-
-Rancangan (sengaja TIDAK optimistis):
-  Memilih tau pada data yang sama lalu mengujinya di situ akan melebih-lebihkan. Karena itu tiap
-  kohort dibelah PER CITRA menjadi dua bagian. Kalibrasi pada bagian A, evaluasi pada bagian B,
-  lalu ditukar, lalu dirata-ratakan. Ini meniru penempatan nyata: sedikit sampel berlabel dari
-  lokasi target, bukan seluruh kohort.
-
-Dibandingkan tiga hal pada bagian evaluasi yang sama:
-  tau_sumber  : dipilih pada OIA-DDR valid (yang dipakai naskah sekarang)
-  tau_target  : dipilih pada separuh kohort target yang TIDAK dievaluasi
-  tau_oracle  : dipilih pada bagian evaluasi itu sendiri (batas atas, tidak dapat dicapai
-                di penempatan nyata; hanya untuk menunjukkan seberapa jauh tau_target dari ideal)
-
-KRITERIA DIPATOK DI MUKA, sebelum melihat hasil:
-  BERHASIL bila tau_target mencapai retensi TP dalam +-0.03 dari sasaran 0.80 pada bagian
-  evaluasi, di KETIGA kohort eksternal, sementara tau_sumber tidak.
-  Hasil dilaporkan apa pun keluarannya.
-
-Gate: protokol naskah (fit_mlp pada OIA-DDR valid, konfigurasi deployed, 5 seed).
-Keluaran: _septem/scripts_optionB/target_recalibration.json. Hanya membaca.
-"""
 import json
 import statistics
 import sys
@@ -52,7 +28,7 @@ def log(m):
 
 
 def halves(image_id):
-    """Belah per CITRA, bukan per kotak: kotak dari satu citra tidak boleh terpisah."""
+
     uniq = np.unique(image_id)
     rng = np.random.default_rng(SPLIT_SEED)
     perm = rng.permutation(len(uniq))

@@ -1,69 +1,4 @@
-"""
-refine.py
-KG-guided bounding-box refinement for tier R3 detections — LGov-Net Contribution 2.
 
-LEGACY MODULE, NOT USED FOR THE REPORTED RESULTS.
---------------------------------------------------
-CEG-Net as reported is post-hoc and never changes a box or a class; no reported number
-passes through this refinement. It is kept because the earlier training scripts still
-import it.
-
-Applies a four-step pipeline to each R3 bbox:
-
-  Step 1 — Cross-head box aggregation
-    Confidence-weighted average of all head_predictions bboxes.  Heads with
-    higher detection scores influence the aggregated box more.  If no valid
-    head bboxes are present, falls back to None.
-
-  Step 2 — KG class arbitration
-    Checked: SDM_norm(majority_class, runner_up_class) ≤ delta_merge?
-      YES → the two classes are clinically close in the KG embedding space.
-            Commit to majority_class as the refined class, upgrade to R2.
-      NO  → disagreement spans a meaningful KG gap. Keep as R3 (reduced
-            confidence; addressed by downstream radiologist / training weight).
-
-  Step 3 — Anatomical plausibility check
-    APS(refined_class, assigned_zone) is looked up. If APS < aps_min (default
-    0.5) the detection is anatomically implausible → downgrade to R4,
-    regardless of the Step 2 outcome.
-
-  Step 4 — SDM-modulated NMS
-    A local NMS over a batch of R3 candidates.  The IoU suppression threshold
-    is modulated by clinical similarity:
-      SDM_norm(class_A, class_B) ≤ sdm_nms_similar_cap
-          → use nms_iou_similar (lower, e.g. 0.3) — more aggressive merging
-      SDM_norm(class_A, class_B) >  sdm_nms_similar_cap
-          → use nms_iou_thresh (standard, e.g. 0.5) — preserve distinct classes
-
-    This step is applied to a batch (via refine_r3_batch) and reduces the
-    candidate list before returning per-box refinement records.
-
-Output contract per bbox:
-  {
-    "bbox_id":          str,
-    "refined_bbox":     [x1, y1, x2, y2] | None,
-    "refined_class":    str | None,
-    "upgraded_to":      "R2" | None,   # set when Step 2 upgrades
-    "downgraded_to":    "R4" | None,   # set when Step 3 fails; overrides upgrade
-    "kept_as":          "R3" | None,   # set when neither upgraded nor downgraded
-    "refinement_reason": str,
-    "timestamp":        str,            # ISO-8601 UTC string — audit trail
-  }
-  Exactly one of {upgraded_to, downgraded_to, kept_as} is non-None per record.
-
-Public API:
-  aggregate_head_bboxes(box)                 -> Optional[List[float]]
-  kg_class_arbitration(box, sdm_norm, thr)   -> Tuple[Optional[str], bool]
-  anatomical_check(cls, zone, compat, min_a) -> bool
-  sdm_modulated_nms(candidates, sdm_norm, thr) -> List[dict]
-  refine_r3_bbox(box, sdm_norm, compat, thr) -> dict
-  refine_r3_batch(boxes, sdm_norm, compat, thr) -> List[dict]
-
-Dependencies:
-  - src/governance/contracts.py  (LESION_CLASSES)
-  - src/governance/evidence.py   (compute_aps, compute_sdca)
-  NO dependency on gate.py, routing.py, training loop, or loss functions.
-"""
 
 from __future__ import annotations
 
@@ -104,7 +39,7 @@ DEFAULT_REFINE_THRESHOLDS: Dict[str, float] = {
 
 
 def _iou(a: List[float], b: List[float]) -> float:
-    """Axis-aligned IoU between two [x1, y1, x2, y2] boxes."""
+
     ix1 = max(a[0], b[0])
     iy1 = max(a[1], b[1])
     ix2 = min(a[2], b[2])
@@ -125,7 +60,7 @@ def _sdm_norm_for_pair(
     class_b: str,
     sdm_norm: Dict[Tuple[str, str], Dict[str, float]],
 ) -> Optional[float]:
-    """Return SDM_norm between class_a and class_b, or None if not found."""
+
     if class_a == class_b:
         return 0.0
     if _LESION_IDX.get(class_a, 99) <= _LESION_IDX.get(class_b, 99):
@@ -142,19 +77,7 @@ def _sdm_norm_for_pair(
 
 
 def aggregate_head_bboxes(box: dict) -> Optional[List[float]]:
-    """Step 1 — Confidence-weighted average of detection head bboxes.
 
-    Each head in ``head_predictions`` contributes its bbox weighted by its
-    ``score``.  Heads with missing or zero score are excluded.  If all heads
-    have equal score the result is the unweighted mean.
-
-    Args:
-        box: DetectorBox dict.  Must have a ``head_predictions`` list where
-             each entry has ``bbox`` ([x1, y1, x2, y2]) and ``score`` (float).
-
-    Returns:
-        [x1, y1, x2, y2] weighted-average bbox, or None if no valid heads.
-    """
     heads = box.get("head_predictions") or []
     valid = [
         h
@@ -192,25 +115,7 @@ def kg_class_arbitration(
     sdm_norm: Dict[Tuple[str, str], Dict[str, float]],
     thresholds: Dict[str, float],
 ) -> Tuple[Optional[str], bool]:
-    """Step 2 — KG-guided class arbitration for R3 box.
 
-    Looks up the SDM distance between the ensemble majority class and the
-    runner-up class.  If the distance is small (≤ delta_merge), the two
-    classes are clinically close enough in the KG space to commit to the
-    majority class and upgrade the tier to R2.
-
-    Args:
-        box:          DetectorBox dict with ``ensemble_probs``.
-        sdm_norm:     Output of ``encoder.normalize_sdca()``.
-                      Keys: (ci, cj) with lower LESION_CLASSES index first.
-        thresholds:   Must have key ``"delta_merge"``.
-
-    Returns:
-        (refined_class, upgraded_to_r2)
-        refined_class:   The committed class after arbitration (majority class
-                         in both cases).  None if ensemble_probs is empty.
-        upgraded_to_r2:  True when SDM_norm ≤ delta_merge.
-    """
     ep: dict = box.get("ensemble_probs") or {}
     if not ep:
         return None, False
@@ -244,20 +149,7 @@ def anatomical_check(
     compat_scores: Dict[Tuple[str, str], float],
     aps_min: float,
 ) -> bool:
-    """Step 3 — Anatomical plausibility check.
 
-    Returns True (passes) when APS ≥ aps_min, False (fails) when APS < aps_min.
-
-    Args:
-        refined_class:  The class committed to in Step 2.
-        assigned_zone:  ETDRS zone for this bbox (from DetectorBox).
-        compat_scores:  Output of ``encoder.compute_compat()``.
-        aps_min:        APS threshold below which the box is deemed implausible
-                        (architecture default: 0.5).
-
-    Returns:
-        bool — True → plausible (keep or upgrade); False → downgrade to R4.
-    """
     aps = compute_aps(refined_class, assigned_zone, compat_scores)
     return aps >= aps_min
 
@@ -267,41 +159,7 @@ def sdm_modulated_nms(
     sdm_norm: Dict[Tuple[str, str], Dict[str, float]],
     thresholds: Optional[Dict[str, float]] = None,
 ) -> List[dict]:
-    """Step 4 — SDM-modulated non-maximum suppression for R3 candidates.
 
-    Standard NMS suppresses boxes with high IoU.  This variant modulates the
-    IoU threshold based on the KG-derived clinical similarity of the two boxes'
-    predicted classes:
-
-      SDM_norm(class_A, class_B) ≤ sdm_nms_similar_cap
-          → use nms_iou_similar (lower = more aggressive merging)
-      SDM_norm(class_A, class_B) >  sdm_nms_similar_cap (or unknown)
-          → use nms_iou_thresh (standard merging)
-
-    Rationale: two R3 boxes predicting clinically similar classes (e.g. MA and
-    HE, SDM ≈ 0.1) are likely duplicates of the same lesion — merge them
-    readily.  Two boxes predicting distinct classes (e.g. MA and Soft_EX,
-    SDM ≈ 0.8) might represent genuinely different co-located lesions — keep
-    them unless IoU is very high.
-
-    Each candidate dict must have:
-        ``bbox``         : [x1, y1, x2, y2]
-        ``score``        : float — used for sort order (higher kept)
-        ``majority_class``: str
-
-    All other fields are passed through unchanged.
-
-    Args:
-        candidates: List of dicts with the fields above.
-        sdm_norm:   Output of ``encoder.normalize_sdca()``.
-        thresholds: Optional overrides for keys:
-                    ``nms_iou_thresh``, ``nms_iou_similar``,
-                    ``sdm_nms_similar_cap``.
-
-    Returns:
-        Subset of ``candidates`` that survived suppression, in descending
-        score order.
-    """
     thr = {**DEFAULT_REFINE_THRESHOLDS, **(thresholds or {})}
     iou_standard = float(thr["nms_iou_thresh"])
     iou_similar = float(thr["nms_iou_similar"])
@@ -361,29 +219,7 @@ def refine_r3_bbox(
     compat_scores: Dict[Tuple[str, str], float],
     thresholds: Optional[Dict[str, float]] = None,
 ) -> dict:
-    """Full R3 refinement pipeline for one DetectorBox.
 
-    Applies Steps 1–3 in order.  Step 4 (SDM-modulated NMS) is a batch
-    operation; use ``refine_r3_batch()`` to apply it across a set of boxes.
-
-    Decision logic:
-      - Step 2 can set upgraded_to = "R2".
-      - Step 3 can override that with downgraded_to = "R4" (aps_min check
-        applies regardless of Step 2 outcome).
-      - If neither condition fires, kept_as = "R3".
-
-    Args:
-        box:           DetectorBox dict.  Must have:
-                       ``bbox_id``, ``head_predictions``,
-                       ``ensemble_probs``, ``assigned_zone``.
-        sdm_norm:      Output of ``encoder.normalize_sdca()``.
-        compat_scores: Output of ``encoder.compute_compat()``.
-        thresholds:    Optional overrides for DEFAULT_REFINE_THRESHOLDS.
-                       Keys: ``delta_merge``, ``aps_min``.
-
-    Returns:
-        dict with output contract fields (see module docstring).
-    """
     thr = {**DEFAULT_REFINE_THRESHOLDS, **(thresholds or {})}
 
     bbox_id: str = box["bbox_id"]
@@ -493,24 +329,7 @@ def refine_r3_batch(
     compat_scores: Dict[Tuple[str, str], float],
     thresholds: Optional[Dict[str, float]] = None,
 ) -> List[dict]:
-    """Batch R3 refinement: Steps 1–3 per box, then Step 4 (SDM-NMS) across batch.
 
-    Workflow:
-      1. Run ``refine_r3_bbox`` on every input box.
-      2. Collect boxes not downgraded to R4 as NMS candidates.
-      3. Apply ``sdm_modulated_nms`` to the surviving candidates.
-      4. Re-mark boxes suppressed by NMS as downgraded_to="R4".
-      5. Return the full list (same order as input), with updated outcomes.
-
-    Args:
-        boxes:         List of R3 DetectorBox dicts (same image).
-        sdm_norm:      Output of ``encoder.normalize_sdca()``.
-        compat_scores: Output of ``encoder.compute_compat()``.
-        thresholds:    Optional overrides for ALL DEFAULT_REFINE_THRESHOLDS keys.
-
-    Returns:
-        List of refinement result dicts (one per input box, input order preserved).
-    """
     thr = {**DEFAULT_REFINE_THRESHOLDS, **(thresholds or {})}
 
     # Step 1–3: per-box pipeline

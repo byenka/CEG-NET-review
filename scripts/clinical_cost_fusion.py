@@ -1,26 +1,4 @@
-"""clinical_cost_fusion.py — apakah fusi skor membeli dimensi biaya klinis, atau hanya peringkat?
 
-Pertanyaan yang menentukan. baselines_nokg.py dan fusion_external.py menunjukkan rata-rata skor
-tiga pass mengungguli setiap varian gate pada AUPRC di keempat kohort. Kalau fusi juga membawa
-sinyal biaya klinis, maka kontribusi naskah ini habis. Kalau fusi buta terhadap biaya klinis
-sama seperti skor detektor mentah (T13: AUROC 0.479, kebetulan), maka yang dibeli knowledge graph
-adalah dimensi yang TIDAK dimiliki metode berbasis skor mana pun, berapa pun AUPRC-nya.
-
-Protokol mengikuti Tabel 13 persis: pada OIA-DDR test, pisahkan UNSAFE_MISMATCH (grade-shifting,
-seharusnya DISUPRES) dari CLINICALLY_CLOSE_MISMATCH (within-grade, seharusnya DIPERTAHANKAN),
-lalu ukur AUROC tiap sinyal dengan UNSAFE sebagai kelas positif.
-
-Arah yang benar berbeda per sinyal, dan ini harus dibaca hati-hati:
-  * SDCA: tinggi = berbahaya, jadi sinyal yang informatif memberi AUROC MENDEKATI 1.
-  * skor detektor, skor fusi, skor gate: tinggi = pertahankan, jadi sinyal yang sadar klinis
-    memberi UNSAFE nilai RENDAH, yaitu AUROC MENDEKATI 0.
-  * AUROC 0.5 berarti tidak ada informasi sama sekali, ke arah mana pun.
-Karena itu yang dilaporkan juga |AUROC - 0.5|, yaitu banyaknya informasi biaya klinis yang dibawa
-sinyal itu, bebas arah.
-
-CI: bootstrap berpasangan image-clustered 2.000 resampel (seed 0), sama dengan tabel lain.
-Keluaran: _septem/scripts_optionB/clinical_cost_fusion.json. Hanya membaca.
-"""
 import csv
 import json
 import statistics
@@ -108,7 +86,7 @@ def categories(csv_path):
 
 
 def boot_auroc(score, y, img, n_boot=N_BOOT, seed=0):
-    """CI image-clustered untuk AUROC; kelompok yang jadi satu kelas saja dilewati."""
+
     rng = np.random.default_rng(seed)
     uniq = np.unique(img)
     groups = [np.where(img == im)[0] for im in uniq]

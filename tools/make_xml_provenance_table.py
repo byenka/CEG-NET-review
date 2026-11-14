@@ -1,13 +1,5 @@
 #!/usr/bin/env python
-"""make_xml_provenance_table.py — render S14 dari JSON audit provenans XML.
 
-Membaca outputs/0506/xml_provenance/audit.json (dihasilkan oleh
-tools/audit_xml_provenance.py) dan menulis _FINAL_Latex/tables/S14_xml_provenance.tex.
-Tidak menghitung ulang apa pun.
-
-Jalankan dari root repo:
-  python tools/make_xml_provenance_table.py
-"""
 from __future__ import annotations
 
 import hashlib

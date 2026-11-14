@@ -1,38 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-"""Uji sensitivitas gate terhadap prior klinis SDM.
 
-MOTIVASI. Enam angka pada `outputs/stage3_audit/sdm_norm_clinical_prior.json`
-ditetapkan dari aturan ICDR, bukan dipelajari dari data. Pertanyaan pertama yang akan
-diajukan reviewer: seberapa besar perolehan gate bergantung pada keenam angka itu?
-Tanpa jawaban terukur, Kontribusi 1 berdiri di atas tetapan yang tak teruji.
-
-Satu angka khususnya tidak dapat diturunkan dari aturan yang tertulis di naskah.
-Naskah menyatakan biaya "0 bila satu kelompok keparahan, dan bertambah menurut jumlah
-batas grade yang dilewati" — itu menjelaskan raw 0, 1.0, dan 2.0, tetapi TIDAK
-menjelaskan Hard_EX-Soft_EX = 1.5. Padahal pasangan itulah yang paling sering muncul
-setelah pasangan satu-grade: 18.772 dari 64.214 deteksi (29,2%) memakai nilai 0.75.
-Jadi angka yang tak terdokumentasi itu justru menanggung beban.
-
-CARA KERJA. SDCA seluruhnya ditentukan oleh pasangan (kelas prediksi, runner-up):
-    SDCA_i = SDM_norm(c_i, r_i).
-Kolom prob_ma/prob_he/prob_hardex/prob_softex pada CSV governance menyimpan distribusi
-kelasnya, sehingga pasangan itu dapat dibangun ulang dan SDCA dihitung ulang di bawah
-prior alternatif TANPA menjalankan ulang detektor. Verifikasi: rekonstruksi ini cocok
-persis dengan kolom ev_sdca yang tersimpan pada 64.203 dari 64.214 baris (99,98%);
-11 baris sisanya adalah deteksi yang pred_class-nya bukan argmax distribusi tersimpan.
-Supaya seluruh varian dibandingkan pada pijakan yang identik, SEMUA varian (termasuk
-baseline) memakai SDCA hasil rekonstruksi, dan selisih terhadap kolom terpasang
-dilaporkan terpisah sebagai kontrol.
-
-Gate, pembagian data, dan metrik mengikuti tools/eval_fp_reduction_benchmark.py apa
-adanya: AUPRC pada tugas governance_retain, gate MLP dipasang pada split valid dan
-dievaluasi pada split test.
-
-Jalankan dari root repo:
-    python tools/sdm_prior_sensitivity.py
-    python tools/sdm_prior_sensitivity.py --seeds 5 --out outputs/0506/sdm_sensitivity.json
-"""
 from __future__ import annotations
 
 import argparse
@@ -76,13 +44,13 @@ def load_locked_prior() -> dict:
 
 
 def _norm(raw: dict) -> dict:
-    """Rescale by max, persis seperti Eq. 1 naskah."""
+
     mx = max(raw.values())
     return {k: (v / mx if mx > 0 else 0.0) for k, v in raw.items()}
 
 
 def prior_variants(locked: dict, n_shuffle: int = 5) -> list:
-    """Daftar (nama, keterangan, prior) yang diuji."""
+
     same_group = {("HE", "MA")}   # satu-satunya pasangan satu-grade (kunci terurut)
     variants = [
         ("locked", "prior ICDR terpasang {0, 0.50, 0.75, 1.00}", dict(locked)),
@@ -124,7 +92,7 @@ def prior_variants(locked: dict, n_shuffle: int = 5) -> list:
 # ---------- rekonstruksi pasangan (prediksi, runner-up) ----------
 
 def read_pairs(path: Path) -> tuple:
-    """Kembalikan (daftar pasangan terurut per baris, ev_sdca tersimpan)."""
+
     pairs, stored = [], []
     with open(path, newline="", encoding="utf-8") as f:
         for r in csv.DictReader(f):
@@ -146,7 +114,7 @@ def read_pairs(path: Path) -> tuple:
 
 
 def sdca_from_prior(pairs: list, prior: dict, fallback: np.ndarray) -> np.ndarray:
-    """Petakan tiap baris ke nilai priornya; baris tanpa pasangan memakai nilai asli."""
+
     out = np.empty(len(pairs), dtype=np.float64)
     for i, p in enumerate(pairs):
         out[i] = prior[p] if p is not None and p in prior else fallback[i]

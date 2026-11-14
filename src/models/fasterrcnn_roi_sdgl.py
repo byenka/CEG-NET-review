@@ -1,14 +1,4 @@
-"""ROI SDGL-loss patch for torchvision Faster R-CNN.
 
-This module replaces torchvision RoIHeads classification loss with an
-SDGL-shaped objective so detector gradients flow through a clinical-distance
-loss (Mode 2 full-detector path).
-
-Scope:
-- Replaces only the ROI classification term (loss_classifier)
-- Keeps bbox regression term identical to torchvision default
-- Designed for Stage 5 full-mode detector fine-tuning
-"""
 
 from __future__ import annotations
 
@@ -28,7 +18,7 @@ _LAST_STATS: Dict[str, float] = {}
 
 
 def _compute_dynamic_sdm_norm_matrix(lesion_embeddings: Tensor) -> Tensor:
-    """Build differentiable SDM_norm matrix from current lesion embeddings."""
+
     if lesion_embeddings.ndim != 2 or lesion_embeddings.size(0) != len(LESION_CLASSES):
         raise ValueError(
             "lesion_embeddings must have shape [num_lesion_classes, d] "
@@ -229,7 +219,7 @@ def enable_roi_sdgl_loss(
     bg_weight: float = 0.20,
     uniform_temp: bool = False,
 ) -> None:
-    """Enable ROI SDGL classification loss for torchvision Faster R-CNN."""
+
 
     close_pairs = _build_close_pairs(sdm_norm, close_threshold=close_threshold)
     _SDGL_CTX.clear()
@@ -289,7 +279,7 @@ def get_last_sdgl_roi_stats() -> Dict[str, float]:
 
 
 def set_roi_sdgl_dynamic_state(lesion_embeddings: Optional[Tensor]) -> None:
-    """Inject current lesion embeddings for differentiable SDM in ROI loss."""
+
     if lesion_embeddings is None:
         _SDGL_CTX["lesion_embeddings"] = None
         return

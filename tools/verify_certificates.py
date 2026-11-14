@@ -1,28 +1,5 @@
 #!/usr/bin/env python
-"""verify_certificates.py — validasi auditability teknis atas sertifikat per-deteksi.
 
-Lima pemeriksaan, semuanya deterministik dan tanpa anotasi:
-
-  C1 determinisme        emisi ulang ke direktori sementara menghasilkan berkas identik
-                         bita-per-bita (sha256 sama) untuk setiap kohort.
-  C2 rekonstruksi        keputusan dan tier dapat dihitung ulang HANYA dari field
-                         sertifikat (retain_probability, tau_star, ev_sdca, delta)
-                         memakai aturan yang diterbitkan, dan cocok dengan yang tersimpan.
-  C3 konsistensi prior   ev_sdca sama dengan SDM_norm[argmax, runner-up] yang dihitung
-                         ulang dari kg_graph.json terbitan.
-  C4 pengungkapan label  laju ketidaksamaan antara label teremisi dan argmax ROI, angka
-                         yang dinyatakan naskah untuk OIA-DDR test.
-  C5 kebebasan ranker    field prior sertifikat (argmax, runner-up, ev_sdca) dihitung dari
-                         distribusi per-ROI saja, sehingga tidak berubah bila keputusan
-                         diambil oleh skor detektor alih-alih gate.
-
-Ini adalah validasi auditability TEKNIS. Ia tidak menunjukkan manfaat klinis dan bukan
-pengganti reader study.
-
-Keluaran: outputs/0506/certificates/verification.json
-Jalankan dari root repo:
-  python tools/verify_certificates.py
-"""
 from __future__ import annotations
 
 import csv

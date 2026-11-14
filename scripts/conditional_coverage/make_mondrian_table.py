@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-"""Generate the Mondrian-preview supplementary table from frozen JSON. No fitting."""
+
 from __future__ import annotations
 
 import hashlib
@@ -7,7 +7,7 @@ import json
 from pathlib import Path
 
 def _resolve(*candidates):
-    """Find the input in the research workspace layout or in the repository layout."""
+
     for base in Path(__file__).resolve().parents:
         for rel in candidates:
             p = base / rel

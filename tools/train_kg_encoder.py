@@ -1,63 +1,5 @@
 #!/usr/bin/env python
-"""train_kg_encoder.py — latih encoder GAT knowledge graph, lalu ekspor SDM dan Compat.
 
-BERKAS BARU. Skrip ini TIDAK mengubah satu pun berkas lama. Ia hanya membaca artefak KG yang
-sudah ada dan menulis artefak baru ke direktori keluaran tersendiri, sehingga hasil lama tidak
-pernah tertimpa.
-
-LATAR
------
-Pipeline yang berjalan memakai SDM dari tabel prior ICDR (`schema.build_clinical_prior_sdm`),
-bukan dari embedding. Encoder GAT (`src/kg/encoder.py`) sudah lengkap, dan `run_lgovnet_step`
-sudah menyalurkan gradien ke parameternya, tetapi tidak pernah ada loop luar dengan optimizer.
-Skrip ini adalah loop itu. Arsitektur, knowledge graph, dan seluruh tahap hilir tidak berubah.
-
-PERINGATAN YANG WAJIB DIBACA SEBELUM MEMAKAI WAKTU SERVER
----------------------------------------------------------
-`compute_l_kg` di src/losses/sdgl.py menarik jarak embedding ke biaya ICDR yang SAMA dengan yang
-dipakai tabel prior:
-
-    L_KG = sum over severity_transition pairs of ( ||e_ci - e_cj||_2 - w_target )^2
-
-Dengan lambda_kg besar, SDM terlatih akan konvergen ke prior dan porsi KG TIDAK akan bergerak.
-Kegagalan itu terjadi karena konstruksi, bukan karena data. Karena itu `--lambda_kg` adalah
-variabel eksperimen yang sesungguhnya di sini, dan sweep beberapa nilai lebih informatif daripada
-satu run panjang pada nilai bawaan.
-
-KRITERIA YANG DIPATOK DI MUKA (jangan diubah setelah melihat hasil)
--------------------------------------------------------------------
-1. Porsi KG naik dari 0.007 ke sekurangnya 0.020, dengan kelima CI seed di atas nol.
-2. Kontrol permutasi S2 berbalik: mempermutasi biaya terlatih harus lebih merugikan daripada
-   meratakannya. Tanpa ini, urutan klinis tetap bukan yang dipakai gate, berapa pun AUPRC-nya.
-
-CATATAN TENTANG GATE DI SINI
-----------------------------
-`run_lgovnet_step` menuntut instance LGG (gate 4-tier). LGG itu BUKAN gate yang dipakai naskah;
-gate naskah adalah MLP numpy yang dipasang belakangan oleh tools/eval_fp_reduction_benchmark.py.
-LGG di sini hanya perancah supaya jalur loss lengkap dan gradien mengalir ke encoder.
-
-KELUARAN (semuanya di --output_dir, tidak menimpa apa pun)
-----------------------------------------------------------
-  kg_encoder_trained.pt            state_dict encoder terlatih
-  sdm_norm_encoder_trained.json    SDM terlatih, ternormalisasi, source=gat_encoder_trained
-  sdm_norm_clinical_prior.json     SALINAN berkas di atas, memakai nama yang DICARI Stage 3C
-  compat_scores.json               Compat terlatih
-  nodes.json, edges.json           disalin dari --kg_dir supaya direktori ini berdiri sendiri
-  train_log.json                   kurva loss per epoch dan seluruh argumen run
-
-Nama `sdm_norm_clinical_prior.json` dipakai karena itulah nama yang dibaca Stage 3C. Isinya
-BUKAN prior klinis; field "source" setiap entri berbunyi "gat_encoder_trained" supaya tidak ada
-yang tertukar. Ini dipilih agar tidak perlu mengubah satu baris pun di Stage 3C.
-
-CONTOH
-------
-  python tools/train_kg_encoder.py \
-      --kg_dir outputs/stage3_audit \
-      --cache_dir outputs/detector_cache/primary/oiaddr/train \
-      --annotations_dir data/oiaddr/xml/train \
-      --output_dir outputs/sept/kg_trained_lkg0.1 \
-      --epochs 30 --lambda_kg 0.1 --seed 0 --device cuda
-"""
 from __future__ import annotations
 
 import argparse
@@ -94,43 +36,14 @@ from lgovnet.src.data.xml_parser import parse_xml_file
 
 
 def _raw_to_kg():
-    """Kembalikan pemeta label kanonik proyek, BUKAN versi sendiri.
 
-    ontology.normalize_raw_label() melakukan strip, lowercase, lalu mengganti spasi, hyphen,
-    titik dan slash menjadi underscore. Menyalin ulang normalisasi itu dengan .strip().lower()
-    saja membuat label seperti "Hard EX" gagal terpeta dan kotak GT-nya hilang diam-diam.
-    """
     from lgovnet.src.data.ontology import map_raw_to_kg
 
     return map_raw_to_kg
 
 
 def ensure_head_predictions(det_all: dict) -> dict:
-    """Isi head_predictions dari detector_raw. WAJIB, dan alasannya harus dibaca.
 
-    Tidak satu pun cache DetectorBox di repo ini mengisi head_predictions (diperiksa pada
-    detector_cache/primary, detector_cache/secondary, secondary_v2, detcmp dan yolo_e2: nol
-    terisi). Akibatnya di routing.py:
-
-      * _mean_bbox() mengembalikan None  -> _find_best_gt_match() mengembalikan (None, 0.0)
-        -> matched_gt False -> SETIAP kotak jatuh ke R4 -> L_SDGL = 0.
-        Ini terukur: 60 citra, 9.604 kotak, R1=R2=R3=0.
-      * Stage 3C tidak terkena masalah ini karena ia membaca detector_raw sendiri dan mengoper
-        pred_bbox secara eksplisit ke _assign_target miliknya (audit_stage3c, baris 631-632).
-
-    SATU head, bukan empat. Empat head identik akan membuat _count_heads_correct bernilai 4
-    sehingga aturan R1 (>=3 head benar) terbuka, tetapi itu MENGARANG kesepakatan antar-head
-    yang tidak pernah diukur. Dengan satu head yang jujur:
-      * R1 tidak tercapai (butuh >=3 head) — konsekuensi data, bukan pilihan;
-      * kotak yang cocok GT dan majority-nya sama dengan GT jatuh ke R2, sisanya R3;
-      * R2 justru tier yang dibentuk tau_SDM/q_SDM, yaitu satu-satunya suku yang mendorong
-        embedding menjauh dari prior ICDR. Mekanisme yang diuji eksperimen ini tetap aktif.
-
-    Catatan kejujuran kedua: compute_sas() tanpa head asli memakai proxy terdegradasi
-    max(ensemble_probs) dengan used_fallback=True, jadi SAS saat latih TIDAK sama dengan SAS
-    konfigurasi deployed yang memakai detektor kedua sebagai sumber. Bandingkan hasil dengan
-    kesadaran itu.
-    """
     n_box = n_fill = n_skip = 0
     for boxes in det_all.values():
         for b in boxes:
@@ -166,7 +79,7 @@ def set_seed(seed: int) -> None:
 
 
 def load_gt_boxes(xml_dir: Path, image_ids, raw_map) -> dict:
-    """{image_id: [{"bbox": [x1,y1,x2,y2], "class_label": str}]} sesuai kontrak run_lgovnet_step."""
+
     out, n_box, n_skip = {}, 0, 0
     for iid in image_ids:
         parsed = parse_xml_file(xml_dir / f"{iid}.xml")
@@ -186,7 +99,7 @@ def load_gt_boxes(xml_dir: Path, image_ids, raw_map) -> dict:
 
 
 def export_artifacts(encoder, kg_artifacts, out_dir: Path, kg_dir: Path, device) -> dict:
-    """Hitung SDM dan Compat dari encoder terlatih, lalu tulis artefak Stage-3A-kompatibel."""
+
     encoder.eval()
     with torch.no_grad():
         enc = build_encoder_inputs(kg_artifacts, device=device)

@@ -1,46 +1,4 @@
-"""online_evidence.py — training-time evidence builder for Mode 2 closed-loop.
 
-Builds a per-detection [SAS, SDCA, APS, PSS] evidence vector and tier
-supervision target during Mode 2 detector training, so LGG can be called
-inside the training loop and GateLoss can backpropagate into the KG encoder
-and LGG parameters.
-
-REV-7 (2026-06-02) — Sprint 1+2 evidence-faithful bridge patch:
-  • build_proposal_records now reads real Faster R-CNN class probabilities
-    from det["class_probs"] when present (Sprint 1 — R1 bridge).
-  • records carry "class_probs_vec" (canonical 4-dim) and "prob_source"
-    ("real_roi_softmax" | "synthetic_score_residual") for telemetry.
-  • records_to_tensors uses SOFT e_pred = P(class|roi) @ lesion_embeddings
-    when class_probs_vec is available (architecture §C2 claim-valid path).
-  • Optional secondary-detector cache (Sprint 2 — multi-source SAS) is
-    consumed via load_secondary_detector_cache + build_proposal_records'
-    new ``secondary_cache`` / ``image_ids`` params. When supplied, real
-    cross-detector agreement SAS replaces the single-source max-softmax
-    proxy and per-record sas_source is labelled "multi_source_*".
-  • New helper evidence_fidelity_stats(records) emits gate (0) telemetry:
-    real_prob_coverage, soft_epred_coverage, multi_source_sas_coverage,
-    runnerup_unique_pairs, sdca_distinct_values, sdca_std, sas_distinct,
-    sas_std, aps_std — to be written into mode2_summary.json + training
-    CSV by the trainer.
-
-Honest framing (pre REV-7 fallback path remains available):
-  - When det["class_probs"] is absent, SDCA reverts to the synthetic
-    bridge with deterministic canonical runner-up (4-value SDCA collapse).
-    This is now flagged as NEGATIVE-ABLATION-only by the architecture
-    contract (§EVIDENCE-FIDELITY CONTRACT, §C3 (0)).
-  - When secondary_cache is None, SAS reverts to single-source proxy
-    (= max(class_probs)). This is now flagged as PENDING-novelty by the
-    architecture (§NOVELTY TABLE Multi-source SAS row).
-  - PSS = 0.5 constant remains (real TTA cache integration deferred).
-
-Tier category mapping matches Stage 3C ``_assign_target`` byte-for-byte:
-  IoU>=0.5 + pred==gt          -> TP_EXACT                  -> R1 (tier=0)
-  IoU>=0.5 + mismatch + close  -> CLINICALLY_CLOSE_MISMATCH -> R2 (tier=1)
-  IoU>=0.5 + mismatch + unsafe -> UNSAFE_MISMATCH           -> R3 (tier=2)
-  0.1<=IoU<0.5                 -> LOCALIZATION_WEAK         -> R3 (tier=2)
-  IoU<0.1 + score>=0.15        -> BACKGROUND_FP             -> R4 (tier=3)
-  IoU<0.1 + score<0.15         -> LOW_CONF_CANDIDATE        -> R4 (tier=3)
-"""
 
 from __future__ import annotations
 
@@ -114,24 +72,14 @@ def _sdm_norm_lookup(c1: str, c2: str, sdm_norm: Dict) -> Optional[float]:
 
 
 def load_compat_scores(path: Path) -> Dict[Tuple[str, str], float]:
-    """Load ``compat_scores.json`` produced by Stage 3A.
 
-    Mirrors ``tools/audit_stage3c_governance_targets._load_compat_scores``.
-    """
     with open(path, encoding="utf-8") as f:
         data = json.load(f)
     return {tuple(k.split("__", 1)): float(v) for k, v in data.items() if "__" in k}
 
 
 def _synthetic_class_probs(pred_class: str, pred_score: float) -> Dict[str, float]:
-    """Single-head training-time class-prob proxy (fallback when real probs absent).
 
-    Matches the Stage 3C 'synthetic ensemble_probs' regime. Predicted class gets
-    ``pred_score``; the other lesion classes split ``(1 - pred_score)`` evenly.
-    Tied non-predicted probs are deterministic for downstream SDCA top-2 lookup
-    (canonical runner-up by LESION_CLASSES order). REV-7 architecture flags this
-    as NEGATIVE-ABLATION-only when used in a positive C3 claim path.
-    """
     others = [c for c in LESION_CLASSES if c != pred_class]
     p_other = (1.0 - float(pred_score)) / max(len(others), 1)
     out: Dict[str, float] = {pred_class: float(pred_score)}
@@ -141,23 +89,13 @@ def _synthetic_class_probs(pred_class: str, pred_score: float) -> Dict[str, floa
 
 
 def _real_class_probs_dict(probs_row: Sequence[float]) -> Dict[str, float]:
-    """Convert a canonical-order probability vector [P_MA, P_HE, P_HardEX, P_SoftEX]
-    to a class-keyed dict. Caller must ensure the row is already in the order of
-    LESION_CLASSES (which is what predict_with_class_probs() returns after the
-    background column drop).
-    """
+
     n = min(len(probs_row), len(LESION_CLASSES))
     return {LESION_CLASSES[i]: float(probs_row[i]) for i in range(n)}
 
 
 def _probs_row_from_det(det: Dict, idx: int) -> Optional[List[float]]:
-    """Extract row ``idx`` from a detection dict's ``class_probs`` field.
 
-    Accepts torch.Tensor [N, C] or list-of-list. Returns canonical-order list of
-    length len(LESION_CLASSES) or None if unavailable. The predict_with_class_probs()
-    helper in src/governance/multiclass_inference.py already drops the background
-    column, so columns 0..3 = MA, HE, Hard_EX, Soft_EX.
-    """
     probs = det.get("class_probs")
     if probs is None:
         return None
@@ -184,19 +122,7 @@ def _probs_row_from_det(det: Dict, idx: int) -> Optional[List[float]]:
 def load_secondary_detector_cache(
     cache_dir: Optional[Path],
 ) -> Dict[str, List[Dict]]:
-    """Load secondary-detector (e.g., RetinaNet r1a) predictions per image_id.
 
-    The expected layout matches tools/export_detector_predictions.py output:
-    ``cache_dir / <image_id>.json`` is a JSON list of per-bbox records with
-    ``detector_raw.bbox / label / label_name / score`` and optional
-    ``detector_class_probs``. Missing dir or unreadable files yield an empty
-    cache, falling back to single-source SAS at training time.
-
-    Returns:
-        Dict mapping image_id (str) → list of normalized records with keys
-        ``bbox`` [x1, y1, x2, y2], ``label_name``, ``score``,
-        ``class_probs`` (dict).
-    """
     out: Dict[str, List[Dict]] = {}
     if cache_dir is None:
         return out
@@ -244,16 +170,7 @@ def _multi_source_sas(
     primary_label: str,
     secondary_per_image: Optional[List[Dict]],
 ) -> Tuple[float, str]:
-    """Multi-source agreement SAS via IoU matching.
 
-    Returns:
-        (sas_value, sas_source) where sas_source ∈ {
-            "single_source_proxy",          # no secondary cache available
-            "multi_source_unmatched",       # secondary had boxes but no IoU>=_IOU_MATCH_SECONDARY match
-            "multi_source_agreed",          # matched and label agreement
-            "multi_source_conflict",        # matched but label disagreement
-        }
-    """
     if not secondary_per_image:
         return float(primary_score), "single_source_proxy"
     best_iou = 0.0
@@ -358,49 +275,7 @@ def build_proposal_records(
     image_ids: Optional[List[str]] = None,
     secondary_cache: Optional[Dict[str, List[Dict]]] = None,
 ) -> List[Dict]:
-    """Build per-detection records with evidence + tier index.
 
-    Args:
-        detections:    list (length B) of Faster R-CNN eval-mode outputs. Each
-                       item is a dict with ``boxes`` [N,4], ``labels`` [N],
-                       ``scores`` [N], and (optionally, when produced by
-                       ``predict_with_class_probs``) ``class_probs`` [N, 4].
-        targets:       list (length B) of training targets:
-                       ``{"boxes": Tensor[M,4], "labels": Tensor[M]}``.
-        image_sizes:   ``[(H, W), ...]`` per image.
-        sdm_norm:      Stage 3A SDM lookup table.
-        compat_scores: Stage 3A compat scores (lesion × zone).
-        label_to_class: optional FRCNN label-idx → class-name map. Defaults to
-                        :data:`FRCNN_LABEL_TO_CLASS`.
-        image_ids:     optional list (length B) of image_id strings used to
-                       look up the secondary-detector cache. Required when
-                       ``secondary_cache`` is provided.
-        secondary_cache: optional dict mapping image_id → list of secondary-
-                       detector records (see :func:`load_secondary_detector_cache`).
-                       Enables multi-source SAS at training time. When None or
-                       empty for a given image, SAS falls back to single-source
-                       max-softmax proxy and ``sas_source`` is set accordingly.
-
-    Returns:
-        Flat list of detection records. Each record has::
-
-            {
-              "image_idx":      int,
-              "image_id":       Optional[str],
-              "pred_class":     str,
-              "majority_class": str,
-              "pred_score":     float,
-              "evidence_vec":   [sas, sdca, aps, pss],
-              "class_probs_vec": [P_MA, P_HE, P_Hard_EX, P_Soft_EX],
-              "prob_source":    "real_roi_softmax" | "synthetic_score_residual",
-              "sas_source":     "multi_source_agreed" | "multi_source_conflict"
-                                | "multi_source_unmatched" | "single_source_proxy",
-              "tier_index":     int,  # 0..3
-              "category":       str,
-              "best_iou":       float,
-              "radial_zone":    str,
-            }
-    """
     # Lazy import to keep module import free of heavy package side-effects.
     try:
         from src.governance.anatomy_provider import RadialZoneAnatomyProvider
@@ -511,33 +386,7 @@ def records_to_tensors(
     lesion_embeddings: torch.Tensor,
     device: torch.device,
 ) -> Optional[Dict[str, torch.Tensor]]:
-    """Convert proposal records to LGG-ready tensors.
 
-    REV-7: when every record carries a full ``class_probs_vec`` of length
-    len(LESION_CLASSES), e_pred is computed SOFT as
-    ``prob_matrix @ lesion_embeddings`` (architecture §C2 claim-valid path).
-    Otherwise it falls back to the hard ``index_select(majority_class)``
-    lookup. ``e_pred_source`` is added to the returned dict so the trainer
-    can include it in mode2_summary telemetry.
-
-    Args:
-        records: output of :func:`build_proposal_records`.
-        lesion_embeddings: Tensor[len(LESION_CLASSES), d] — KG lesion
-            embeddings (used to build e_pred).
-        device: tensor device.
-
-    Returns:
-        ``None`` when ``records`` is empty. Otherwise::
-
-            {
-              "evidence_vectors": Tensor[N, 4]      (no grad — supervision side)
-              "e_pred":           Tensor[N, d]      (grad through lesion_emb)
-              "e_pred_source":    str               ("soft" | "hard")
-              "gate_input":       Tensor[N, 4 + d]
-              "tier_targets":     Tensor[N] int64
-              "majority_idx":     Tensor[N] int64
-            }
-    """
     if not records:
         return None
     ev = torch.tensor(
@@ -588,7 +437,7 @@ def records_to_tensors(
 
 
 def summarise_records(records: List[Dict]) -> Dict[str, int]:
-    """Return tier and category counts for telemetry."""
+
     out = {"n_total": len(records),
            "n_r1": 0, "n_r2": 0, "n_r3": 0, "n_r4": 0}
     for r in records:
@@ -613,34 +462,7 @@ def _std_float(xs: List[float]) -> float:
 
 
 def evidence_fidelity_stats(records: List[Dict]) -> Dict[str, float]:
-    """Gate (0) telemetry for the architecture's evidence-fidelity contract.
 
-    Returns a flat dict suitable for direct merge into ``mode2_summary.json``::
-
-        {
-          "ev_n_records":               int,
-          "ev_real_prob_coverage":      float in [0, 1],
-          "ev_soft_epred_coverage":     float in [0, 1],
-          "ev_multi_source_sas_coverage": float in [0, 1],
-          "ev_n_multi_source_agreed":   int,
-          "ev_n_multi_source_conflict": int,
-          "ev_runnerup_unique_pairs":   int,
-          "ev_sdca_distinct_values":    int,
-          "ev_sdca_std":                float,
-          "ev_sas_distinct_values":     int,
-          "ev_sas_std":                 float,
-          "ev_aps_distinct_values":     int,
-          "ev_aps_std":                 float,
-          "ev_pss_std":                 float,
-        }
-
-    Architecture gate (0) thresholds (CONDITIONAL CLAIM RULE):
-      ev_real_prob_coverage       >= 0.95
-      ev_soft_epred_coverage      >= 0.95
-      ev_multi_source_sas_coverage >= 0.80   (Stage 5B)
-      ev_runnerup_unique_pairs    >= 5
-      ev_sas_distinct_values      >= 20      (Stage 5B)
-    """
     n = len(records)
     base: Dict[str, float] = {
         "ev_n_records": 0,

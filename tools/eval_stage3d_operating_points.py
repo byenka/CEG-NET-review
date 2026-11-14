@@ -1,35 +1,5 @@
 #!/usr/bin/env python
-"""
-eval_stage3d_operating_points.py
-Phase 19N — Stage 3D.1: Operating Point Calibration for LGG baselines.
 
-Sweeps decision thresholds on the validation split and selects operating
-points at TP_retention >= 0.85, 0.80, 0.75 for each model.
-Selected thresholds are evaluated on the held-out test split.
-
-Decision rule:
-  LGG is operationally useful only if it achieves greater FP_suppression
-  than B0 at the same TP_retention constraint on the test split.
-
-Inputs:
-  outputs/stage3c_audit/governance_features_train.csv
-  outputs/stage3c_audit/governance_features_valid.csv
-  outputs/stage3c_audit/governance_features_test.csv
-
-Outputs:
-  outputs/stage3d_lgg/operating_point_results.csv
-  outputs/stage3d_lgg/pareto_valid.csv
-  outputs/stage3d_lgg/pareto_test.csv
-  outputs/stage3d_lgg/bootstrap_ci.csv
-  outputs/stage3d_lgg/stage3d_operating_point_decision.md
-
-Usage:
-    python tools/eval_stage3d_operating_points.py \\
-      --stage3c_dir outputs/stage3c_audit \\
-      --output_dir  outputs/stage3d_lgg
-
-    python tools/eval_stage3d_operating_points.py --no_mlp  # LR + B0 only
-"""
 
 from __future__ import annotations
 
@@ -87,18 +57,7 @@ def _load_csv(path: Path) -> List[dict]:
 def _extract_all(
     records: List[dict],
 ) -> Tuple[Dict[str, np.ndarray], np.ndarray, np.ndarray, np.ndarray, List[str]]:
-    """Extract all feature columns + labels from CSV records.
 
-    Drops rows with missing or non-finite values in ANY column so that
-    all models (B0-B3) operate on the exact same set of rows.
-
-    Returns:
-        features : dict col->float32 array
-        y_true   : int32 array (1=RETAIN, 0=SUPPRESS)
-        is_unsafe: bool array
-        is_tp    : bool array (TP_EXACT category only)
-        image_ids: list[str] aligned with above arrays
-    """
     all_cols = ["pred_score", "ev_sas", "ev_sdca", "ev_aps", "ev_pss"]
     feat_lists: Dict[str, list] = {c: [] for c in all_cols}
     y_list: list = []
@@ -237,13 +196,7 @@ def _find_operating_point(
     tp_ret_target: float,
     thresholds: np.ndarray,
 ) -> Optional[float]:
-    """Return the highest threshold where TP_ret >= target on this split.
 
-    Higher threshold = more suppressive.  We sweep ascending and keep
-    updating best_thresh whenever the target is still met, so the final
-    value is the most suppressive operating point that satisfies the
-    TP retention constraint.
-    """
     retain_mask = y_true == 1
     n_retain = int(retain_mask.sum())
     if n_retain == 0:
@@ -305,7 +258,7 @@ def _bootstrap_ci(
     n_bootstrap: int = 1000,
     seed: int = 42,
 ) -> Dict[str, dict]:
-    """Bootstrap 95% CI for AUPRC by resampling images (not boxes)."""
+
     if not _SKLEARN_OK or len(y_true) == 0:
         return {}
 

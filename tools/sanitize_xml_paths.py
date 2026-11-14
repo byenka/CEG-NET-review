@@ -1,23 +1,5 @@
 #!/usr/bin/env python
-"""sanitize_xml_paths.py — buat salinan bersih anotasi XML tanpa elemen <path>.
 
-Elemen <path> pada anotasi IDRiD dan TJDR memuat direktori pengguna lokal mesin penulis.
-Elemen itu tidak dipakai pipeline mana pun, yang membaca <filename>, sehingga dapat dibuang
-tanpa mengubah perilaku.
-
-Berkas asli TIDAK DISENTUH. Salinan ditulis ke data/<ds>/xml_clean/<split>/ dengan struktur
-split yang sama.
-
-Penghapusan dilakukan di tingkat bita, bukan lewat parser XML, agar indentasi, urutan elemen,
-dan akhiran baris tetap identik dengan aslinya. Hanya baris <path>...</path> yang hilang.
-
-Setiap berkas diverifikasi sesudah ditulis: dapat diurai, tidak lagi memuat direktori pengguna,
-dan seluruh objek (kelas dan empat koordinat) serta ukuran citra identik dengan aslinya.
-
-Jalankan dari root repo:
-  python tools/sanitize_xml_paths.py            # tulis salinan bersih
-  python tools/sanitize_xml_paths.py --check    # hanya laporkan, tanpa menulis
-"""
 from __future__ import annotations
 
 import argparse
@@ -36,7 +18,7 @@ USERDIR = re.compile(rb"[A-Za-z]:[/\\]+Users[/\\]+", re.I)
 
 
 def signature(data: bytes):
-    """Kelas, koordinat, dan ukuran citra; dipakai untuk membandingkan sebelum dan sesudah."""
+
     root = ET.fromstring(data)
     size = root.find("size")
     dims = None

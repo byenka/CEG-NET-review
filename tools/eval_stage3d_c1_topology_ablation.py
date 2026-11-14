@@ -1,51 +1,5 @@
 #!/usr/bin/env python
-"""
-eval_stage3d_c1_topology_ablation.py
-Phase 19N — Stage 3D C1 Topology Ablation: KG graph structure contribution.
 
-Completes the C1 mandatory ablations from architecture v3:
-  • Directed vs undirected edges.
-  • Clinical KG vs random graph baseline.
-  • (Optional) Fixed-only vs all-trainable edges.
-
-Tests whether the KG TOPOLOGY (directionality and clinical structure)
-produces materially different LGG routing performance, by running the
-frozen GAT encoder over modified KG graphs and using the resulting
-4×64 lesion embeddings as e_pred in [SAS, e_pred] LGG input.
-
-Variants:
-  B0                        : score threshold (no model, baseline)
-  B_class_only              : SAS + one-hot(pred_class)   [non-KG reference]
-  B_kg_clinical_directed    : SAS + GAT(clinical KG, original edges)
-  B_kg_clinical_undirected  : SAS + GAT(clinical KG, all directed → bidirectional)
-  B_kg_random_topology_s*   : SAS + GAT(random topology, 5 seeds, same edge counts)
-
-Decision rule:
-  C1 KG topology contributes if:
-    • B_kg_clinical_directed consistently > B_kg_random_topology
-    • B_kg_clinical_directed differs from B_kg_clinical_undirected
-       (either direction; the question is whether direction matters)
-
-Operating point protocol: same as Stage 3D.1/3D.2/3D.3.
-
-Inputs:
-  outputs/stage3c_audit/governance_features_{train,valid,test}.csv
-  outputs/stage3_audit/kg_encoder_init.pt
-  outputs/graphs/nodes.json
-  outputs/graphs/edges.json
-
-Outputs:
-  outputs/stage3d_ablation/c1_topology_results.csv
-  outputs/stage3d_ablation/bootstrap_c1_topology_ci.csv
-  outputs/stage3d_ablation/c1_topology_decision.md
-
-Usage:
-    python tools/eval_stage3d_c1_topology_ablation.py \\
-      --stage3c_dir outputs/stage3c_audit \\
-      --stage3a_dir outputs/stage3_audit \\
-      --graphs_dir  outputs/graphs \\
-      --output_dir  outputs/stage3d_ablation
-"""
 
 from __future__ import annotations
 
@@ -98,11 +52,7 @@ _N_RANDOM_SEEDS = 5
 
 
 def _make_undirected(kg: dict) -> dict:
-    """Return a copy of kg with all directed edges duplicated as reverse-direction.
 
-    For each edge with directed=True, add the reverse edge (dst → src) with the
-    same weight and edge_type. Mark all edges as directed=False in the copy.
-    """
     new_kg = copy.deepcopy(kg)
     for etype, edges in list(new_kg["edges"].items()):
         seen_pairs: set = set()
@@ -130,12 +80,7 @@ def _make_undirected(kg: dict) -> dict:
 
 
 def _make_random_topology(kg: dict, rng: np.random.Generator) -> dict:
-    """Return a copy of kg with edge connectivity randomized per edge type.
 
-    Preserves: number of edges per edge type, weight distribution per edge type,
-              directed flag, and edge type membership.
-    Randomizes: source/destination node pairs (sampled uniformly without self-loops).
-    """
     new_kg = copy.deepcopy(kg)
     nodes = new_kg["nodes"]
     n_nodes = len(nodes)
@@ -193,7 +138,7 @@ def _kg_to_lesion_embeddings(
     build_encoder_inputs,
     device: str = "cpu",
 ) -> np.ndarray:
-    """Run forward pass and extract 4×64 lesion embeddings."""
+
     enc_inputs = build_encoder_inputs(kg, device=device)
     with torch.no_grad():
         embeddings = encoder.forward_node_embeddings(
@@ -211,7 +156,7 @@ def _kg_to_lesion_embeddings(
 
 
 def _l2_pairwise(embeddings: np.ndarray) -> List[Tuple[str, str, float]]:
-    """Pairwise L2 distances between lesion embeddings (for diagnostic print)."""
+
     pairs: List[Tuple[str, str, float]] = []
     for i in range(4):
         for j in range(i + 1, 4):

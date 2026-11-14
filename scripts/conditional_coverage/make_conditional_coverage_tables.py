@@ -1,13 +1,5 @@
 #!/usr/bin/env python
-"""Generate the two conditional-coverage tables of the main article from frozen JSON.
 
-No fitting, no recomputation: reads
-  _LGOVNET_NEW_SEP/results/step0_conditional_coverage.json
-  _LGOVNET_NEW_SEP/results/step1_conditional_coverage_cohorts.json
-and writes
-  _FINAL_Latex/tables/T16_conditional_coverage_indomain.tex
-  _FINAL_Latex/tables/T17_conditional_coverage_cohorts.tex
-"""
 from __future__ import annotations
 
 import hashlib
@@ -15,7 +7,7 @@ import json
 from pathlib import Path
 
 def _resolve(*candidates):
-    """Find the input in the research workspace layout or in the repository layout."""
+
     for base in Path(__file__).resolve().parents:
         for rel in candidates:
             p = base / rel

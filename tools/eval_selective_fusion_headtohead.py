@@ -1,18 +1,5 @@
 #!/usr/bin/env python
-"""eval_selective_fusion_headtohead.py — gate lawan rata-rata tiga pass pada sumbu baru.
 
-Tabel 8 menunjukkan rata-rata tiga pass (AUPRC 0.722) mengungguli gate penuh (0.699) pada
-OIA-DDR. Pertanyaan yang belum dijawab: apakah urutan itu bertahan pada metrik selective
-prediction dan pada akurasi titik operasi conformal, dua sumbu yang berbeda dari AUPRC.
-
-Skor fusi hanya tersedia untuk OIA-DDR (valid dan test), sehingga perbandingan ini in-domain.
-Protokol identik dengan tools/eval_fp_reduction_benchmark.py: gate dipasang pada validasi,
-lima benih, bootstrap berklaster-citra 2.000 resample benih 0.
-
-Keluaran: outputs/0506/selective_conformal/fusion_headtohead.json
-Jalankan dari root repo:
-  python tools/eval_selective_fusion_headtohead.py
-"""
 from __future__ import annotations
 
 import csv
@@ -48,7 +35,7 @@ def bbox_ids(path: Path) -> np.ndarray:
 
 
 def fused_for(split: str, ids: np.ndarray) -> np.ndarray:
-    """Skor fusi selaras urutan baris CSV bukti. Gagal keras bila ada yang tak cocok."""
+
     table = {}
     with FUSED.open(newline="", encoding="utf-8") as fh:
         for r in csv.DictReader(fh):
@@ -62,7 +49,7 @@ def fused_for(split: str, ids: np.ndarray) -> np.ndarray:
 
 def paired_aurc_delta(a: np.ndarray, b: np.ndarray, label: np.ndarray, buckets,
                       n_boot: int = N_BOOT, seed: int = BOOT_SEED):
-    """CI selisih AURC(a) - AURC(b) pada resample berpasangan yang sama."""
+
     rng = np.random.default_rng(seed)
     n_img = len(buckets)
     d = []

@@ -1,21 +1,5 @@
 #!/usr/bin/env python
-"""plot_fig2_governance.py — regenerate Figure 2 (governance) with the HONEST,
-traceable numbers, replacing the retired +0.536 figure.
 
-Reads the LOCKED B10 metrics:
-  outputs/point123_2026-05-30_..._final_clean/stage3d_ab/new/lgg_test_metrics.json
-and (optionally) the matched-TP FP-suppression gain + CI from
-  outputs/0506/headline_fp_benchmark.json
-then draws a threshold-free AUPRC comparison:
-  M0 (score threshold) | Score-MLP | KG-evid only | LGov-Net (KG-evid + score)
-annotating the KG contribution (LGov-Net - Score-MLP) and governance-over-M0.
-
-Usage (server / anywhere matplotlib is available):
-  python tools/plot_fig2_governance.py \
-    --metrics outputs/point123_2026-05-30_point123_external_pss_stage3d_final_clean/stage3d_ab/new/lgg_test_metrics.json \
-    --headline outputs/0506/headline_fp_benchmark.json \
-    --out journal/figures/fig2_governance.png
-"""
 from __future__ import annotations
 
 import argparse

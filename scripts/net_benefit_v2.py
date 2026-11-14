@@ -1,36 +1,4 @@
-"""net_benefit_v2.py — kurva manfaat bersih BAKU, memperbaiki cacat rancangan v1.
 
-MENGAPA VERSI INI ADA. net_benefit.py (v1) memilih ambang tiap sistem sebagai
-KUANTIL skor yang menyamai p_t, sehingga fraksi deteksi yang dipertahankan
-dipatok tepat p_t. Akibatnya TP/n <= p_t, sehingga manfaat bersih sebuah sistem
-TERKUNCI di bawah p_t berapa pun bagusnya sistem itu. Karena manfaat bersih
-retain-semua melebihi p_t pada p_t <= 0.20, kemenangan retain-semua di daerah
-itu DIPAKSA oleh aritmetika dan bukan temuan klinis. Terverifikasi: pada
-p_t=0.05 batas sistem 0.0500 sedangkan retain-semua 0.3495.
-
-Decision curve analysis baku (Vickers dan Elkin) memakai aturan
-    pertahankan bila p_hat >= p_t
-dengan p_hat PROBABILITAS TERKALIBRASI, justru supaya fraksi retensi bebas
-bergerak dan tidak terikat pada preferensi biaya. Itu yang dikerjakan di sini.
-
-Kalibrasi: penskalaan suhu (fit_temperature), sudah menjadi konvensi repo dan
-sudah menjadi baseline bernama di Bagian 4.5. Suhu dipasang pada OIA-DDR
-VALIDASI, tidak pernah pada test.
-
-KEBERATAN YANG DIUNGKAP, BUKAN DISEMBUNYIKAN: skor gate pada validasi bersifat
-in-sample, karena gate memang dipasang pada validasi (protokol naskah). Suhu
-untuk gate karena itu dipasang pada skor in-sample, sedangkan suhu untuk skor
-detektor tidak. Supaya kalibrasi tidak diam-diam mengerjakan pekerjaan berat,
-kurva dilaporkan DUA KALI: mentah dan terkalibrasi. Bila keduanya sepakat
-secara kualitatif, keberatan itu tidak menggigit.
-
-DESKRIPTIF: tidak ada gagal atau berhasil. Yang dilaporkan adalah rentang p_t
-tempat tiap sistem memberi manfaat bersih tertinggi, PLUS fraksi retensi pada
-tiap p_t, yang pada v1 secara patologis terpaku pada p_t.
-
-Keluaran: _septem/scripts_optionB/net_benefit_v2.json (dan cache skor .npz).
-Hanya membaca data.
-"""
 import csv
 import json
 import sys
@@ -77,7 +45,7 @@ def bbox_ids(p):
 
 
 def net_benefit(p_hat, y, pt):
-    """DCA BAKU: ambang adalah p_t itu sendiri pada probabilitas, bukan kuantil."""
+
     n = len(y)
     keep = p_hat >= pt
     tp = float((keep & (y == 1)).sum())

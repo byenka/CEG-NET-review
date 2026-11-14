@@ -1,12 +1,5 @@
 #!/usr/bin/env python
-"""make_ensemble_bound_table.py — render S17 dari JSON beku ensemble multi-detektor.
 
-Membaca hasil _LGOVNET_NEW_SEP/results/ensemble_external.json (atau salinan paket) dan menulis
-_FINAL_Latex/tables/S17_ensemble_bound.tex. Tidak menghitung ulang apa pun.
-
-Jalankan dari root repo:
-  python tools/make_ensemble_bound_table.py
-"""
 from __future__ import annotations
 
 import hashlib

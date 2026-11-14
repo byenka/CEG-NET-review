@@ -1,32 +1,5 @@
 #!/usr/bin/env python
-"""build_canonical_governance_table.py — G2: reconcile the governance numbers into
-ONE canonical, fully-labelled FP-reduction table so the three differently-measured
-governance figures in the journal stop looking contradictory.
 
-Background (the inconsistency this fixes):
-  - T7 (old)  reported +0.536  -> that is the Stage3D.4 TIER-ROUTING operating
-    point (M0 at TP>=0.80 thresh~0.999), a DIFFERENT metric.
-  - T8        reported M0 0.629 / KG 0.700 (+0.071) -> FP-reduction benchmark
-    under the FULL Mode-1 evidence (real PSS + external anatomy).
-  - 0506 E2   reported M0 0.492 / KG 0.538 (+0.046) -> FP-reduction benchmark on
-    a COMPARISON detector under LIGHT evidence (approximate APS, placeholder PSS).
-They are not contradictory; they are different (operating point / evidence /
-detector). This tool puts every FP-reduction-benchmark row in one table with
-EXPLICIT Detector + Evidence + operating-point columns, plus the bootstrap CI,
-and a caption note that the tier-routing figure lives in its own table.
-
-Input: repeatable --row "Setting|Detector|Evidence|/path/to/fp_benchmark.json".
-Each JSON is produced by tools/eval_fp_reduction_benchmark.py (ideally with
---bootstrap so the CI column is filled).
-
-Usage:
-  python tools/build_canonical_governance_table.py \
-    --row "Headline (Mode-1)|Faster R-CNN r5b|full (ext.APS+realPSS)|outputs/0506/headline_fp_benchmark.json" \
-    --row "Detector-agnostic|Faster R-CNN (25e)|light (approx APS, placeholder PSS)|outputs/0506/detcmp_e2/fasterrcnn_fp_benchmark.json" \
-    --row "Detector-agnostic|FCOS|light|outputs/0506/detcmp_e2/fcos_fp_benchmark.json" \
-    --out_md outputs/0506/tables/canonical_governance.md \
-    --out_tex outputs/0506/tables/T_canonical_governance.tex
-"""
 from __future__ import annotations
 
 import argparse

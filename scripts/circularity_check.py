@@ -1,13 +1,4 @@
-"""circularity_check.py — apakah gain gate bertahan pada target yang tidak didefinisikan lewat SDM?
 
-Target deployed (governance_retain) memakai SDM_norm untuk memisahkan clinically close (RETAIN)
-dari unsafe mismatch (SUPPRESS), sedangkan gate membaca SDCA yang juga berasal dari SDM.
-Pemeriksaan (hanya membaca, tidak mengubah naskah):
-  A. gate dipasang seperti naskah (target deployed, OIA-DDR valid), dievaluasi pada test TANPA
-     baris CLINICALLY_CLOSE_MISMATCH dan UNSAFE_MISMATCH (label murni IoU/skor);
-  B. gate dipasang ulang pada valid dengan target clean yang sama, dievaluasi pada test clean.
-Lima seed, average precision, rerata dan SD sampel; M0 pada subset yang sama.
-"""
 import json
 import statistics
 import sys

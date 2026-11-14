@@ -1,20 +1,10 @@
-"""make_s9_source_domain_sensitivity.py — tabel suplemen S9 dari source_domain_sensitivity.json.
 
-Isi: apakah hasil gating artefak karena gate SELALU dipasang di OIA-DDR validasi? Gate dipasang
-pada kohort SUMBER yang berbeda lalu diuji pada target yang tetap, OIA-DDR test. Baris OIA-DDR
-valid adalah KONTROL POSITIF: ia harus mereproduksi Tabel 2.
-
-KRITERIA PRA-REGISTRASI TERPENUHI. Confound yang wajib ikut dilaporkan: prevalensi sumber berbeda
-jauh, sehingga ini menguji pergeseran domain DAN pergeseran prior kelas sekaligus.
-
-Keluaran: _FINAL_Latex/tables/S9_source_domain_sensitivity.tex. Jalankan dari root repo.
-"""
 import json
 from decimal import ROUND_HALF_UP, Decimal
 from pathlib import Path
 
 def _resolve(*candidates):
-    """Find the input in the research workspace layout or in the repository layout."""
+
     for base in Path(__file__).resolve().parents:
         for rel in candidates:
             p = base / rel

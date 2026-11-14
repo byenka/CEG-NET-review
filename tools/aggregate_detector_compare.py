@@ -1,25 +1,5 @@
 #!/usr/bin/env python
-"""aggregate_detector_compare.py — collect the per-detector ``compare_results.json``
-files produced by E1 (tools/train_detector_compare.py and, optionally,
-tools/train_yolo_compare.py) and emit the FILLED model-level comparison:
 
-  * aggregate_summary.json   — machine-readable, all rows + provenance
-  * T10_model_level_results.tex — LaTeX table (real mAP@0.5 numbers, our split)
-  * model_level_comparison.md   — human-readable summary
-
-NO OVERWRITE BY CONSTRUCTION: every run writes into a brand-new timestamped dir
-``outputs/detcmp/_aggregate/run_<ts>/`` (see tools/_safe_output.fresh_timestamped_dir),
-so prior aggregations are never clobbered. The generated T10 .tex is written into
-that run dir; copy it into journal/tables/ yourself when satisfied (so the journal
-copy is never silently replaced).
-
-This does NOT touch Mode 1 and reads ONLY comparison result files.
-
-Usage (after E1 runs):
-    python tools/aggregate_detector_compare.py \
-        --results_root outputs/detcmp \
-        --extra_glob "outputs/detcmp_yolo/*/compare_results.json"
-"""
 from __future__ import annotations
 
 import argparse

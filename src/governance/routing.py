@@ -1,77 +1,4 @@
-"""
-routing.py
-Automatic ground-truth derivation and tier-target construction for the
-Learned Governance Gate (LGG) — LGov-Net Contribution 2.
 
-LEGACY MODULE, NOT USED FOR THE REPORTED RESULTS.
---------------------------------------------------
-The annotation-derived tier targets below trained the earlier four-way gate of
-src/governance/gate.py. In the paper, tiers are never learned and never read the
-annotations: they are the two-way rule over (retain decision, SDCA) of Algorithm 1,
-`assign` in tools/make_tier_routing.py. The RETAIN target that the reported gate is
-fitted to is written by tools/audit_stage3c_governance_targets.py. This module is kept
-because the earlier training scripts still import it.
-
-This module produces per-bbox *supervision targets* (pseudo-labels) that
-tell the LGG which tier (R1–R4) each candidate bounding box should be
-assigned to during training.  Targets are derived purely from detector
-evidence and GT annotations — never from gate output.  Gate output is only
-valid for inference and post-hoc analysis, not for constructing its own
-training signal.
-
-Tier semantics (from architecture-lgov-net-v2_rev.txt, Contribution 2):
-
-  R1 — Accept:    GT bbox matched (IoU ≥ iou_match), ≥ min_heads_r1 / 4
-                  detection heads predict the correct GT class, AND the
-                  ensemble majority class equals the GT class.
-                  High-confidence correct detections.
-
-  R2 — Soft-correct: GT matched, ensemble majority == GT class, but fewer
-                  than min_heads_r1 heads are correct.  The minority
-                  heads predict classes that are clinically similar
-                  (SDCA_norm ≤ clinical_sim_max) to the majority.
-                  Correctable by KG guidance downstream.
-
-  R3 — Escalate: GT matched, but disagreement is structured:
-                  δ1 < SDCA_norm ≤ δ2. This means the ambiguity spans a
-                  clinically meaningful separation in the KG embedding
-                  space — not trivially similar but not completely wrong.
-                  Deferred to radiologist / KG-guided refinement.
-
-  R4 — Reject:   NMS survivor with IoU < iou_match to every GT box.
-                  No evidence of a real lesion behind this detection.
-                  Suppressed / discarded in postprocessing.
-
-  Fallback for GT-matched boxes not satisfying R1 / R2, with SDCA outside
-  the δ1–δ2 range: assigned R3 (conservative escalation).
-
-Output contract per bbox:
-  {
-    "bbox_id":          str,
-    "target_tier":      "R1" | "R2" | "R3" | "R4",
-    "target_tier_index": int,           # 0=R1 … 3=R4
-    "matched_gt":       bool,
-    "iou_to_gt":        float | None,   # None when gt_boxes is empty
-    "num_heads_correct": int,
-    "majority_class":   str | None,
-    "minority_classes": list[str],
-    "sdca_norm":        float,
-    "aps":              float,
-    "pss":              float,          # PSS value (or FALLBACK_PSS=0.5)
-    "reason":           str,
-    "timestamp":        str,            # ISO-8601 UTC string — audit trail
-  }
-
-Public API:
-  is_clinically_similar(class_a, class_b, sdm_norm, threshold) -> bool
-  derive_gate_target(box, gt_boxes, sdm_norm, compat_scores, thresholds) -> dict
-  route_bbox_batch(boxes, gt_boxes, sdm_norm, compat_scores, thresholds) -> list
-
-Dependencies:
-  - src/governance/contracts.py   (LESION_CLASSES, ZONE_NAMES, FALLBACK_PSS)
-  - src/governance/evidence.py    (compute_sdca, compute_aps)
-  NO dependency on gate.py, encoder.py, or training loop.
-"""
 
 from __future__ import annotations
 
@@ -112,10 +39,7 @@ DEFAULT_ROUTING_THRESHOLDS: Dict[str, float] = {
 
 
 def _compute_iou(bbox_a: List[float], bbox_b: List[float]) -> float:
-    """Axis-aligned IoU between two [x1, y1, x2, y2] boxes.
 
-    Returns 0.0 when either box has zero area or there is no overlap.
-    """
     x1 = max(bbox_a[0], bbox_b[0])
     y1 = max(bbox_a[1], bbox_b[1])
     x2 = min(bbox_a[2], bbox_b[2])
@@ -139,11 +63,7 @@ def _compute_iou(bbox_a: List[float], bbox_b: List[float]) -> float:
 
 
 def _mean_bbox(box: dict) -> Optional[List[float]]:
-    """Return the element-wise mean of all head_predictions bboxes.
 
-    Returns None if head_predictions is absent or empty.
-    This is used as the representative predicted location for IoU matching.
-    """
     heads = box.get("head_predictions") or []
     bboxes = [
         h["bbox"]
@@ -161,20 +81,7 @@ def _find_best_gt_match(
     gt_boxes: List[dict],
     iou_threshold: float,
 ) -> Tuple[Optional[dict], float]:
-    """Find the GT box with highest IoU to pred_bbox.
 
-    Args:
-        pred_bbox:     [x1, y1, x2, y2] of the predicted box.  If None,
-                       no match is possible.
-        gt_boxes:      List of dicts with keys ``bbox`` ([x1,y1,x2,y2]) and
-                       ``class_label`` (str, one of LESION_CLASSES).
-        iou_threshold: Not used for the search itself; intended for caller
-                       to decide match/no-match.
-
-    Returns:
-        (best_gt_dict, best_iou).  best_gt_dict is None and best_iou is 0.0
-        when pred_bbox is None or gt_boxes is empty.
-    """
     if pred_bbox is None or not gt_boxes:
         return None, 0.0
 
@@ -194,7 +101,7 @@ def _find_best_gt_match(
 
 
 def _count_heads_correct(box: dict, gt_class: str) -> int:
-    """Count how many detection heads predict gt_class as their argmax."""
+
     heads = box.get("head_predictions") or []
     count = 0
     for h in heads:
@@ -207,10 +114,7 @@ def _count_heads_correct(box: dict, gt_class: str) -> int:
 
 
 def _get_minority_classes(box: dict, majority_class: str) -> List[str]:
-    """Return the argmax class for every head that does NOT predict majority_class.
 
-    Only unique classes are returned (set → sorted list for determinism).
-    """
     heads = box.get("head_predictions") or []
     minority: set = set()
     for h in heads:
@@ -236,28 +140,7 @@ def is_clinically_similar(
     sdm_norm: Dict[Tuple[str, str], Dict[str, float]],
     threshold: float,
 ) -> bool:
-    """Return True if class_a and class_b are clinically similar under SDM.
 
-    Clinical similarity is defined as SDCA_norm(class_a, class_b) ≤ threshold
-    in the KG embedding space.  Low SDCA_norm means the KG places the two
-    classes close together — a confusable pair (e.g. MA and HE: cost = 0.0).
-
-    If the pair is not found in sdm_norm (e.g. same class, or pre-training),
-    defaults to True when class_a == class_b and False otherwise.
-
-    Args:
-        class_a:   First lesion class name.
-        class_b:   Second lesion class name.
-        sdm_norm:  Output of normalize_sdca() in encoder.py.
-                   Keys are (ci, cj) with lower LESION_CLASSES index first.
-                   Values are {"raw": float, "norm": float}.
-        threshold: SDCA_norm ≤ threshold → clinically similar.
-                   Recommended default: clinical_sim_max from
-                   DEFAULT_ROUTING_THRESHOLDS (0.4).
-
-    Returns:
-        bool.
-    """
     if class_a == class_b:
         return True
 
@@ -285,44 +168,7 @@ def derive_gate_target(
     thresholds: Optional[Dict[str, float]] = None,
     pss: float = FALLBACK_PSS,
 ) -> dict:
-    """Derive the tier supervision target for one DetectorBox.
 
-    Assigns an R1–R4 target tier based on GT matching, multi-head agreement,
-    clinical similarity, and SDCA thresholds.  This target is used as the
-    pseudo-label for supervising the LGG.
-
-    IMPORTANT: The gate's own output (tier_probs, tier_hard) must NOT be
-    used to construct this target.  Doing so would cause circular supervision.
-
-    Rules (checked in priority order):
-      1. No GT match (IoU < iou_match to all GT boxes)  → R4
-      2. ≥ min_heads_r1 heads predict GT class AND majority == GT → R1
-      3. majority == GT class AND all minority classes are clinically
-         similar to majority (SDCA_norm ≤ clinical_sim_max)          → R2
-      4. δ1 < SDCA_norm ≤ δ2 (structured disagreement)              → R3
-      5. Fallback: GT matched but none of the above                  → R3
-
-    Args:
-        box:           DetectorBox dict conforming to contracts.DetectorBox.
-                       Must have bbox_id, head_predictions, ensemble_probs,
-                       assigned_zone.
-        gt_boxes:      List of GT annotation dicts for the same image.
-                       Each must have keys:
-                         ``bbox``        : [x1, y1, x2, y2]
-                         ``class_label`` : str (one of LESION_CLASSES)
-        sdm_norm:      Output of encoder.normalize_sdca().
-                       May be empty dict when called before any training.
-        compat_scores: Output of encoder.compute_compat().
-                       May be empty dict (falls back to 0.5 via compute_aps).
-        thresholds:    Optional dict overriding DEFAULT_ROUTING_THRESHOLDS
-                       keys.  Only specified keys are overridden.
-        pss:           PSS value for this bbox (float in [0,1]).  Pass the
-                       value from evidence.compute_pss() or build_evidence_for_bbox().
-                       Defaults to FALLBACK_PSS (0.5) when not provided.
-
-    Returns:
-        dict with output contract fields (see module docstring).
-    """
     thr: Dict[str, float] = {**DEFAULT_ROUTING_THRESHOLDS, **(thresholds or {})}
 
     ensemble_probs: dict = box["ensemble_probs"]
@@ -442,24 +288,7 @@ def route_bbox_batch(
     thresholds: Optional[Dict[str, float]] = None,
     pss_values: Optional[Dict[str, float]] = None,
 ) -> List[dict]:
-    """Derive tier targets for a batch of DetectorBoxes from one image.
 
-    Calls derive_gate_target for every box in boxes.  All boxes are assumed
-    to come from the same image, matched against the same gt_boxes.
-
-    Args:
-        boxes:         List of DetectorBox dicts (from one image).
-        gt_boxes:      List of GT annotation dicts for the same image.
-        sdm_norm:      Output of encoder.normalize_sdca().
-        compat_scores: Output of encoder.compute_compat().
-        thresholds:    Optional threshold overrides (see derive_gate_target).
-        pss_values:    Optional {bbox_id: pss_float} mapping.  When provided,
-                       each bbox's PSS is injected into its certificate.
-                       Missing entries fall back to FALLBACK_PSS.
-
-    Returns:
-        List of target dicts, one per input box, in the same order.
-    """
     pss_map: Dict[str, float] = pss_values or {}
     return [
         derive_gate_target(

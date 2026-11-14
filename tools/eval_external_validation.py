@@ -1,54 +1,5 @@
 #!/usr/bin/env python
-"""
-eval_external_validation.py
-External validation of the frozen LGG governance gate on IDRiD and TJDR.
 
-Protocol:
-  - LGG trained on oiaddr train governance_features
-  - Operating point selected on oiaddr valid (frozen, not tuned on external data)
-  - Applied to external dataset features (IDRiD or TJDR train/test)
-  - Metrics: TP retention rate, FP suppression gain vs B0 at frozen operating point
-
-Models evaluated:
-  B0          : score threshold (no model)
-  B2_MLP      : SAS + SDCA → MLP                          (primary KG-evidence variant)
-  B3_MLP      : SAS + SDCA + APS + PSS → MLP              (full evidence)
-  B_PCSR_MLP  : SAS + PCSR(4-dim SDM-row of pred_class) → MLP
-                (supporting variant — robust under detector-confidence
-                 collapse because PCSR is computed from predicted class
-                 alone, not from possibly-inverted ensemble_probs).
-                Reported side-by-side with B2_MLP; SDCA remains primary.
-
-This is the only cross-dataset evaluation tool in the LGov-Net pipeline.
-All thresholds are frozen from oiaddr valid before any external data is seen.
-
-Inputs:
-  --train_stage3c_dir   : oiaddr stage3c output dir (has governance_features_train.csv + _valid.csv)
-  --external_stage3c_dir: IDRiD or TJDR stage3c output dir
-  --external_splits     : which splits to evaluate (e.g. train test)
-  --external_name       : dataset name for output labeling (e.g. idrid, tjdr)
-  --output_dir          : where to write results
-
-Outputs:
-  outputs/external_validation/{external_name}/external_eval_results.csv
-  outputs/external_validation/{external_name}/external_eval_summary.json
-  outputs/external_validation/{external_name}/external_eval_report.md
-
-Usage:
-    python tools/eval_external_validation.py \\
-      --train_stage3c_dir outputs/stage3c_audit/oiaddr \\
-      --external_stage3c_dir outputs/stage3c_audit/idrid \\
-      --external_splits train test \\
-      --external_name idrid \\
-      --output_dir outputs/external_validation/idrid
-
-    python tools/eval_external_validation.py \\
-      --train_stage3c_dir outputs/stage3c_audit/oiaddr \\
-      --external_stage3c_dir outputs/stage3c_audit/tjdr \\
-      --external_splits train test \\
-      --external_name tjdr \\
-      --output_dir outputs/external_validation/tjdr
-"""
 
 from __future__ import annotations
 
@@ -92,7 +43,7 @@ _CLINICAL_SDM = np.array([
 
 
 def _pcsr_for_class(pred_class: str) -> np.ndarray:
-    """Return the 4-dim SDM row for a predicted class. Unknown class → zeros."""
+
     idx = _CLASS_IDX.get(pred_class, -1)
     if idx < 0:
         return np.zeros(4, dtype=np.float32)
@@ -103,10 +54,7 @@ def _pcsr_for_class(pred_class: str) -> np.ndarray:
 
 
 def _load_image_masks(mask_dir: Path, split: str, image_ids: List[str]) -> Dict[str, np.ndarray]:
-    """Load fundus masks for the given image_ids.
-    Returns: dict image_id → 2D bool mask (True = inside fundus).
-    Used by H_mask DHA component.
-    """
+
     try:
         from PIL import Image
     except ImportError:
@@ -143,9 +91,7 @@ def _load_image_masks(mask_dir: Path, split: str, image_ids: List[str]) -> Dict[
 
 
 def _load_bbox_coords(cache_dir: Path, split: str) -> Dict[str, Tuple[float, float, float, float]]:
-    """Index detector cache by bbox_id → (x1, y1, x2, y2).
-    Used by H_mask DHA component.
-    """
+
     out: Dict[str, Tuple[float, float, float, float]] = {}
     split_dir = cache_dir / split
     if not split_dir.exists():
@@ -173,7 +119,7 @@ def _mask_filter_indices(
     masks: Dict[str, np.ndarray],
     coords: Dict[str, Tuple[float, float, float, float]],
 ) -> np.ndarray:
-    """Return boolean mask: True keep, False drop. Drop = bbox center outside fundus."""
+
     keep = np.ones(len(image_ids), dtype=bool)
     n_dropped = 0
     n_no_coord = 0
@@ -203,9 +149,7 @@ def _mask_filter_indices(
 
 
 def _compute_score_cdf_per_class(scores: np.ndarray, pred_classes: List[str]) -> Dict[str, np.ndarray]:
-    """Build per-class sorted-score reference from a source split.
-    Used by H_score DHA component (frozen on oiaddr-valid; never refit on external).
-    """
+
     out: Dict[str, np.ndarray] = {}
     pc_arr = np.array(pred_classes)
     for c in _CLASS_ORDER:
@@ -222,10 +166,7 @@ def _apply_score_cdf(
     pred_classes: List[str],
     cdf_per_class: Dict[str, np.ndarray],
 ) -> np.ndarray:
-    """Transform raw scores to source-domain percentile rank, per predicted class.
-    Monotonic per-class transform. Boxes whose pred_class has no reference
-    samples in the CDF are left unchanged.
-    """
+
     out = scores.astype(np.float64).copy()
     for i, (s, c) in enumerate(zip(scores, pred_classes)):
         ref = cdf_per_class.get(c)
@@ -237,12 +178,7 @@ def _apply_score_cdf(
 
 
 def _load_real_sdca_overrides(real_sdca_dir: Path, dataset: str, split: str) -> Dict[str, float]:
-    """Stage 10A — load real_sdca overrides keyed by bbox_id from
-    {real_sdca_dir}/{dataset}_{split}_real_sdca.csv.
-    Returns: dict bbox_id -> real_sdca (float). bbox_ids with empty/missing
-    real_sdca (status='fallback') are NOT in the dict; caller keeps synthetic.
-    Added 2026-05-17.
-    """
+
     csv_path = real_sdca_dir / f"{dataset}_{split}_real_sdca.csv"
     out: Dict[str, float] = {}
     if not csv_path.exists():
@@ -277,11 +213,7 @@ def _apply_real_sdca_overrides(
     bbox_ids: List[str],
     overrides: Dict[str, float],
 ) -> Tuple[int, int]:
-    """Replace SDCA feature column (index 1) in B2 and B3 matrices for bbox_ids
-    present in overrides. PCSR matrix Xp does NOT contain SDCA → not modified.
-    Returns: (n_replaced, n_kept_synthetic).
-    Added 2026-05-17.
-    """
+
     n_replaced = 0; n_kept = 0
     for i, bid in enumerate(bbox_ids):
         if bid in overrides:
@@ -294,15 +226,7 @@ def _apply_real_sdca_overrides(
 
 
 def _fit_temperature_global(scores: np.ndarray, y: np.ndarray) -> float:
-    """Fit a single scalar temperature T on source-domain validation NLL.
-    Used by B_calibrated DHA baseline. T is fitted by minimizing binary cross-
-    entropy of sigmoid(score/T) against the binary retain label y on oiaddr-valid.
-    NOTE: T-scaling on a single score channel is rank-preserving, so B0 at matched
-    TP_ret is numerically identical to plain B0. Implemented for completeness and
-    to verify LGov-Net governance gains are not artifacts of standard global
-    calibration. Reference: Guo et al. 2017, On Calibration of Modern Neural
-    Networks.
-    """
+
     try:
         from scipy.optimize import minimize_scalar
     except ImportError:
@@ -327,18 +251,13 @@ def _fit_temperature_global(scores: np.ndarray, y: np.ndarray) -> float:
 
 
 def _apply_temperature(scores: np.ndarray, T: float) -> np.ndarray:
-    """Apply sigmoid(score / T). Bounded to (0, 1). Monotonic in score."""
+
     s = scores.astype(np.float64) / max(T, 1e-6)
     return (1.0 / (1.0 + np.exp(-s))).astype(np.float32)
 
 
 def _load_features(csv_path: Path) -> Tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray, List[str], List[str], List[str]]:
-    """Load governance_features_{split}.csv.
-    Returns: X_b2, X_b3, X_pcsr, y, scores, image_ids, bbox_ids, pred_classes.
-      X_b2   = [SAS, SDCA]                            (primary KG variant)
-      X_b3   = [SAS, SDCA, APS, PSS]                  (full evidence)
-      X_pcsr = [SAS, SDM[pred_class, 0..3]]           (supporting variant)
-    """
+
     rows = []
     with open(csv_path, encoding="utf-8") as f:
         reader = csv.DictReader(f)
@@ -397,7 +316,7 @@ def _compute_metrics(
     image_ids: List[str],
     tp_target: float,
 ) -> Dict:
-    """Compute TP retention and FP suppression at this binary prediction."""
+
     mask_gt_retain = y_true == 1
     mask_gt_suppress = y_true == 0
 
@@ -425,7 +344,7 @@ def _select_threshold(
     y: np.ndarray,
     tp_target: float,
 ) -> float:
-    """Find the highest threshold where TP_ret >= tp_target."""
+
     best_thresh = 0.001
     best_fp_supp = 0.0
     mask_pos = y == 1
@@ -451,7 +370,7 @@ def _bootstrap_fp_supp(
     n_bootstrap: int = 1000,
     seed: int = 42,
 ) -> Tuple[float, float]:
-    """Bootstrap CI for FP suppression at given threshold."""
+
     rng = np.random.default_rng(seed)
     unique_imgs = list(set(image_ids))
     img_arr = np.array(image_ids)
@@ -476,7 +395,7 @@ def _bootstrap_fp_supp(
 
 
 def _train_mlp(X_train: np.ndarray, y_train: np.ndarray, seed: int = 42):
-    """Train StandardScaler + MLPClassifier."""
+
     scaler = StandardScaler()
     X_s = scaler.fit_transform(X_train)
     clf = MLPClassifier(
@@ -495,10 +414,7 @@ def _compute_per_class_metrics(
     pred_classes: List[str],
     classes: List[str] = ("MA", "HE", "Hard_EX", "Soft_EX"),
 ) -> List[Dict]:
-    """Per-pred_class TP_ret and FP_supp at a given binary prediction.
-    Used by R1 (per-class FP_supp at LGG operating point).
-    Returns one dict per class with breakdown counts and rates.
-    """
+
     pc_arr = np.array(pred_classes)
     out: List[Dict] = []
     for c in classes:

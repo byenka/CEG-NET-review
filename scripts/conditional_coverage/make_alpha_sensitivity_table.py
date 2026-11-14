@@ -1,12 +1,5 @@
 #!/usr/bin/env python
-"""Generate the miscoverage-level sensitivity table of the supplementary from frozen JSON.
 
-No fitting, no recomputation: reads
-  _LGOVNET_NEW_SEP/results/step7_alpha_sensitivity.json
-and writes
-  _FINAL_Latex/tables/S24_alpha_sensitivity.tex
-The table is typeset at the end of Supplementary S14.
-"""
 from __future__ import annotations
 
 import hashlib
@@ -15,7 +8,7 @@ from pathlib import Path
 
 
 def _resolve(*candidates):
-    """Find the input in the research workspace layout or in the repository layout."""
+
     for base in Path(__file__).resolve().parents:
         for rel in candidates:
             p = base / rel

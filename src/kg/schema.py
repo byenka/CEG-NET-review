@@ -1,21 +1,4 @@
-"""
-schema.py
-Knowledge Graph schema for LGov-Net — static structural definition.
 
-Defines G = (V, E) with 9 nodes and 5 edge types.
-
-Fixed vs Trainable edge summary:
-  Edge type                    Fixed/Trainable  Directed
-  ---------------------------  ---------------  --------
-  morphological_confusability  FIXED            No
-  pathophysiological_mechanism TRAINABLE weight No topo.; DIRECTED
-  spatial_distribution         TRAINABLE        No (bipartite)
-  severity_transition          FIXED            No
-  co_occurrence_pattern        TRAINABLE        No
-
-Single source of truth for numeric priors: src/data/ontology.py.
-This file constructs the graph objects; it does not duplicate raw values.
-"""
 
 from dataclasses import dataclass, field
 
@@ -32,16 +15,7 @@ MIN_EDGE_WEIGHT_EPSILON: float = 0.05
 
 @dataclass
 class NodeSpec:
-    """A single node in the LGov-Net KG.
 
-    Attributes:
-        idx:        Global node index (0–8). Must match ontology.ALL_NODES.
-        name:       Canonical node name, e.g. 'MA', 'Foveal'.
-        node_type:  'lesion' for C=4 lesion nodes, 'zone' for ETDRS zones.
-        feat_dim:   Dimension of x_v = [one-hot(9) || clinical_attr(8)].
-                    9 for zone nodes (no clinical attrs beyond one-hot);
-                    17 for lesion nodes.
-    """
 
     idx: int
     name: str
@@ -51,30 +25,7 @@ class NodeSpec:
 
 @dataclass
 class EdgeSpec:
-    """A single edge (or undirected edge pair) in the LGov-Net KG.
 
-    For undirected edges, src < dst by convention. Symmetry (adding the
-    reverse direction) is the caller's responsibility during GNN message
-    passing — only ONE EdgeSpec is stored here.
-
-    For directed edges (pathophysiological_mechanism) src is the upstream
-    node (MA) and message flows src → dst only.
-
-    Attributes:
-        src:          Source node index.
-        dst:          Destination node index.
-        src_name:     Source node name (for readability / JSON output).
-        dst_name:     Destination node name.
-        edge_type:    One of the 5 LGov-Net edge type strings.
-        directed:     True only for pathophysiological_mechanism.
-        trainable:    False = weight frozen at init_weight throughout training.
-                      True  = weight is a learnable parameter, initialised to
-                              init_weight.
-        init_weight:  Starting weight value.
-                      Fixed edges: clinically derived (ICDR / kappa studies).
-                      Trainable edges: placeholder 1.0, or dataset-derived
-                      value set later via build_dataset_stats.py.
-    """
 
     src: int
     dst: int
@@ -96,19 +47,7 @@ class EdgeSpec:
 
 
 def build_default_nodes() -> list:
-    """Return ordered list of 9 NodeSpec objects.
 
-    Order and indices are identical to ontology.ALL_NODES:
-      0 MA | 1 HE | 2 Hard_EX | 3 Soft_EX |
-      4 Foveal | 5 Parafoveal | 6 Peripapillary |
-      7 Vascular_Arcades | 8 Peripheral
-
-    Zone nodes use feat_dim=9 (one-hot only; no clinical attr vector).
-    Lesion nodes use feat_dim=17 (one-hot(9) + clinical_attr(8)).
-
-    Returns:
-        List of NodeSpec, length 9.
-    """
     from lgovnet.src.data.ontology import LESION_NODES, ZONE_NODES
 
     nodes: list = []
@@ -128,15 +67,7 @@ def build_default_nodes() -> list:
 
 
 def build_default_edges() -> list:
-    """Return complete list of EdgeSpec objects across all 5 edge types.
 
-    Returns:
-        List of EdgeSpec. Undirected edges have ONE entry (src < dst).
-        Directed edges have ONE entry (src → dst).
-
-    Trainable edges with init_weight=1.0 are uniform placeholders until
-    tools/build_dataset_stats.py computes dataset-specific values.
-    """
     from lgovnet.src.data.ontology import (
         ALL_NODES,
         LESION_NODES,
@@ -260,15 +191,7 @@ def export_nodes_edges(
     nodes_path: "str | None" = None,
     edges_path: "str | None" = None,
 ) -> "tuple[list, list]":
-    """Build and optionally save nodes and edges to JSON files.
 
-    Args:
-        nodes_path: Output path for nodes.json. Skipped if None.
-        edges_path: Output path for edges.json. Skipped if None.
-
-    Returns:
-        (nodes, edges) — lists of dicts (JSON-serialisable).
-    """
     import dataclasses
     import json
     from pathlib import Path
@@ -295,15 +218,7 @@ def export_nodes_edges(
 
 
 def build_adjacency_dict() -> dict:
-    """Return {edge_type: [(src_idx, dst_idx, init_weight), ...]} for all 5 types.
 
-    Convenience wrapper over build_default_edges() for downstream use
-    (e.g. GNN message passing setup).
-
-    Returns:
-        Dict keyed by edge type string, values are sorted lists of
-        (src, dst, init_weight) tuples.
-    """
     adj: dict = {}
     for e in build_default_edges():
         adj.setdefault(e.edge_type, []).append((e.src, e.dst, e.init_weight))
@@ -311,44 +226,7 @@ def build_adjacency_dict() -> dict:
 
 
 def build_clinical_prior_sdm() -> dict:
-    """Build a grading-aware clinical-prior SDM from ICDR severity_transition weights.
 
-    Note on wording: the costs in SEVERITY_TRANSITION are an author-defined severity
-    ordering of the lesion pairs, informed by ICDR but not derived from it; the paper
-    reports them as such and no experiment establishes their clinical correctness. The
-    names ICDR_cost and severity_transition_icdr are kept for compatibility with the
-    stored artifacts.
-
-    Contribution 1 claim: 'grading-aware SDM' means semantic distance between
-    lesion classes is proportional to the ICDR grade cost of confusing them.
-    This function implements that claim deterministically — no encoder training
-    required, fully traceable to the ICDR 5-level scale.
-
-    Formula:
-        SDM_clinical(ci, cj) = ICDR_cost(ci, cj) / max(ICDR_costs)
-
-    Where ICDR_cost comes from SEVERITY_TRANSITION in ontology.py:
-        MA ↔ HE       = 0.0  (no grade change — most similar)
-        MA ↔ Hard_EX  = 1.0  (one grade change)
-        MA ↔ Soft_EX  = 2.0  (two grade change — most different)
-        HE ↔ Hard_EX  = 1.0
-        HE ↔ Soft_EX  = 2.0
-        Hard_EX↔Soft_EX = 1.5
-
-    Clinical ordering guaranteed by construction:
-        SDM(MA,HE)=0.00 < SDM(MA,Hard_EX)=0.50 < SDM(MA,Soft_EX)=1.00  ✓
-        SDM(HE,Hard_EX)=0.50 < SDM(HE,Soft_EX)=1.00                     ✓
-
-    Note on MA↔HE (SDM=0.0): this is a clinically correct zero-cost pair,
-    not a missing entry. Governance gate behavior: SDCA=0.0 for MA↔HE
-    ambiguous boxes signals 'clinically safe confusion' to the LGG —
-    correct behavior per architecture spec.
-
-    Returns:
-        {(ci, cj): {"raw": float, "norm": float, "source": str}}
-        Keys are ordered (lesion_i, lesion_j) with i < j by LESION_NODES index.
-        All "norm" values are in [0.0, 1.0].
-    """
     from lgovnet.src.data.ontology import SEVERITY_TRANSITION, LESION_NODES
 
     lesion_names = sorted(LESION_NODES.keys(), key=lambda n: LESION_NODES[n])

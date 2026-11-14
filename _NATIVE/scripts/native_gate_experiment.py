@@ -1,51 +1,4 @@
-"""native_gate_experiment.py — eksperimen PRA-REGISTRASI gate graph-attention KG-native.
 
-Pertanyaan: apakah gate yang membaca knowledge graph secara native (graph attention atas
-9 node KG, lalu attention yang dikondisikan pada tiap deteksi) mengungguli gate MLP penuh
-yang dipakai naskah, dan apakah keunggulan itu datang dari STRUKTUR graf?
-
-SELURUH HIPERPARAMETER, KRITERIA, DAN ATURAN TAFSIR DIPATOK DI SINI SEBELUM DIJALANKAN.
-Tidak ada penyetelan pada data test. Hasil dilaporkan apa pun keluarannya.
-
-Varian (semua dipasang pada OIA-DDR validasi, 5 seed, dievaluasi pada OIA-DDR test dan
-tiga kohort eksternal zero-shot):
-  G0   gate MLP penuh naskah (fit_mlp atas SAS, SDCA, APS, PSS, skor, sds, nsrc).
-       KONTROL POSITIF: rerata AP OIA-DDR test harus mereproduksi 0.69855 (toleransi 0.001).
-  G0+  MLP atas masukan per-deteksi YANG SAMA dengan G1 (7 skalar, distribusi 4 kelas,
-       one-hot top-1 dan top-2), TANPA graf. Memisahkan efek masukan dari efek graf.
-  G1   gate KG-native: HeteroGAT 2 lapis atas 38 edge KG (5 tipe + self-loop; bobot edge
-       masuk ke logit attention), lalu attention berkondisi-deteksi atas 9 node, lalu head.
-  G2   G1 identik, tetapi endpoint tujuan edge DIACAK di dalam tiap tipe edge (berbeda per
-       seed). Menguji apakah struktur graf berpengaruh.
-
-Hiperparameter terkunci (G0+, G1, G2): d=16, 2 head, 2 lapis GAT, head 16 tanh; G0+ memakai
-dua lapis tersembunyi 32 dan 16 agar kekalahannya tidak dapat dijelaskan oleh kapasitas.
-Adam lr 0.01, weight decay 1e-4, 400 epoch full-batch, BCE, tanpa early stopping.
-Skalar distandardisasi dengan rerata dan simpangan baku VALIDASI, sama seperti fit_mlp.
-
-KETERBATASAN DATA YANG DIKETAHUI SEBELUM DIJALANKAN:
-  - radial_zone KOSONG pada setiap deteksi di setiap kohort. Lima dari sembilan node (zona)
-    tidak dapat dikaitkan ke deteksi; mereka hanya berperan sebagai konteks message passing.
-  - distribusi kelas detektor SEKUNDER tidak tersimpan; hanya ev_sds (JSD skalar) dan
-    ev_sds_nsrc. Attention multi-source atas distribusi dua detektor tidak dapat dibangun.
-
-KRITERIA LOLOS (seluruhnya wajib):
-  C1  rerata(AP G1 - AP G0) >= +0.010 pada OIA-DDR test, DAN CI bootstrap > 0 pada >= 4/5 seed
-  C2  G1 > G2 dengan CI bootstrap > 0 pada >= 4/5 seed
-  C3  rerata AP G1 >= rerata AP G0 pada >= 2 dari 3 kohort eksternal
-ATURAN TAFSIR (dipatok di muka): bila LOLOS tetapi G1 tidak mengungguli G0+ dengan CI > 0
-pada >= 4/5 seed, keunggulan itu milik MASUKAN tambahan, bukan graf, dan TIDAK BOLEH
-diklaim sebagai kontribusi KG-native.
-
-Bootstrap: berklaster-citra, berpasangan, 2.000 resample, benih 0 (sama dengan naskah).
-
-Isolasi: skrip hanya MEMBACA CSV bukti, graf dan modul tools di lokasi aslinya. Seluruh
-keluaran ditulis di bawah _NATIVE/. Hash md5 kode dan graf yang dipakai dicatat di JSON.
-
-Jalankan dari root repositori:
-  python _NATIVE/scripts/native_gate_experiment.py           # eksperimen resmi
-  python _NATIVE/scripts/native_gate_experiment.py --quick   # uji asap, berkas terpisah
-"""
 import argparse
 import csv
 import hashlib
@@ -107,8 +60,7 @@ def md5(path):
 
 # ------------------------------------------------------------------------- data
 def read_probs(path, n_expected):
-    """Kolom probabilitas dibaca dalam urutan baris yang sama dengan load_csv.
-    load_csv(governance_retain) tidak membuang baris; jumlahnya tetap diasersi."""
+
     probs = np.empty((n_expected, 4), dtype=np.float64)
     n = 0
     with open(path, newline="", encoding="utf-8") as fh:
@@ -132,7 +84,7 @@ def load_cohort(path):
 
 
 def validate_graph(graph):
-    """Graph contract check: ordered nodes, expected edge types, and feature dims."""
+
     nodes = sorted(graph["nodes"], key=lambda n: n["idx"])
     names = [n["name"] for n in nodes]
     if tuple(names[:4]) != LESIONS:
@@ -223,8 +175,7 @@ class HeteroGATLayer(nn.Module):
 
 
 class NativeGate(nn.Module):
-    """G1/G2. Graf ikut per deteksi lewat (a) embedding lesi berbobot distribusi kelas,
-    (b) selisih embedding top-1 dan top-2, (c) attention berkondisi-deteksi atas 9 node."""
+
 
     def __init__(self, graph, n_scalars):
         super().__init__()
@@ -269,7 +220,7 @@ class NativeGate(nn.Module):
 
 
 class InputMLP(nn.Module):
-    """G0+. Informasi per deteksi identik dengan G1, tanpa graf."""
+
 
     def __init__(self, n_scalars, hidden):
         super().__init__()

@@ -1,29 +1,5 @@
 #!/usr/bin/env python
-"""smoke_eval_reclassifier.py
 
-Smoke test for the Phase-1.5 proxy C3 metric added on 2026-05-23.
-
-What this verifies (in order):
-  1. tools.train_stage5_mode2 imports cleanly (no syntax / missing dep).
-  2. SDGLReClassifier instantiates and runs a forward pass with the
-     shapes used in training (p_ens [C], e_pred [d]).
-  3. eval_reclassifier() runs end-to-end on:
-       - the REAL LGovNetEncoder built from outputs/stage3_audit/
-       - a small SYNTHETIC val_records list (no Stage 3C CSV needed).
-     Verifies the returned dict has all 5 expected keys and sane ranges:
-       reclass_acc ∈ [0,1], reclass_sdm_cost_misclass ≥ 0,
-       reclass_n_misclass ∈ [0, n_val], reclass_per_class_acc length = 4.
-  4. c3_proxy_metric_available logic — confirms that with a trained-once
-     reclassifier the smoke metric is reachable.
-
-What this DOES NOT verify (out of scope):
-  - That training improves the metric (that's the 4 ablations, not smoke).
-  - Stage 3C CSV parsing (uses synthetic records to keep smoke hermetic).
-  - Detector or LGG checkpoint loading.
-
-Output: writes a JSON report to outputs/smoke_reclassifier_eval/.
-Exit code 0 = pass, 1 = fail.
-"""
 
 from __future__ import annotations
 
@@ -46,11 +22,7 @@ if _root not in sys.path:
 def _make_synthetic_val_records(
     n: int = 32, n_classes: int = 4, seed: int = 0
 ) -> List[Dict]:
-    """Build val records with the same shape parse_governance_row produces.
 
-    Mix of correct-looking and confused samples so reclass_n_misclass > 0
-    (otherwise the SDM-cost-on-misclass code path isn't exercised).
-    """
     from lgovnet.src.losses.sdgl import LESION_CLASSES
 
     g = torch.Generator().manual_seed(seed)

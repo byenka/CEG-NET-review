@@ -1,35 +1,5 @@
 #!/usr/bin/env python
-"""export_compare_predictions.py — E2 step 1: export a COMPARISON detector's
-predictions to the DetectorBox JSON cache that the governance pipeline
-(Stage3C builder + benchmark) consumes — for the detector-agnostic test.
 
-Why a NEW exporter (not the Mode-1 tools/export_detector_predictions.py):
-  * the Mode-1 exporter only knows fasterrcnn/retinanet and is part of the
-    LOCKED Mode-1 bridge — we must NOT modify it.
-  * comparison checkpoints come from tools/train_detector_compare.py and may be
-    fcos / ssd300 / *_v2; this exporter rebuilds ANY of the 6 stock detectors via
-    src/models/detector_compare_factory.py using the checkpoint's saved config.
-
-Format fidelity: the DetectorBox records are produced by the SAME helper the
-Mode-1 exporter uses (``_predictions_to_detector_boxes`` imported from
-tools/export_detector_predictions.py) — identical JSON schema, identical zone
-assignment. So the downstream Stage3C builder treats every detector uniformly.
-
-Real class probabilities (richer SDCA / uncertainty signal):
-  fasterrcnn / fasterrcnn_v2 -> predict_with_class_probs (GeneralizedRCNN path)
-  retinanet / retinanet_v2   -> predict_retinanet_with_class_probs
-  fcos / ssd300              -> no real-prob fn -> synthetic (score-residual)
-Each box records its ``probs_source`` so the comparison is honest per detector.
-
-Does NOT touch Mode 1. NEVER overwrites a previous cache (guarded).
-
-Usage:
-  python tools/export_compare_predictions.py \
-    --checkpoint outputs/detcmp/retinanet/best.pt \
-    --splits valid test --use_class_probs \
-    --score_thresh 0.05 --detections_per_img 300 \
-    --output_dir outputs/detcmp/retinanet_cache
-"""
 from __future__ import annotations
 
 import argparse
@@ -62,7 +32,7 @@ _REALPROB_RETINA = {"retinanet", "retinanet_v2"}
 
 def _load_compare_model(checkpoint: str, device: torch.device,
                         score_thresh: float, detections_per_img: int):
-    """Rebuild a comparison detector from a train_detector_compare.py checkpoint."""
+
     ckpt = torch.load(checkpoint, map_location=device, weights_only=False)
     cfg = ckpt.get("config", {})
     mt = cfg.get("model_type")
@@ -89,7 +59,7 @@ def _load_compare_model(checkpoint: str, device: torch.device,
 
 
 def _realprob_fn(model_type: str, use_class_probs: bool):
-    """Return the real-class-prob inference fn for this detector, or None."""
+
     if not use_class_probs:
         return None
     try:

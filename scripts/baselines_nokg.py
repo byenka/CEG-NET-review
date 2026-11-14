@@ -1,27 +1,4 @@
-"""baselines_nokg.py — pembanding tanpa knowledge graph pada kotak kandidat yang sama.
 
-Pertanyaan reviewer yang ingin dijawab: apakah gain gate hanya berasal dari dua pass tambahan
-(flip test-time augmentation dan detektor kedua), bukan dari evidence knowledge graph?
-
-Semua skor dihitung pada boks kandidat detektor primer yang SAMA (cache beku), split test OIA-DDR,
-label governance_retain, AUPRC = average precision, bootstrap image-clustered 2.000 resampel
-(seed 0) seperti Tabel 2 dan 8.
-
-Pembanding:
-  m0              skor detektor primer
-  tta_mean0       rata-rata skor primer dan pass flip; kotak tanpa pasangan dianggap 0
-  tta_meanavail   rata-rata atas pass yang punya kotak cocok
-  ens2_mean0      rata-rata skor primer dan detektor kedua; tanpa pasangan dianggap 0
-  ens2_meanavail  rata-rata atas sumber yang tersedia
-  ens3_mean0      rata-rata primer + flip + detektor kedua; tanpa pasangan dianggap 0
-  nokg_gate       MLP protokol naskah pada [SAS, PSS, ev_sds, ev_sds_nsrc, skor] (tanpa SDCA dan APS)
-Pembanding internal: kg_gate dan full_gate dipasang ulang dengan protokol yang sama (dicek terhadap
-outputs/0506/indomain_5seed/indomain_results.json).
-
-Pencocokan kotak: IoU >= 0.15, kelas diabaikan, satu kotak sumber boleh dipakai beberapa kotak primer
-(sama dengan resep SAS/PSS pipeline).
-Keluaran: _septem/scripts_optionB/baselines_nokg.json dan tabel ringkas ke stdout. Hanya membaca.
-"""
 import csv
 import json
 import statistics
@@ -64,7 +41,7 @@ def iou(a, b):
 
 
 def cache_entries(root: Path, split: str, image_id: str):
-    """[(bbox_id, bbox, score)] dari satu berkas cache."""
+
     f = root / split / f"{image_id}.json"
     if not f.is_file():
         return []
@@ -81,7 +58,7 @@ def cache_boxes(root: Path, split: str, image_id: str):
 
 
 def fused_scores(csv_path: Path, split: str):
-    """Skor fusi per baris CSV (urutan baris dipertahankan)."""
+
     with open(csv_path, newline="", encoding="utf-8") as fh:
         rows = [(r["bbox_id"], r["image_id"], float(r["pred_score"])) for r in csv.DictReader(fh)]
     by_img = {}

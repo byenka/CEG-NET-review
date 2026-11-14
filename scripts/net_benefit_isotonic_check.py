@@ -1,26 +1,4 @@
-"""net_benefit_isotonic_check.py — uji KEADILAN untuk klaim manfaat bersih v2.
 
-KEBERATAN YANG DIUJI. Pada net_benefit_v2, gate mengalahkan fusi skor pada
-manfaat bersih, padahal fusi menang pada AUPRC. Sebabnya kalibrasi: gate
-dilatih dengan NLL sehingga keluarannya sudah probabilitas (T=1.00, ECE 0.0225),
-sedangkan fusi skor tidak pernah dilatih menjadi probabilitas (ECE 0.1864).
-Mengadu keduanya pada ambang probabilitas tetap berarti mengadu pengklasifikasi
-terlatih melawan skor mentah. Penskalaan suhu hanya satu parameter dan menyisakan
-ECE fusi 0.1114.
-
-UJI YANG BENAR: beri tiap pembanding kalibrator TERKUAT yang wajar, yaitu
-regresi isotonik yang dipasang pada OIA-DDR VALIDASI, lalu ulangi DCA.
-  Bila fusi terkalibrasi isotonik MENYUSUL gate, klaim v2 adalah artefak
-  kalibrasi lemah dan TIDAK BOLEH masuk naskah.
-  Bila fusi tetap tertinggal, klaim bertahan dalam bentuk konservatif.
-
-CATATAN KEJUJURAN: isotonik untuk GATE dipasang pada skor validasi yang bersifat
-in-sample (gate memang dipasang pada validasi), sehingga menguntungkan gate.
-Karena itu perbandingan yang dilaporkan sebagai kesimpulan adalah yang
-KONSERVATIF: fusi dengan kalibrasi terbaiknya melawan gate TANPA isotonik.
-
-Hanya membaca cache skor. Keluaran: net_benefit_isotonic_check.json.
-"""
 import json
 from pathlib import Path
 

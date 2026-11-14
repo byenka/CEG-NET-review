@@ -1,68 +1,5 @@
 #!/usr/bin/env python
-"""
-audit_stage3c_governance_targets.py
-Phase 19N — Stage 3C: Governance Target Audit
 
-Before training the Learned Governance Gate (LGG), this audit classifies
-every detector candidate box into one of six governance target categories using
-GT XML annotations, IoU matching, detector score, and clinical-prior SDM.
-
-Goal: verify that governance targets are well-distributed and clinically
-meaningful, ensuring LGG learns from an interpretable signal, not a
-collapsed or ambiguous label set.
-
-Six target categories:
-  TP_EXACT:                  IoU >= 0.5, predicted class == GT class
-  CLINICALLY_CLOSE_MISMATCH: IoU >= 0.5, class mismatch, SDM(pred,GT) < 0.3
-                              (only MA<->HE: zero ICDR grade cost)
-  UNSAFE_MISMATCH:           IoU >= 0.5, class mismatch, SDM(pred,GT) >= 0.3
-  LOCALIZATION_WEAK:         0.1 <= IoU < 0.5
-  BACKGROUND_FP:             IoU < 0.1, detector score >= 0.15
-  LOW_CONF_CANDIDATE:        IoU < 0.1, detector score < 0.15
-
-Governance semantics for Stage 3D LGG:
-  RETAIN:   TP_EXACT, CLINICALLY_CLOSE_MISMATCH, LOCALIZATION_WEAK
-  SUPPRESS: UNSAFE_MISMATCH, BACKGROUND_FP, LOW_CONF_CANDIDATE
-
-Gate criteria (Stage 3C):
-  1. All candidates assigned exactly one category (no unassigned)
-  2. No NaN in IoU or evidence signals
-  3. TP_EXACT and BACKGROUND_FP both exist (non-zero count)
-  4. No single category > 90% of all boxes (no distribution collapse)
-  5. avg semantic_confusion_cost(CLINICALLY_CLOSE) <
-     avg semantic_confusion_cost(UNSAFE) — if both categories exist
-  6. SDCA ordering by class: mean SDCA(MA) < mean SDCA(Hard_EX) < mean SDCA(Soft_EX)
-
-Implementation note (2026-05-24):
-    Mainline supports canonical multi-source SAS by attaching
-    head_predictions from primary+secondary detector caches via IoU match.
-    Use --secondary_cache_dir for non-proxy SAS features.
-
-Outputs:
-  outputs/stage3c_audit/governance_target_audit_{split}.json
-  outputs/stage3c_audit/governance_target_distribution.csv
-  outputs/stage3c_audit/stage3c_decision.md
-
-The per-split JSON is the canonical artifact. Aggregate CSV/Markdown summaries are
-regenerated from the latest JSON files in the output directory on every run, so
-rerunning a split replaces its old section instead of appending mixed PASS/FAIL
-history.
-
-Usage:
-    python tools/audit_stage3c_governance_targets.py \\
-            --annotations_dir data/oiaddr/xml/valid \
-            --cache_dir outputs/detector_cache/primary/oiaddr/valid \
-      --kg_dir outputs/stage3_audit \\
-      --split valid \\
-      --output_dir outputs/stage3c_audit
-
-    python tools/audit_stage3c_governance_targets.py \\
-            --annotations_dir data/oiaddr/xml/test \
-            --cache_dir outputs/detector_cache/primary/oiaddr/test \
-      --kg_dir outputs/stage3_audit \\
-      --split test \\
-      --output_dir outputs/stage3c_audit
-"""
 
 from __future__ import annotations
 
@@ -303,7 +240,7 @@ def _missing_radial_pairs(compat_scores: Dict[Tuple[str, str], float]) -> List[s
 
 
 def _load_gt_annotations(ann_dir: Path) -> Dict[str, List[dict]]:
-    """Load all Pascal VOC XML files → {stem: [{class, bbox}, ...]}."""
+
     gt: dict = {}
     xml_files = sorted(ann_dir.glob("*.xml"))
     if not xml_files:
@@ -443,12 +380,7 @@ def _attach_multisource_heads(
 
 
 def _sdm_pred_gt(pred_class: str, gt_class: str, sdm_norm: dict) -> Optional[float]:
-    """Look up the clinical SDM confusion cost between predicted and GT class.
 
-    This is NOT the same as SDCA (top-1 vs runner-up). It measures how
-    dangerous it is to predict pred_class when the GT is gt_class.
-    Returns None if either class is not in LESION_NODES.
-    """
     if pred_class not in _LESION_IDX or gt_class not in _LESION_IDX:
         return None
     if pred_class == gt_class:
@@ -472,14 +404,7 @@ def _assign_target(
     gt_boxes: List[dict],
     sdm_norm: dict,
 ) -> dict:
-    """Assign one governance target category to a single predicted box.
 
-    Uses non-exclusive IoU matching: each predicted box is matched to the
-    GT box with the highest IoU, regardless of other predictions.
-
-    Returns:
-        {category, best_iou, best_gt_class, semantic_confusion_cost, action}
-    """
     best_iou = 0.0
     best_gt_class = None
 
@@ -530,26 +455,7 @@ def _assign_target(
 
 
 def _sdca_proxy_for_box(box: dict, pred_class: str) -> dict:
-    """Compute SDCA proxy quality fields for one box.
 
-    The current single-head detector bridge constructs ensemble_probs as:
-      predicted_class = detection_score
-      other 3 classes = (1 - score) / 3  each (tied)
-
-    Consequences:
-    - If score > 0.25: majority_class == pred_class; runner_up is first
-      non-predicted class by dict iteration order (tie-breaking artifact).
-    - If score < 0.25: majority_class != pred_class (non-detected class wins
-      argmax because (1-s)/3 > s). SDCA then measures confusion between
-      two non-detected classes, not between detected class and nearest alternative.
-    - In both cases non-predicted probs are exactly tied (synthetic).
-
-    Returns dict with:
-      is_synthetic_prob:        True if all non-predicted probs are equal
-      majority_matches_pred:    True if argmax(ensemble_probs) == pred_class
-      runner_up_class:          Runner-up class used for SDCA computation
-      majority_cls_ev:          Actual majority class in evidence computation
-    """
     ep = box.get("ensemble_probs", {})
     result = {
         "is_synthetic_prob": False,
@@ -1055,10 +961,7 @@ _RETAIN_CATS_BINARY = frozenset(
 
 
 def _uncertainty_features(class_probs):
-    """Same-family selective-prediction features from a per-class probability
-    dict: max-softmax probability (MSP), margin (top1-top2), and entropy-
-    derived confidence (1 - normalized predictive entropy). All three are
-    confidence-aligned and in [0, 1]: higher = more confident."""
+
     if not class_probs:
         return None, None, None
     vals = []
@@ -1139,7 +1042,7 @@ _MODE2_TIER_BY_CATEGORY: Dict[str, str] = {
 
 
 def _normalise_class_probs(box: dict, pred_class: str) -> Dict[str, float]:
-    """Return canonical per-class probabilities for the Mode 2 CSV schema."""
+
     raw = box.get("detector_class_probs") or box.get("ensemble_probs") or {}
     probs = {cls: float(raw.get(cls, 0.0)) for cls in _LESION_CLASSES}
     total = sum(probs.values())
@@ -1157,7 +1060,7 @@ def _consensus_for_mode2(
     majority_class: str,
     tier_target: str,
 ) -> float:
-    """Estimate consensus for Stage 5 when multi-head votes are absent."""
+
     heads = box.get("head_predictions") or []
     head_preds = []
     for head in heads:
@@ -1186,13 +1089,7 @@ def _write_features_csv(
     split: str,
     provenance: dict,
 ) -> None:
-    """Save per-box features + binary label for Stage 3D LGG training.
 
-    label=1: RETAIN_OR_FLAG (TP_EXACT, CLINICALLY_CLOSE_MISMATCH, LOCALIZATION_WEAK)
-    label=0: SUPPRESS (BACKGROUND_FP, LOW_CONF_CANDIDATE, UNSAFE_MISMATCH)
-
-    The CSV also carries the extra Mode 2 fields consumed by train_stage5_mode2.
-    """
     with open(path, "w", newline="", encoding="utf-8") as f:
         writer = csv.DictWriter(f, fieldnames=_FEATURES_CSV_FIELDS)
         writer.writeheader()

@@ -1,17 +1,4 @@
-"""export_fused_scores.py — ekspor skor fusi tiga pass OIA-DDR ke CSV berkunci bbox_id.
 
-Tujuan: tools/make_tier_routing.py ikut dirilis sebagai kode, dan menanam pembaca cache detektor
-di sana akan membuatnya lambat serta bergantung pada ribuan berkas cache hanya untuk satu kolom
-tabel. Skrip ini menuliskan vektornya sekali, generator tabel tinggal membacanya dan mencocokkan
-lewat bbox_id sehingga keselarasan barisnya dapat diperiksa, bukan diasumsikan.
-
-Fusi = rata-rata skor detektor primer, pass flip, dan detektor kedua; kotak yang tidak punya
-pasangan pada suatu pass menyumbang 0. Pencocokan IoU >= 0.15, kelas diabaikan, satu kotak sumber
-boleh dipakai beberapa kotak primer. Definisi ini identik dengan baselines_nokg.py dan
-fusion_external.py, dan hasilnya diperiksa silang terhadap keduanya sebelum ditulis.
-
-Keluaran: _septem/scripts_optionB/fused_scores_oiaddr.csv (split, bbox_id, fused). Hanya membaca.
-"""
 import csv
 import json
 import sys

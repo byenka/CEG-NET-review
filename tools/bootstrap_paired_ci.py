@@ -1,30 +1,5 @@
 #!/usr/bin/env python
-"""bootstrap_paired_ci.py — REV-7D α-prime statistical attribution test.
 
-Compute paired bootstrap confidence intervals for KG-on vs no-KG matched
-ablation outcomes across multiple seeds. This is the architecture §C3 gate
-(vi) attribution test under the α-prime reframed primary metric family
-(ECE + AUROC + mAP_50 non-regression), per the locked alpha-prime protocol.
-
-Input:
-  - --kg_dir   path containing per-seed clinical_metrics.json files of KG-on
-                 (filename pattern: ``{kg_dir}/seed{seed}/audit_topk/clinical_metrics.json``)
-  - --nokg_dir same for matched no-KG ablation
-  - --seeds    list of seeds (e.g., 42 101 202)
-  - --metric   metric key (e.g., overall_ece, macro_auroc, ma_he_confusion_rate, ma_auroc, mAP_50)
-  - --direction "minimize" or "maximize" — lower is better (ECE, Brier) or higher is better (AUROC, mAP)
-
-Output:
-  - Paired delta per seed
-  - Bootstrap percentile CI [2.5%, 97.5%]
-  - Bootstrap mean
-  - Probability that KG_on improves over no-KG (sign-agreement rate)
-  - JSON summary
-
-Statistical reasoning: paired bootstrap on seed-level deltas. Resample seeds
-with replacement, compute mean delta per resample, build empirical
-distribution. CI exclusion of 0 → claim attribution.
-"""
 
 from __future__ import annotations
 
@@ -41,16 +16,7 @@ def _load_metric(
     run_dir: Path,
     metric: str,
 ) -> Dict[str, float]:
-    """Load metric value from a single run's clinical_metrics.json or pareto_summary.json.
 
-    Falls back across multiple JSON paths and metric locations to handle
-    different output conventions.
-
-    REV-7D: metric names ending with "_posttemp" are looked up in
-    ``posthoc_temp/calibrated_clinical_metrics.json``. The base name (strip
-    suffix) is used as the macro lookup key. Example: 'overall_ece_posttemp'
-    → look up 'overall_ece' in the posthoc-calibrated metrics.
-    """
     # Posthoc temperature scaling lookup.
     if metric.endswith("_posttemp"):
         base_metric = metric[: -len("_posttemp")]
@@ -114,11 +80,7 @@ def _bootstrap_ci(
     alpha: float = 0.05,
     rng_seed: int = 12345,
 ) -> Tuple[float, float, float, float]:
-    """Percentile bootstrap CI on the mean of deltas.
 
-    Returns (mean, lo, hi, p_positive) where p_positive is the fraction of
-    bootstrap resamples whose mean delta is positive (≥ 0).
-    """
     rng = np.random.default_rng(rng_seed)
     n = deltas.size
     if n == 0:

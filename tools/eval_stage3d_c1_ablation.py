@@ -1,62 +1,5 @@
 #!/usr/bin/env python
-"""
-eval_stage3d_c1_ablation.py
-Phase 19N — Stage 3D C1 Ablation: KG Design Contribution.
 
-Tests whether the ICDR grading-aware clinical SDM ordering is responsible
-for the SDM-row embedding gain observed in Stage 3D.3, or whether any
-structured SDM (uniform, random, reversed) would work equally well.
-
-This directly validates Contribution 1 (C1) of architecture v3:
-  "Directed clinical KG with grading-aware SDM"
-
-Key question:
-  Is B_sdmrow_clinical > B_sdmrow_uniform / random / reversed / shuffled?
-  → YES: ICDR clinical ordering contributes to governance routing.
-  → NO:  Any embedding structure is equivalent; clinical KG is not decisive.
-
-SDM variants tested (all use [SAS, SDM-row-embedding] as MLP input):
-  B0                : score threshold (no model, baseline)
-  B_class_only      : SAS + one-hot(pred_class)  [identity, non-KG reference]
-  B_sdmrow_clinical : SAS + clinical SDM-row     [KG C1 claim — ICDR-derived]
-  B_sdmrow_uniform  : SAS + uniform SDM-row      [all distances = 0.5]
-  B_sdmrow_reversed : SAS + reversed SDM-row     [1 - clinical, anti-ICDR]
-  B_sdmrow_shuffled : SAS + shuffled SDM-row     [clinical with permuted labels]
-  B_sdmrow_rand_s*  : SAS + random SDM-row       [5 seeds]
-
-Clinical SDM (from ICDR severity_transition, normalized by max_cost=2.0):
-  MA ↔ HE       = 0.00  (grade-0: same ICDR tier)
-  MA ↔ Hard_EX  = 0.50  (grade-1)
-  MA ↔ Soft_EX  = 1.00  (grade-2: different tier)
-  HE ↔ Hard_EX  = 0.50  (grade-1)
-  HE ↔ Soft_EX  = 1.00  (grade-2)
-  Hard_EX↔Soft_EX = 0.75
-
-Decision rule (strict):
-  B_sdmrow_clinical must win ≥ 75% of comparisons against all controls
-  (uniform, reversed, shuffled, random×5 = 8 controls × 3 TP targets = 24).
-  Additionally: clinical must beat reversed at ≥ 2/3 targets (ordering direction test).
-
-Operating point protocol: same as Stage 3D.1/3D.2/3D.3.
-  Threshold selected on valid at TP_ret >= 0.85 / 0.80 / 0.75.
-  All metrics reported on held-out test split.
-  Bootstrap FP_supp_gain CI (1000 resamples by image_id).
-
-Inputs:
-  outputs/stage3c_audit/governance_features_{train,valid,test}.csv
-  outputs/stage3_audit/sdm_norm_clinical_prior.json   (optional, has fallback)
-
-Outputs:
-  outputs/stage3d_ablation/c1_ablation_results.csv
-  outputs/stage3d_ablation/bootstrap_c1_fp_supp_gain_ci.csv
-  outputs/stage3d_ablation/c1_ablation_decision.md
-
-Usage:
-    python tools/eval_stage3d_c1_ablation.py \\
-      --stage3c_dir outputs/stage3c_audit \\
-      --stage3a_dir outputs/stage3_audit \\
-      --output_dir  outputs/stage3d_ablation
-"""
 
 from __future__ import annotations
 
@@ -106,7 +49,7 @@ _CLINICAL_SDM_FALLBACK = np.array([
 # ── SDM constructors ──────────────────────────────────────────────────────────
 
 def _load_clinical_sdm(sdm_path: Path) -> np.ndarray:
-    """Load clinical SDM from JSON (keys: 'ci__cj'). Falls back to hardcoded."""
+
     if sdm_path.exists():
         try:
             with open(sdm_path, encoding="utf-8") as f:
@@ -140,28 +83,28 @@ def _load_clinical_sdm(sdm_path: Path) -> np.ndarray:
 
 
 def _uniform_sdm() -> np.ndarray:
-    """All off-diagonal distances = 0.5 (no clinical ordering information)."""
+
     mat = np.full((_N, _N), 0.5, dtype=np.float32)
     np.fill_diagonal(mat, 0.0)
     return mat
 
 
 def _reversed_sdm(clinical: np.ndarray) -> np.ndarray:
-    """Anti-clinical: reverse the ICDR ordering (1 - clinical, diagonal=0)."""
+
     mat = 1.0 - clinical
     np.fill_diagonal(mat, 0.0)
     return mat.astype(np.float32)
 
 
 def _shuffled_sdm(clinical: np.ndarray, rng: np.random.Generator) -> np.ndarray:
-    """Clinical SDM with class labels permuted (one random shuffle)."""
+
     perm = rng.permutation(_N)
     mat = clinical[np.ix_(perm, perm)].copy()
     return mat.astype(np.float32)
 
 
 def _random_sdm(rng: np.random.Generator) -> np.ndarray:
-    """Random symmetric SDM in [0,1] with diagonal=0."""
+
     raw = rng.uniform(0.0, 1.0, (_N, _N)).astype(np.float32)
     mat = (raw + raw.T) / 2.0
     np.fill_diagonal(mat, 0.0)
@@ -169,7 +112,7 @@ def _random_sdm(rng: np.random.Generator) -> np.ndarray:
 
 
 def _sdm_row_embeddings(sdm: np.ndarray) -> np.ndarray:
-    """Return [N_classes, N_classes] embedding: row i = SDM distances from class i."""
+
     return sdm.astype(np.float32)   # already [4, 4]
 
 
@@ -224,10 +167,7 @@ def _build_X(
     sdm_emb: Optional[np.ndarray],
     oh: Optional[np.ndarray],
 ) -> np.ndarray:
-    """Build feature matrix.
-    sdm_emb: [4, 4] SDM rows — each box gets its pred_class row.
-    oh: [N, 4] one-hot.
-    """
+
     cols = [sas]
     if sdm_emb is not None:
         cols.append(sdm_emb[cls_idx])   # [N, 4]

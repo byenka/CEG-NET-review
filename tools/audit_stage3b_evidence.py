@@ -1,46 +1,5 @@
 #!/usr/bin/env python
-"""
-audit_stage3b_evidence.py
-Phase 19N — Stage 3B: Full Evidence Pipeline with Real KG Values
 
-Replaces Stage 2 stub SDM/compat with frozen KG artifacts from Stage 3A:
-  - sdm_norm_clinical_prior.json  (ICDR severity-transition, grading-aware)
-  - compat_scores.json            (high_affinity_prior, encoder-calibrated)
-
-Runs the complete evidence pipeline (SAS, SDCA, APS, PSS) on the full
-detector cache for valid and/or test splits. Reports distributions of all
-four signals to confirm the real KG is producing clinical evidence signal
-distinct from the stub placeholders.
-
-Gate criteria (Stage 3B):
-  1. Evidence records valid: all vectors ∈ [0,1], no errors
-  2. SDCA distribution: ≥ 2 distinct values (real KG signal, not all 0.5)
-  3. SDCA clinical ordering observed in data: boxes predicted as {MA, HE} pairs
-     should have lower mean SDCA than {MA, Soft_EX} pairs — checked if ≥1 box
-     each class exists
-  4. APS = 0.5 expected (ApproximateAnatomyProvider still low-confidence)
-  5. Artifacts saved: evidence_audit_{split}.json
-
-Implementation note (2026-05-24):
-    Mainline now supports canonical multi-source SAS by attaching
-    head_predictions from primary+secondary detector caches via IoU match.
-    Use --secondary_cache_dir for non-proxy SAS.
-
-Usage:
-    python tools/audit_stage3b_evidence.py \\
-      --kg_dir outputs/stage3_audit \\
-    --cache_dir outputs/detector_cache/primary/oiaddr/valid \
-      --split valid \\
-      --max_images 0 \\
-      --output_dir outputs/stage3b_audit
-
-    # For test split:
-    python tools/audit_stage3b_evidence.py \\
-      --kg_dir outputs/stage3_audit \\
-            --cache_dir outputs/detector_cache/primary/oiaddr/test \
-      --split test \\
-      --output_dir outputs/stage3b_audit
-"""
 
 from __future__ import annotations
 
@@ -314,7 +273,7 @@ def _attach_multisource_heads(
 
 
 def _load_sdm_norm_json(path: Path) -> Dict[Tuple[str, str], Dict]:
-    """Load sdm_norm_clinical_prior.json → {(ci, cj): {"raw": float, "norm": float}}."""
+
     with open(path, encoding="utf-8") as f:
         data = json.load(f)
     result: dict = {}
@@ -326,7 +285,7 @@ def _load_sdm_norm_json(path: Path) -> Dict[Tuple[str, str], Dict]:
 
 
 def _load_compat_scores_json(path: Path) -> Dict[Tuple[str, str], float]:
-    """Load compat_scores.json → {(lesion, zone): float}."""
+
     with open(path, encoding="utf-8") as f:
         data = json.load(f)
     result: dict = {}
@@ -531,11 +490,7 @@ def _audit_image(
 def _check_sdca_clinical_ordering(
     all_sdca_by_class: Dict[str, List[float]],
 ) -> Tuple[bool, List[str]]:
-    """Check that SDCA values respect ICDR clinical ordering across classes.
 
-    Expected: mean_SDCA(MA runner-up=HE) < mean_SDCA(MA runner-up=Soft_EX)
-    This is a soft informational check — requires boxes for both pairs to exist.
-    """
     notes: List[str] = []
 
     # These checks use the majority-class SDCA aggregated across all boxes.

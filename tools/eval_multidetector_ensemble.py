@@ -1,32 +1,5 @@
 #!/usr/bin/env python
-"""eval_multidetector_ensemble.py — baseline ensemble lima detektor dari cache.
 
-Tabel 8 membandingkan gate terhadap ensemble tiga pass, yaitu pass primer, pass flip, dan satu
-detektor sekunder. Reviewer yang menanyakan deep ensemble berhak menanyakan pembanding ensemble
-yang lebih kuat. Lima detektor lain sudah terlatih dan cache deteksinya lengkap untuk OIA-DDR
-valid dan test, sehingga pembanding itu dapat dihitung tanpa menjalankan ulang model apa pun.
-
-Ini BUKAN deep ensemble dalam arti Lakshminarayanan (arsitektur sama, inisialisasi berbeda);
-kelimanya arsitektur berbeda. Deep ensemble sejati menuntut pelatihan ulang beberapa kali dan
-tidak tersedia dari arsip. Yang ini adalah ensemble heterogen, dan pada tugas peringkat ia
-pembanding yang lebih kuat daripada rata-rata tiga pass.
-
-Skor ensemble didefinisikan pada kotak kandidat detektor PRIMER, mengikuti konvensi naskah:
-tiap anggota dicocokkan ke kotak primer pada IoU minimal 0.15, dan anggota yang tidak punya
-kotak yang cocok menyumbang skor nol.
-
-Varian yang dilaporkan:
-  E5      rata-rata lima detektor detcmp
-  E6      rata-rata primer ditambah lima detektor detcmp
-  E6+bukti gate penuh dengan skor E6 menggantikan masukan skor mentah
-
-Protokol identik tools/eval_fp_reduction_benchmark.py: target governance_retain, gate dipasang
-pada OIA-DDR validasi, lima benih, bootstrap berklaster-citra 2.000 resample benih 0.
-
-Keluaran: outputs/0506/selective_conformal/multidetector_ensemble.json
-Jalankan dari root repo:
-  python tools/eval_multidetector_ensemble.py
-"""
 from __future__ import annotations
 
 import csv
@@ -60,7 +33,7 @@ TASK = "governance_retain"
 
 
 def load_boxes(path: Path):
-    """{image_id: (bbox_ids, Nx4 array, scores)} dari satu direktori cache split."""
+
     out = {}
     for f in sorted(path.glob("*.json")):
         rows = json.loads(f.read_text(encoding="utf-8"))
@@ -93,7 +66,7 @@ def iou_matrix(a: np.ndarray, b: np.ndarray) -> np.ndarray:
 
 
 def member_scores(split: str, csv_ids: np.ndarray) -> dict:
-    """Skor tiap anggota pada kotak primer, selaras urutan csv_ids."""
+
     prim = load_boxes(PRIMARY / split)
     # peta bbox_id primer -> (image, indeks baris)
     loc = {}

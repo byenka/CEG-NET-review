@@ -1,87 +1,4 @@
-"""
-train_step.py
-LGov-Net Integration Step — Phase 14 (orchestration only).
 
-This module implements one minimal end-to-end training step that connects
-every LGov-Net component in the correct order.  It does NOT contain any
-training loop, Trainer class, callback system, registry, or dataloader
-boilerplate — it only orchestrates the existing modules.
-
-Closed-loop data flow
-─────────────────────
-detector outputs
-    │  class_probs + head_predictions  (per bbox, per image)
-    ▼
-KG encoder   (LGovNetEncoder)
-    │  node_embeddings [N=9, d=64]
-    │  SDM_learned (pairwise L2 distances)
-    │  Compat (lesion×zone anatomical scores)
-    ▼
-Evidence computation  (evidence.build_evidence_batch)
-    │  g(b_j) = [SAS, SDCA_norm, APS, PSS]  ∈ R^4 per bbox
-    ▼
-Gate input assembly   (gate.build_pred_embedding + gate.concat_gate_input)
-    │  gate_input = [SAS, SDCA_norm, APS, PSS, e_pred]  ∈ R^{4+d} per bbox
-    ▼
-Governance Gate       (LGG.gumbel_forward — training; LGG.forward — inference)
-    │  tier_logits [B, 4], tier_probs [B, 4]
-    ▼
-Routing               (routing.route_bbox_batch)
-    │  target_tier records — supervision targets for L_gate
-    ▼
-R3 Refinement         (refine.refine_r3_batch)
-    │  upgraded / downgraded / kept_as records
-    ▼
-SDGL Loss             (SDGLLoss)
-    │  L_SDGL = λ1·L_R1 + λ2·L_R2 + λ3·Σ_j w_j·L_R3
-    │  L_KG   = Σ_{fixed edges} (||e_ci − e_cj||² − w_target)²
-    ▼
-Gate Loss             (GateLoss)
-    │  L_gate = CE(tier_logits, target_tier_indices)
-    ▼
-Total Loss            (compute_total_loss)
-    └► L_total = L_SDGL + λ_gate·L_gate + λ_KG·L_KG
-                 + λ_eff·L_eff (hook, 0.0 until implemented)
-                 + λ_aux·L_aux (hook, 0.0 until implemented)
-
-Public API
-──────────
-  run_lgovnet_step(...)                → StepOutput dict
-  build_step_debug_info(...)           → dict
-  summarize_tier_stats(routing_batch)  → dict
-  summarize_fallback_usage(evidence_batch) → dict
-
-STUBS (non-blocking, clearly marked)
-──────────────────────────────────────
-  S1 — detector_stub(image_ids, cfg)  : real backbone not yet integrated.
-       Returns synthetic DetectorBox dicts with random class_probs.
-       Phase 15 replaces this with a real forward pass.
-  S2 — L_R1 / L_R3 are classification-only NLL (no smooth-L1 / GIoU).
-       SDGL stubs are already documented in sdgl.py.
-  S3 — PSS is always placeholder (FALLBACK_PSS = 0.5).
-       Real perturbation loop belongs in Phase 15.
-  S4 — KG graph artifacts are built fresh from scratch each step (no
-       caching).  Phase 15 should cache and only re-run when embeddings
-       are updated.
-
-Dependencies
-────────────
-  src/kg/encoder.py            (LGovNetEncoder, build_gat_encoder,
-                                build_encoder_inputs, compute_sdm,
-                                compute_compat, normalize_sdca)
-  src/kg/builder.py            (build_graph_from_artifacts)
-  src/governance/evidence.py   (build_evidence_batch)
-  src/governance/gate.py       (LGG, build_pred_embedding, concat_gate_input,
-                                get_gumbel_tau)
-  src/governance/routing.py    (route_bbox_batch, TIER_NAMES)
-  src/governance/refine.py     (refine_r3_batch)
-  src/governance/contracts.py  (make_placeholder_pss, LESION_CLASSES)
-  src/losses/sdgl.py           (SDGLLoss, compute_total_loss)
-  src/losses/gate_loss.py      (GateLoss)
-  src/utils/pipeline_metrics.py (compute_pipeline_metrics)
-
-  NO dependency on any external training framework.
-"""
 
 from __future__ import annotations
 
@@ -147,24 +64,7 @@ def detector_stub(
     bboxes_per_image: int = 4,
     seed: int = 0,
 ) -> Dict[str, List[dict]]:
-    """STUB — synthetic detector output for testing/integration.
 
-    Returns DetectorBox dicts grouped by image_id.  All class_probs are
-    drawn from a Dirichlet distribution so they sum to 1.  Head predictions
-    mimic 4 independent detection heads.
-
-    Replace this function with the real backbone forward pass in Phase 15.
-
-    Args:
-        image_ids:          List of image identifiers.
-        bboxes_per_image:   Number of synthetic bboxes to generate per image.
-        seed:               Random seed for reproducibility.
-
-    Returns:
-        {image_id: [DetectorBox, ...]}
-        Each DetectorBox has:
-          bbox_id, assigned_zone, ensemble_probs, head_predictions
-    """
     torch.manual_seed(seed)
     random.seed(seed)
 
@@ -220,21 +120,7 @@ def detector_stub(
 
 
 def summarize_tier_stats(routing_batch: List[dict]) -> dict:
-    """Count how many bboxes landed in each governance tier.
 
-    Args:
-        routing_batch: Output of ``route_bbox_batch()``, one dict per bbox.
-
-    Returns:
-        {
-            "num_r1": int,
-            "num_r2": int,
-            "num_r3": int,
-            "num_r4": int,
-            "tier_distribution": {0: int, 1: int, 2: int, 3: int},
-            "total_bboxes": int,
-        }
-    """
     counts = {t: 0 for t in TIER_NAMES}
     for rec in routing_batch:
         tier_name = rec.get("target_tier", "R4")
@@ -251,18 +137,7 @@ def summarize_tier_stats(routing_batch: List[dict]) -> dict:
 
 
 def summarize_fallback_usage(evidence_batch: List[dict]) -> dict:
-    """Count evidence quality issues (SAS fallbacks and missing zones).
 
-    Args:
-        evidence_batch: Output of ``build_evidence_batch()``.
-
-    Returns:
-        {
-            "fallback_sas_count": int,    — bboxes using degraded-proxy SAS
-            "missing_zone_count": int,    — bboxes with no assigned_zone
-            "total_evidence": int,
-        }
-    """
     fallback_sas = 0
     missing_zone = 0
     for ev in evidence_batch:
@@ -287,31 +162,7 @@ def build_step_debug_info(
     loss_dict: dict,
     pipeline_cfg: dict,
 ) -> dict:
-    """Assemble all debug diagnostics for one integration step.
 
-    Combines all required debug metrics (specified in the FASE 14 brief) plus
-    additional tensor-shape summaries useful for debugging.
-
-    Required debug metrics:
-      - fallback_sas_count
-      - tier_distribution
-      - r3_refined_to_r2_count
-      - r3_downgraded_to_r4_count
-      - num_r1 / num_r2 / num_r3 / num_r4
-      - mean_sdca
-      - mean_aps
-
-    Args:
-        evidence_batch:     Output of ``build_evidence_batch()``.
-        routing_batch:      Output of ``route_bbox_batch()``.
-        refinement_records: Output of ``refine_r3_batch()`` (may be empty).
-        gate_output:        Dict from ``LGG.gumbel_forward()`` or ``LGG.forward()``.
-        loss_dict:          Dict from ``compute_total_loss()`` wrapper.
-        pipeline_cfg:       Config dict passed to the step (for reference).
-
-    Returns:
-        Flat dict with all debug metrics.
-    """
     tier_stats = summarize_tier_stats(routing_batch)
     fallback_stats = summarize_fallback_usage(evidence_batch)
     pipeline_metrics = compute_pipeline_metrics(
@@ -377,70 +228,7 @@ def run_lgovnet_step(
     step: int = 0,
     cfg: Optional[dict] = None,
 ) -> dict:
-    """Execute one LGov-Net integration step (orchestrator only).
 
-    Connects detector outputs → KG encoder → evidence → gate → routing →
-    refinement → SDGL + gate + KG loss → total loss.
-
-    NOTE: this function does NOT call .backward() or optimizer.step().
-    Calling code (training loop) is responsible for those operations.
-
-    Args:
-        image_ids:
-            List of image identifier strings in the batch.
-        detector_outputs:
-            {image_id: [DetectorBox, ...]}
-            Each DetectorBox must have: bbox_id, assigned_zone,
-            ensemble_probs, head_predictions.
-            May be synthetic (detector_stub) while backbone is pending.
-        gt_boxes:
-            {image_id: [{"bbox": [x1,y1,x2,y2], "class_label": str}, ...]}
-            Ground-truth bounding boxes used by routing for tier derivation.
-            May be empty dicts ({}) for R4-only batches or stub runs.
-        kg_artifacts:
-            Output dict from ``builder.build_graph_from_artifacts()``.
-            Must contain: nodes, edges, node_features, stats.
-        encoder:
-            LGovNetEncoder module (training mode).
-            Rows 0–3 of its output correspond to LESION_NAMES.
-        gate:
-            LGG (Learned Governance Gate) module.
-            Must be instantiated with embedding_dim matching
-            encoder.embedding_dim (default: both 64).
-        sdgl_fn:
-            SDGLLoss module instance.
-        gate_loss_fn:
-            GateLoss module instance.
-        step:
-            Global training step index (0-indexed).
-            Used for Gumbel temperature annealing.
-        cfg:
-            Optional config dict overriding defaults.  Supported keys:
-              gumbel_tau_start   (default 1.0)
-              gumbel_tau_end     (default 0.1)
-              gumbel_tau_anneal_steps (default 10_000)
-              lambda_gate        (default 1.0)
-              lambda_kg          (default 0.1)
-              use_kg_embedding   (default True)
-              routing_thresholds (default None → routing defaults)
-              refine_thresholds  (default None → refine defaults)
-              gate_hard          (default False)
-
-    Returns:
-        StepOutput dict:
-        {
-          "loss_total":           Tensor — ready for .backward()
-          "loss_sdgl":            Tensor
-          "loss_gate":            Tensor
-          "loss_kg":              Tensor
-          "tier_stats":           dict   — num_r1/r2/r3/r4
-          "routing_records":      list[dict] — one per bbox
-          "refinement_records":   list[dict] — one per R3 bbox
-          "debug_info":           dict   — all required debug metrics
-          "gate_output":          dict   — tier_logits/tier_probs/tier_hard
-                                           (PATCH-15.5 P1: audit/eval path)
-        }
-    """
     # ── Unpack / apply config defaults ────────────────────────────────────────
     cfg = cfg or {}
     tau_start: float = float(cfg.get("gumbel_tau_start", 1.0))
@@ -753,18 +541,7 @@ def run_lgovnet_step(
 # ══════════════════════════════════════════════════════════════════════════════
 
 if __name__ == "__main__":
-    """Minimal smoke test — 1 synthetic batch, no real images or GT required.
 
-    Usage:
-        python src/train_step.py
-
-    Expected output:
-        [PHASE14 SMOKE] loss_total: <float>
-        [PHASE14 SMOKE] tier_distribution: {...}
-        [PHASE14 SMOKE] fallback_sas_count: <int>
-        [PHASE14 SMOKE] backward OK — gradients flow
-        [PHASE14 SMOKE] PASS
-    """
     import traceback
 
     print("=" * 60)

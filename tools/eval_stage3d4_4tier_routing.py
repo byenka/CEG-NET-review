@@ -1,51 +1,5 @@
 #!/usr/bin/env python
-"""
-eval_stage3d4_4tier_routing.py
-Phase 19N — Stage 3D.4: 2-tier vs 4-tier Routing Ablation.
 
-Tests whether 4-tier governance routing (R1/R2/R3/R4) provides better
-clinical governance quality than binary gate (RETAIN/SUPPRESS).
-
-Architecture v3 specifies 4-tier routing as the target governance contract.
-Current experiments use binary gate. This ablation validates the upgrade.
-
-Tier mapping from governance categories:
-  R1 (Certified)    : TP_EXACT             → highest confidence retain
-  R2 (Provisional)  : CLINICALLY_CLOSE_MISMATCH + LOCALIZATION_WEAK → retain with flag
-  R3 (Contested)    : UNSAFE_MISMATCH + LOW_CONF_CANDIDATE → needs clinical review
-  R4 (Rejected)     : BACKGROUND_FP         → safe to suppress
-
-Key governance metrics:
-  R1_precision  : P(true R1 | model says R1) — certified detection reliability
-  R4_purity     : P(true R4 | model suppresses) — safe-to-reject reliability
-  tier_breakdown: among retained, fraction at each tier
-  confusion_cost: weighted misrouting cost (R1→R4 is worst)
-
-Models compared:
-  M0_score    : score threshold (baseline, binary)
-    M_binary    : MLP binary gate on selected evidence features
-    M_4tier     : MLP 4-class on selected evidence features — predicts tier directly
-  M_cascade   : 3 cascaded binary classifiers (ordinal thresholding)
-
-Operating point protocol (consistent with Stage 3D.1/3D.2/3D.3):
-  Thresholds / hyperparams selected on valid at TP_ret >= 0.85 / 0.80 / 0.75.
-  All metrics reported on held-out test split.
-  4-tier collapsed to 2-tier for FP_supp/TP_ret comparison.
-  Additionally: R1_precision and R4_purity reported per operating point.
-
-Inputs:
-  outputs/stage3c_audit/governance_features_{train,valid,test}.csv
-
-Outputs:
-  outputs/stage3d_ablation/tier_routing_results.csv
-  outputs/stage3d_ablation/tier_breakdown.csv
-  outputs/stage3d_ablation/tier_routing_decision.md
-
-Usage:
-    python tools/eval_stage3d4_4tier_routing.py \\
-      --stage3c_dir outputs/stage3c_audit \\
-      --output_dir  outputs/stage3d_ablation
-"""
 
 from __future__ import annotations
 
@@ -167,7 +121,7 @@ def _detect_suspicious_path(path: Path) -> Optional[str]:
 
 
 def _source_output_root_key(source_output_dir: str, split: str) -> str:
-    """Normalize per-split Stage3C output dirs to one shared source root."""
+
 
     path = Path(source_output_dir)
     if path.name.lower() == split:
@@ -455,7 +409,7 @@ def _binary_retain_score(
     sc: object,
     is_4tier: bool = False,
 ) -> np.ndarray:
-    """Return P(retain) for binary model, or P(R1)+P(R2) for 4-tier model."""
+
     Xs = sc.transform(X)
     probs = m.predict_proba(Xs)
     if is_4tier:
@@ -551,7 +505,7 @@ def _weighted_confusion_cost(
     y_tier: np.ndarray,
     pred_tier: np.ndarray,
 ) -> float:
-    """Mean per-box confusion cost using clinical cost matrix."""
+
     costs = []
     for true_t, pred_t in zip(y_tier, pred_tier):
         costs.append(float(_CONFUSION_COST[int(pred_t), int(true_t)]))
@@ -564,7 +518,7 @@ def _4tier_argmax(
     m: object,
     sc: object,
 ) -> Tuple[np.ndarray, float]:
-    """Predict tier by argmax. Returns (predicted_tier, weighted_confusion_cost)."""
+
     Xs = sc.transform(X)
     pred = m.predict(Xs).astype(np.int32)
     cost = _weighted_confusion_cost(y_tier, pred)
@@ -641,7 +595,7 @@ def _bootstrap_r1_prec(
     n_boot: int = 1000,
     seed: int = 42,
 ) -> dict:
-    """Bootstrap CI for R1_precision (fraction of retained that are true R1)."""
+
     rng = np.random.default_rng(seed + 1)
     unique = list(dict.fromkeys(img_ids))
     n_u = len(unique)

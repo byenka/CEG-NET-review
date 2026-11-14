@@ -1,26 +1,4 @@
-"""
-statistics.py
-Compute dataset-derived statistics for initializing trainable KG edges.
 
-Three main computations:
-  1. Lesion counts per image — prevalence and annotation density.
-  2. Co-occurrence matrix — image-level lesion pair co-occurrence.
-     Used to initialize co_occurrence_pattern edge weights.
-  3. Lesion-zone affinity — how often each lesion class appears in each zone.
-     Used to initialize spatial_distribution edge weights.
-
-Design decisions:
-  - All statistics use CANONICAL KG lesion node names (MA, HE, Hard_EX, Soft_EX),
-    obtained by mapping raw XML labels through ontology.map_raw_to_kg().
-  - If a node is absent from the dataset (zero observations), its row/column
-    is retained in output dicts but marked as unobserved.  A RuntimeWarning is
-    emitted for every CONCEPTUAL_ONLY_NODE not observed.
-  - Empty XML directories return empty stats — no crash, informational print only.
-  - Zone assignment uses caller-supplied landmark_map when available, and
-    estimate_landmarks_approx() as fallback (emits UserWarning).
-  - Unobserved nodes in the zone-affinity CSV are written with empty cells,
-    not zeros, to avoid fabricating statistics.
-"""
 
 import csv
 import json
@@ -49,7 +27,7 @@ LESION_ORDER: list = list(LESION_NODES.keys())  # ["MA", "HE", "Hard_EX", "Soft_
 
 
 def _warn_conceptual_nodes(observed_nodes: set) -> None:
-    """Emit RuntimeWarning for any conceptual-only node absent from dataset."""
+
     for node in sorted(CONCEPTUAL_ONLY_NODES):
         if node not in observed_nodes:
             warnings.warn(
@@ -67,19 +45,7 @@ def _warn_conceptual_nodes(observed_nodes: set) -> None:
 
 
 def compute_lesion_counts_per_image(xml_dir: "str | Path") -> list:
-    """Compute per-image lesion bbox counts using canonical KG class names.
 
-    Args:
-        xml_dir: Directory of Pascal VOC XML annotation files.
-
-    Returns:
-        List of dicts, one per successfully parsed XML file.
-        Each dict: {"image_name": str, "MA": int, "HE": int,
-                    "Hard_EX": int, "Soft_EX": int,
-                    "total": int, "unmapped": int}
-        "unmapped" counts bboxes whose raw label could not be mapped to any
-        KG lesion node.  Returns [] if no XML files are found.
-    """
     xml_dir = Path(xml_dir)
     xml_files = sorted(xml_dir.glob("*.xml"))
 
@@ -116,27 +82,7 @@ def compute_cooccurrence_matrix(
     xml_dir: "str | Path",
     image_counts: Optional[list] = None,
 ) -> dict:
-    """Compute image-level co-occurrence counts between canonical lesion class pairs.
 
-    Co-occurrence is image-level: an image contributes 1 to cell (A, B) if it
-    contains at least one bbox of class A AND at least one bbox of class B.
-    Diagonal entries equal total images where that class appears (prevalence).
-
-    Args:
-        xml_dir:      Directory of Pascal VOC XML files.  Only used when
-                      image_counts is None.
-        image_counts: Pre-computed output of compute_lesion_counts_per_image().
-                      If provided, xml_dir is not re-scanned.
-
-    Returns:
-        {
-          "counts": {cls_a: {cls_b: int}},        # raw co-occurrence matrix
-          "n_images_total": int,
-          "n_images_with_any_annotation": int,
-          "observed_nodes": list[str],             # nodes with at least 1 image
-          "unobserved_nodes": list[str],
-        }
-    """
     if image_counts is None:
         image_counts = compute_lesion_counts_per_image(xml_dir)
 
@@ -169,29 +115,7 @@ def compute_lesion_zone_affinity(
     xml_dir: "str | Path",
     landmark_map: Optional[dict] = None,
 ) -> dict:
-    """Compute raw and normalized lesion-zone frequency matrix.
 
-    Each bbox centroid is assigned a zone via assign_bbox_to_zone(). For each
-    (lesion_class, zone) pair, the raw count is the number of bboxes in that
-    combination. Normalization divides each observed lesion row by the total
-    bbox count for that class.
-
-    Args:
-        xml_dir:      Directory of Pascal VOC XML files.
-        landmark_map: Optional dict {image_name: AnatomicalLandmarks}.
-                      If None, or if an image is missing from the map,
-                      estimate_landmarks_approx() is used as fallback (warns).
-
-    Returns:
-        {
-          "raw_counts":  {lesion_class: {zone_name: int}},
-          "normalized":  {lesion_class: {zone_name: float}},   # observed only
-          "observed_nodes": list[str],
-          "unobserved_nodes": list[str],
-          "total_bboxes_per_class": {lesion_class: int},
-        }
-        Unobserved lesion classes are absent from "normalized" — no fake zeros.
-    """
     xml_dir = Path(xml_dir)
     xml_files = sorted(xml_dir.glob("*.xml"))
 
@@ -262,15 +186,7 @@ def compute_dataset_summary(
     cooccurrence: Optional[dict] = None,
     affinity: Optional[dict] = None,
 ) -> dict:
-    """Aggregate summary statistics as a flat, JSON-serializable dict.
 
-    Any argument passed as None is computed from xml_dir automatically.
-
-    Returns:
-        Dict suitable for writing to kg_dataset_stats.json.  Includes
-        prevalence counts, prevalence rates, bbox counts per class,
-        the full co-occurrence matrix, and the normalized zone affinity.
-    """
     xml_dir = Path(xml_dir)
     if image_counts is None:
         image_counts = compute_lesion_counts_per_image(xml_dir)
@@ -312,7 +228,7 @@ def compute_dataset_summary(
 
 
 def save_image_counts_csv(image_counts: list, out_path: "str | Path") -> None:
-    """Write image_level_counts.csv — one row per image."""
+
     out_path = Path(out_path)
     out_path.parent.mkdir(parents=True, exist_ok=True)
     fieldnames = ["image_name"] + LESION_ORDER + ["total", "unmapped"]
@@ -324,7 +240,7 @@ def save_image_counts_csv(image_counts: list, out_path: "str | Path") -> None:
 
 
 def save_cooccurrence_csv(cooccurrence: dict, out_path: "str | Path") -> None:
-    """Write cooccurrence_matrix.csv — 4×4 symmetric matrix, lesion vs lesion."""
+
     out_path = Path(out_path)
     out_path.parent.mkdir(parents=True, exist_ok=True)
     matrix = cooccurrence["counts"]
@@ -337,11 +253,7 @@ def save_cooccurrence_csv(cooccurrence: dict, out_path: "str | Path") -> None:
 
 
 def save_zone_affinity_csv(affinity: dict, out_path: "str | Path") -> None:
-    """Write lesion_zone_affinity.csv — rows: lesion classes, cols: ETDRS zones.
 
-    Unobserved lesion nodes are written with empty cells (not zeros) to avoid
-    fabricating statistics for nodes with no data.
-    """
     out_path = Path(out_path)
     out_path.parent.mkdir(parents=True, exist_ok=True)
     normalized = affinity["normalized"]
@@ -361,7 +273,7 @@ def save_zone_affinity_csv(affinity: dict, out_path: "str | Path") -> None:
 
 
 def save_stats_json(summary: dict, out_path: "str | Path") -> None:
-    """Write kg_dataset_stats.json — full serialized summary."""
+
     out_path = Path(out_path)
     out_path.parent.mkdir(parents=True, exist_ok=True)
     with open(out_path, "w", encoding="utf-8") as f:
@@ -370,6 +282,6 @@ def save_stats_json(summary: dict, out_path: "str | Path") -> None:
 
 
 def load_stats(stats_path: "str | Path") -> dict:
-    """Load previously computed stats from kg_dataset_stats.json."""
+
     with open(stats_path, "r", encoding="utf-8") as f:
         return json.load(f)

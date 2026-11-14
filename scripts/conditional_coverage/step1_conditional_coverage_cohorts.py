@@ -1,20 +1,5 @@
 #!/usr/bin/env python
-"""step1_conditional_coverage_cohorts.py — conditional coverage on all four cohorts.
 
-Asks the Step 0 question of every cohort, using stratification variables that exist in the
-deployed evidence vector and therefore travel to the external cohorts, unlike the five
-`detcmp` detectors of Step 0 whose caches cover OIA-DDR only.
-
-Protocol locked before execution:
-  _LGOVNET_NEW_SEP/PROTOCOL_LOCK_step1_conditional_coverage_cohorts.md
-
-Reads the same CSVs, task and alpha as tools/eval_selective_conformal_baselines.py.
-Nothing is refitted except the gate, on OIA-DDR validation, over the five fixed seeds.
-
-Output: _LGOVNET_NEW_SEP/results/step1_conditional_coverage_cohorts.json
-Run from the repo root:
-  python _LGOVNET_NEW_SEP/scripts/step1_conditional_coverage_cohorts.py
-"""
 from __future__ import annotations
 
 import csv
@@ -42,13 +27,13 @@ PROCEED = 0.15         # C1 trigger, same value as Step 0
 
 
 def pss_status(path: Path) -> np.ndarray:
-    """ev_pss_status per row, in CSV order; load_csv keeps every row for this task."""
+
     rows = list(csv.DictReader(open(path, newline="", encoding="utf-8")))
     return np.array([(r.get("ev_pss_status") or "").strip().lower() for r in rows])
 
 
 def strata_of(d: dict, status: np.ndarray) -> dict:
-    """The three annotation-free taxonomies of the protocol lock."""
+
     measured = ~np.isin(status, ("", "placeholder", "unmatched", "missing", "none"))
     return {
         "A_corroboration": {

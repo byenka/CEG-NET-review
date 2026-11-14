@@ -1,47 +1,5 @@
 #!/usr/bin/env python
-"""export_yolo_predictions.py — E2 (Point 4): export an ULTRALYTICS detector
-(YOLOv8 / YOLO11 / RT-DETR) to the SAME DetectorBox JSON cache the governance
-pipeline consumes — so a modern 2026 detector can flow through the identical
-Stage3C builder + FP-reduction benchmark as the torchvision detectors.
 
-Why a separate exporter (not tools/export_compare_predictions.py):
-  * export_compare_predictions.py does torch.load(ckpt)["model_state_dict"] +
-    cfg["model_type"] in the torchvision factory SUPPORTED set, then
-    load_state_dict on a torchvision module. An ultralytics best.pt has a totally
-    different structure (an ultralytics model object), so it CANNOT pass through
-    that path. This adapter bridges the gap.
-
-Format fidelity: we reuse the EXACT DetectorBox formatter the Mode-1 / E2
-exporters use (``_predictions_to_detector_boxes``) and the SAME zone assignment
-(``estimate_landmarks_approx``), and we iterate ``DRDetectionDataset`` so the
-image set, order and stems are IDENTICAL to every other detector. Downstream
-Stage3C treats the YOLO cache exactly like any other detector.
-
-Class probabilities (honesty contract):
-  Ultralytics post-NMS exposes only the top-1 class + confidence per box (the
-  full per-class vector is not retained after NMS). We therefore write
-  ``class_probs=None`` -> the formatter falls back to the documented synthetic
-  score-residual distribution and stamps ``probs_source="synthetic_score_residual"``
-  per box — EXACTLY like the existing fcos / ssd300 rows. The real-class-prob
-  (SDCA) HEADLINE stays on the Mode-1 Faster R-CNN; this YOLO row demonstrates
-  DETECTOR-AGNOSTIC FP-suppression of the same governance gate, with SDCA from
-  the same honest proxy already used for fcos/ssd. (A future real-prob YOLO path
-  would need pre-NMS class-logit extraction — out of scope here, documented.)
-
-Operating point parity: --score_thresh 0.05 and --detections_per_img 300 mirror
-the torchvision export so the candidate pool per image is comparable. NMS IoU is
-the ultralytics default (0.7), recorded in export_summary.json.
-
-Does NOT touch Mode 1. NEVER overwrites a previous cache (guarded).
-
-Usage (server, after the YOLO best.pt exists):
-  python tools/export_yolo_predictions.py \
-    --checkpoint runs/detect/outputs/detcmp_yolo/yolo11s/yolo11s/weights/best.pt \
-    --splits valid test \
-    --score_thresh 0.05 --detections_per_img 300 --imgsz 800 \
-    --data_root data/oiaddr \
-    --output_dir outputs/0506/yolo_e2/yolo11s_cache --device 0
-"""
 from __future__ import annotations
 
 import argparse
@@ -72,7 +30,7 @@ _YOLO_TO_DETECTORBOX_LABEL = lambda c: int(c) + 1  # noqa: E731
 
 
 def _load_yolo(checkpoint: str):
-    """Load an ultralytics model (YOLO or RT-DETR). Clear error if missing."""
+
     try:
         from ultralytics import YOLO, RTDETR
     except Exception as exc:  # pragma: no cover - depends on server env

@@ -1,30 +1,4 @@
-"""
-real_dataset.py
-PyTorch Dataset for LGov-Net real-data single-head detector pilot — FASE 19A.
 
-Loads paired image/XML files from a data split directory, resizes images to
-a fixed size, scales bounding boxes accordingly, and maps raw XML labels to
-canonical KG class indices.
-
-For the pilot, only the FIRST VALID bounding box per image is returned as the
-detection target.  Images with no valid canonical box are excluded entirely.
-
-Class index mapping (LESION_CLASS_INDEX):
-    MA       -> 0
-    HE       -> 1
-    Hard_EX  -> 2
-    Soft_EX  -> 3
-
-Usage:
-    from src.data.real_dataset import RealLesionDataset, LESION_CLASSES, NUM_CLASSES
-
-    ds = RealLesionDataset(split="train", data_root="data", img_size=512, max_images=32)
-    image, bbox_norm, class_idx, stem = ds[0]
-    # image:     FloatTensor [3, 512, 512]  (ImageNet-normalised)
-    # bbox_norm: FloatTensor [4]            (x1, y1, x2, y2 in [0, 1])
-    # class_idx: LongTensor  scalar
-    # stem:      str          image file stem (no extension)
-"""
 
 from __future__ import annotations
 
@@ -74,27 +48,7 @@ NUM_CLASSES: int = len(LESION_CLASSES)
 
 
 class RealLesionDataset(Dataset):
-    """Paired image + XML annotation dataset for lesion detection.
 
-    Each item exposes:
-        image:     FloatTensor [3, img_size, img_size]  (ImageNet-normalised)
-        bbox_norm: FloatTensor [4]  (x1, y1, x2, y2 normalised to [0, 1])
-        class_idx: LongTensor  scalar
-        stem:      str  image file stem
-
-    Only images with at least one valid, canonically-mappable bounding box are
-    included.  The **first such box** per image is the pilot training target.
-
-    Args:
-        split:      'train', 'valid', or 'test'.
-        data_root:  Directory that contains ``images/`` and ``xml/`` sub-dirs.
-        img_size:   Square resize target in pixels (default 512).
-        max_images: Maximum number of images to load (None = no cap).
-
-    Raises:
-        ImportError:      if Pillow is not installed.
-        FileNotFoundError: if image or XML directory for the split is missing.
-    """
 
     _IMAGENET_MEAN: Tuple[float, float, float] = (0.485, 0.456, 0.406)
     _IMAGENET_STD: Tuple[float, float, float] = (0.229, 0.224, 0.225)
@@ -218,7 +172,7 @@ class RealLesionDataset(Dataset):
     def __getitem__(
         self, idx: int
     ) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor, str]:
-        """Return (image, bbox_norm, class_idx, stem)."""
+
         sample = self._samples[idx]
 
         # Load and transform image
@@ -249,7 +203,7 @@ class RealLesionDataset(Dataset):
 
 
 def _find_image_path(img_dir: str, stem: str) -> Optional[str]:
-    """Return the full path of the image file for *stem*, or None."""
+
     for ext in (".jpg", ".jpeg", ".png", ".JPG", ".JPEG", ".PNG"):
         p = os.path.join(img_dir, stem + ext)
         if os.path.isfile(p):

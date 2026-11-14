@@ -1,26 +1,5 @@
 #!/usr/bin/env python
-"""
-audit_detector_stage1a.py
-Phase 19N — Stage 1A: Detector Readiness Audit
 
-Audits FCOS, RetinaNet, or Faster R-CNN checkpoints against the Stage 1
-quality floor and writes a model-aware bottleneck summary.
-
-Outputs (all in --output_dir):
-  stage1a_readiness_audit.md   — human-readable bottleneck summary
-  bbox_stats_per_class.csv     — GT + pred box area distribution per class
-  convergence_analysis.csv     — per-epoch training/val metrics
-  stage1a_raw.json             — full raw numbers (for diffing later)
-
-Usage:
-    python tools/audit_detector_stage1a.py \
-        --checkpoint outputs/detector_stage1/stage1c_fasterrcnn_r5b_ext25/fasterrcnn_best.pt \
-        --model_type fasterrcnn \
-        --output_dir outputs/detector_eval/r5b_baseline \
-        --split valid \
-        --score_thresh 0.02 \
-        --detections_per_img 200
-"""
 
 from __future__ import annotations
 
@@ -500,7 +479,7 @@ def _convergence_analysis(rows: List[Dict]) -> Dict:
 def _load_fcos_model(
     ckpt: dict, score_thresh: float, device: torch.device
 ) -> torch.nn.Module:
-    """Load LGovFCOS from checkpoint dict."""
+
     LGovFCOS = _import_lgov_fcos()
     cfg = ckpt.get("config", {})
     use_p2 = ckpt.get("use_p2", cfg.get("use_p2", True))
@@ -526,7 +505,7 @@ def _load_fcos_model(
 
 
 def _load_retinanet_model(ckpt: dict, device: torch.device) -> torch.nn.Module:
-    """Load torchvision RetinaNet from checkpoint dict."""
+
     try:
         from torchvision.models.detection import retinanet_resnet50_fpn
         from torchvision.models.detection.retinanet import RetinaNetClassificationHead
@@ -557,7 +536,7 @@ def _load_retinanet_model(ckpt: dict, device: torch.device) -> torch.nn.Module:
 
 
 def _load_fasterrcnn_model(ckpt: dict, device: torch.device) -> torch.nn.Module:
-    """Load torchvision Faster R-CNN/FPN from checkpoint dict."""
+
     try:
         from torchvision.models.detection import fasterrcnn_resnet50_fpn
         from torchvision.models.detection.faster_rcnn import FastRCNNPredictor

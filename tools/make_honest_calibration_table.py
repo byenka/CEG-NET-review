@@ -1,14 +1,5 @@
 #!/usr/bin/env python
-"""make_honest_calibration_table.py — render T18 from the frozen step-2 JSON.
 
-The table was previously written by hand, which let it fall behind its source.
-It reads point estimates only: the two signed coverage gaps, the mean of the two
-absolute gaps, the two risk-coverage areas and their absolute difference. No
-confidence interval is printed, so the interval fields of the JSON are not used.
-
-Run from the repository root:
-    python tools/make_honest_calibration_table.py
-"""
 from __future__ import annotations
 
 import hashlib
@@ -18,7 +9,7 @@ from decimal import ROUND_HALF_UP, Decimal
 from pathlib import Path
 
 def _resolve(*candidates):
-    """Find the input in the research workspace layout or in the repository layout."""
+
     for base in Path(__file__).resolve().parents:
         for rel in candidates:
             p = base / rel

@@ -1,13 +1,4 @@
-"""Step 4 (exploratory): expected calibration error and Brier score of the gate outputs.
 
-Locked design: _LGOVNET_NEW_SEP/PROTOCOL_LOCK_step4_gate_calibration.md. Descriptive only.
-
-The three published variants of the detector score are recomputed first and compared with
-outputs/0506/selective_conformal/baselines.json, the frozen source of Supplementary S16. Any difference above 1e-9
-aborts the run, so the new numbers are only read once the published ones reproduce.
-
-Nothing here is written to the manuscript folders.
-"""
 import gc
 import json
 import sys

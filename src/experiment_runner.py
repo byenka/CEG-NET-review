@@ -1,53 +1,4 @@
-"""
-experiment_runner.py
-Minimal experiment orchestrator for LGov-Net — Phase 17 / 17R.
 
-Provides a structured multi-step experiment runner that wraps the existing
-ablation infrastructure (src/ablation.py) and integration step
-(src/train_step.py) without duplicating any of their logic.
-
-Design principles:
-  - Does NOT implement a Trainer class, callback system, or scheduler.
-  - Multi-step looping means: call run_single_ablation() N times with
-    different detector seeds (different random batches), then aggregate.
-  - Coverage is evaluated honestly: partial/non_informative runs are
-    NOT inflated to "informative".
-  - All heavy lifting is delegated to existing modules.
-
-Phase 17R additions (real-data support):
-  - detector_mode awareness (stub / single_head_real / multi_head_sequential /
-    cached_predictions) via src/detector_backend.py
-  - dry_run_full_dataset flag — report what would run without running it
-  - per_split processing (train | valid | test | all)
-  - max_images_per_split cap for safe incremental real-data runs
-  - detector_mode is reported in every ExperimentResult for audit traceability
-
-Public API:
-  load_experiment_config(yaml_path)  -> dict
-  evaluate_tier_coverage(tier_counts_sum, coverage_rules) -> dict
-  run_single_experiment(case, ...)   -> dict  (one ExperimentResult)
-  run_repeated_experiment(case, ...) -> List[dict]
-  summarize_experiment_results(results) -> dict
-  save_experiment_results(results, summary, out_dir, label) -> None
-  # Phase 17R additions:
-  run_realdata_dry_run(cfg, splits, max_images_per_split) -> dict
-  report_realdata_plan(plan) -> None
-
-Supported experiment modes (MODE constants):
-  MODE_BASELINE = "baseline_full"
-  MODE_SINGLE   = "single_ablation"
-  MODE_SUBSET   = "ablation_suite_subset"
-
-ExperimentResult schema (per run / repeat):
-  experiment_label, mode, ablation_name, num_steps, repeat_index,
-  status ("OK" | "PARTIAL_OK" | "SKIPPED" | "ERROR"),
-  loss_total_mean, loss_sdgl_mean, loss_gate_mean, loss_kg_mean,
-  tier_distribution_mean: {R1: float, R2: float, R3: float, R4: float},
-  tier_coverage: {R1: bool, R2: bool, R3: bool, R4: bool},
-  coverage_status: "informative" | "partial" | "non_informative",
-  fallback_sas_count_mean, mean_sdca, mean_aps,
-  num_steps_completed, caveats: List[str]
-"""
 
 from __future__ import annotations
 
@@ -102,18 +53,7 @@ _PLACEHOLDER_GT = {
 
 
 def load_experiment_config(yaml_path: str) -> dict:
-    """Load configs/experiment.yaml.
 
-    Args:
-        yaml_path: Path to experiment.yaml (absolute or relative).
-
-    Returns:
-        Parsed config dict.
-
-    Raises:
-        FileNotFoundError: if yaml_path does not exist.
-        ImportError:       if PyYAML is not installed.
-    """
     if not os.path.exists(yaml_path):
         raise FileNotFoundError(f"experiment.yaml not found: {yaml_path}")
     if not _YAML_OK:
@@ -131,34 +71,7 @@ def evaluate_tier_coverage(
     tier_counts_sum: Dict[str, int],
     coverage_rules: Optional[dict] = None,
 ) -> dict:
-    """Classify a run by tier coverage across all its steps.
 
-    Evaluation logic (priority order):
-    1. **informative** — all tiers listed in coverage_rules["informative"]["require_tiers"]
-       appear (default: R2 AND R3 must both be present).
-       Rationale: R2 exercises L_soft^R2 (C3/C1 tests); R3 exercises R3 weighting (C3)
-       and refinement (C2). A run without both cannot isolate these contributions.
-    2. **partial** — at least 2 distinct tiers seen; the R2+R3 pair is absent
-       (e.g. only R3+R4 — common with the synthetic smoke-test batch).
-    3. **non_informative** — only 1 distinct tier across all steps.
-       baseline_no_governance (all R1 forced) will always be non_informative.
-       This is honest: it cannot observe tier distribution effects.
-
-    Args:
-        tier_counts_sum: Accumulated bbox counts per tier across all steps.
-                         e.g. {"R1": 0, "R2": 0, "R3": 15, "R4": 45}
-        coverage_rules:  Section from experiment.yaml["coverage_rules"].
-                         If None, uses defaults (require R2+R3 for informative).
-
-    Returns:
-        {
-          "tier_coverage":  {"R1": bool, "R2": bool, "R3": bool, "R4": bool},
-          "coverage_status": "informative" | "partial" | "non_informative",
-          "num_tiers_seen": int,
-          "r2_present": bool,
-          "r3_present": bool,
-        }
-    """
     # Which tiers actually appeared
     tier_coverage = {t: int(tier_counts_sum.get(t, 0)) > 0 for t in _TIERS}
     num_tiers_seen = sum(1 for v in tier_coverage.values() if v)
@@ -211,42 +124,7 @@ def run_single_experiment(
     base_seed: int = 42,
     bboxes_per_image: int = 4,
 ) -> dict:
-    """Execute one (case, repeat) experiment — looping num_steps with seed variation.
 
-    Each step uses a fresh synthetic batch from detector_stub() with a
-    deterministic but varied seed:
-        seed_i = base_seed + step_i + repeat_index * 1000
-
-    Losses and tier distributions are averaged across all steps.
-
-    NOTE on model state: encoder/gate/sdgl_fn/gate_loss_fn are shared across
-    all step iterations of this experiment. For ablations that need a fresh
-    model (e.g. without_kg_embedding), run_single_ablation() handles this
-    internally by creating a fresh LGG instance per call. This means each step
-    in that ablation uses a *different* random init. This is expected behaviour
-    for a smoke-test / infrastructure test.
-
-    Args:
-        case:             One ablation case dict from load_ablation_cases().
-        experiment_label: Experiment identifier string.
-        mode:             One of MODE_BASELINE, MODE_SINGLE, MODE_SUBSET.
-        num_steps:        Number of step iterations.
-        repeat_index:     Repeat index (0-based) for seed offset.
-        image_ids:        Image IDs to pass to detector_stub.
-        gt_boxes:         Fixed GT boxes for routing.
-        kg_artifacts:     KG graph artifact dict (static for all steps).
-        encoder:          LGovNetEncoder (eval mode).
-        gate:             LGG gate (eval mode).
-        sdgl_fn:          SDGLLoss instance.
-        gate_loss_fn:     GateLoss instance.
-        base_cfg:         Base cfg dict merged with ablation cfg_overrides.
-        coverage_rules:   Section from experiment.yaml. If None, uses defaults.
-        base_seed:        Base random seed.
-        bboxes_per_image: Bboxes per image in synthetic batch.
-
-    Returns:
-        ExperimentResult dict.  See module docstring for field schema.
-    """
     abl_name: str = case.get("name", "unnamed")
     contribution: Optional[str] = case.get("contribution")
 
@@ -427,19 +305,7 @@ def run_repeated_experiment(
     bboxes_per_image: int = 4,
     verbose: bool = True,
 ) -> List[dict]:
-    """Run one experiment case num_repeats times.
 
-    Each repeat uses a different seed offset (repeat_index * 1000) so the
-    step-level seeds do not overlap between repeats.
-
-    Args:
-        (see run_single_experiment for shared args)
-        num_repeats: Number of independent repetitions.
-        verbose:     Print progress to stdout.
-
-    Returns:
-        List of ExperimentResult dicts, one per repeat.
-    """
     results: List[dict] = []
     abl_name = case.get("name", "unnamed")
 
@@ -480,26 +346,7 @@ def run_repeated_experiment(
 
 
 def summarize_experiment_results(results: List[dict]) -> dict:
-    """Compute aggregate summary over all ExperimentResult dicts.
 
-    Handles mixed modes and ablation names gracefully.
-
-    Returns:
-        {
-          "total_runs": int,
-          "num_steps_run": int,                 # total step calls across all runs
-          "ok_count": int,
-          "skipped_count": int,
-          "error_count": int,
-          "num_informative_runs": int,
-          "num_partial_runs": int,
-          "num_non_informative_runs": int,
-          "r2_presence_rate": float,             # fraction of runs with R2 > 0
-          "r3_presence_rate": float,
-          "loss_total_mean_overall": float,
-          "by_ablation": {name: {"mean_loss": float, "coverage": str, ...}},
-        }
-    """
     total = len(results)
     ok_results = [r for r in results if r.get("status") == "OK"]
     skipped = sum(1 for r in results if r.get("status") == "SKIPPED")
@@ -617,18 +464,7 @@ def save_experiment_results(
     out_dir: str,
     label: str,
 ) -> None:
-    """Persist experiment results to JSON + CSV files.
 
-    Output files:
-        <out_dir>/experiment_results.json   — full result list + summary + meta
-        <out_dir>/experiment_summary.csv    — flat CSV for tabular inspection
-
-    Args:
-        results:  List of ExperimentResult dicts.
-        summary:  Output of summarize_experiment_results().
-        out_dir:  Directory to write to (created if absent).
-        label:    Experiment label string embedded in filenames and JSON meta.
-    """
     os.makedirs(out_dir, exist_ok=True)
     ts = datetime.now(tz=timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
 
@@ -672,11 +508,7 @@ def save_experiment_results(
 
 
 def build_synthetic_kg_artifacts() -> dict:
-    """Return a minimal synthetic KG artifact dict with N=9 nodes.
 
-    Identical structure to the demo in run_ablation_suite.py and
-    train_step.__main__ smoke test.
-    """
     node_names = [
         "MA",
         "HE",
@@ -737,7 +569,7 @@ def _make_result(
     error: str = "",
     error_tb: str = "",
 ) -> dict:
-    """Build a minimal ExperimentResult for non-OK outcomes."""
+
     result = {
         "experiment_label": experiment_label,
         "mode": mode,
@@ -772,7 +604,7 @@ def _make_result(
 
 
 def _print_result_line(result: dict) -> None:
-    """Print a one-line summary of an ExperimentResult."""
+
     status = result.get("status", "?")
     name = result.get("ablation_name", "?")
     if status == "OK":
@@ -791,7 +623,7 @@ def _print_result_line(result: dict) -> None:
 
 
 def _json_default(obj):
-    """JSON serialiser fallback for non-standard types."""
+
     if hasattr(obj, "item"):
         return obj.item()
     return str(obj)
@@ -820,34 +652,7 @@ def run_scenario_experiment(
     base_cfg: Optional[dict] = None,
     coverage_rules: Optional[dict] = None,
 ) -> dict:
-    """Run one ScenarioBundle through the pipeline → ExperimentResult dict.
 
-    Unlike run_single_experiment (which loops over multiple detector_stub seeds),
-    this function runs a single deterministic pass:
-      1. Merges base_cfg with scenario.cfg_override (for routing_thresholds etc.)
-      2. Calls run_single_ablation with scenario's detector_outputs + gt_boxes
-      3. Evaluates tier coverage and builds an ExperimentResult
-
-    Args:
-        scenario:          ScenarioBundle from scenario_bank.py
-        baseline_case:     Ablation case dict to use (typically baseline_full).
-        experiment_label:  Label string.
-        mode:              One of MODE_TARGETED, MODE_MIXED.
-        kg_artifacts:      Synthetic KG artifacts dict.
-        encoder:           LGovNetEncoder (eval mode).
-        gate:              LGG gate (eval mode).
-        sdgl_fn:           SDGLLoss instance.
-        gate_loss_fn:      GateLoss instance.
-        base_cfg:          Base cfg from experiment.yaml.
-        coverage_rules:    Coverage evaluation rules.
-
-    Returns:
-        ExperimentResult dict with the same schema as run_single_experiment.
-        Additional keys:
-          - scenario_expected_tiers: List[str]
-          - scenario_notes: List[str]
-          - tier_match: bool  (True if all expected_tiers appeared in distribution)
-    """
     scn_name: str = getattr(scenario, "scenario_name", "unnamed_scenario")
     expected_tiers: List[str] = getattr(scenario, "expected_tiers", [])
 
@@ -972,16 +777,7 @@ def run_scenario_suite(
     coverage_rules: Optional[dict] = None,
     verbose: bool = True,
 ) -> List[dict]:
-    """Run a list of ScenarioBundles through run_scenario_experiment.
 
-    Args:
-        scenarios:  Ordered list of ScenarioBundle objects.
-        (remaining args: same as run_scenario_experiment)
-        verbose:    Print per-scenario progress and tier distribution.
-
-    Returns:
-        List of ExperimentResult dicts, one per scenario.
-    """
     results: List[dict] = []
     for scn in scenarios:
         scn_name = getattr(scn, "scenario_name", "unnamed")
@@ -1013,7 +809,7 @@ def run_scenario_suite(
 
 
 def _print_scenario_result_line(result: dict) -> None:
-    """Print a detailed one-line summary for a scenario result."""
+
     status = result.get("status", "?")
     if status != "OK":
         print(
@@ -1054,32 +850,7 @@ def run_realdata_dry_run(
     splits: Optional[List[str]] = None,
     max_images_per_split: Optional[int] = None,
 ) -> dict:
-    """Compute what a real-data run would process, without running any model.
 
-    Scans the data directories, counts paired image/XML files per split,
-    applies the max_images_per_split cap, and reports the execution plan.
-    No model, encoder, or detector is instantiated.
-
-    Args:
-        cfg:                   Experiment config dict.  Used to resolve
-                               ``max_images_per_split`` and ``detector_mode``
-                               when not overridden by direct arguments.
-        splits:                List of split names to include.
-                               If None, uses ["train", "valid", "test"].
-        max_images_per_split:  Cap on number of images per split.
-                               Overrides cfg["max_images_per_split"] if given.
-
-    Returns:
-        {
-          "detector_mode":        str,
-          "splits_planned":       {split: {"total_paired": int,
-                                           "will_process": int,
-                                           "capped": bool}},
-          "total_images_planned": int,
-          "dry_run":              True,
-          "warnings":             List[str],
-        }
-    """
     from lgovnet.src.detector_backend import get_detector_mode, describe_detector_mode
 
     cfg = cfg or {}
@@ -1172,12 +943,7 @@ def run_realdata_dry_run(
 
 
 def report_realdata_plan(plan: dict, verbose: bool = True) -> None:
-    """Print a human-readable summary of a dry-run plan.
 
-    Args:
-        plan:    Output dict from run_realdata_dry_run().
-        verbose: If False, only prints one-line summary.
-    """
     mode = plan.get("detector_mode", "?")
     implemented = plan.get("detector_implemented", False)
     impl_tag = "IMPLEMENTED" if implemented else "NOT IMPLEMENTED"

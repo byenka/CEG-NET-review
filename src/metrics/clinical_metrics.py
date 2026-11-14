@@ -1,24 +1,4 @@
-"""clinical_metrics.py — clinical decision metrics for MedIA defensibility.
 
-Beyond detection mAP, MedIA reviewers expect clinically-relevant metrics that
-characterize the practical decision support quality of a lesion detector.
-This module computes, per lesion class and aggregated:
-
-- Sensitivity @ fixed specificity (default 0.95) — operating point clinical use
-- AUROC (per-class, from box-level scores) — discrimination quality
-- AUPRC (per-class) — useful for highly imbalanced classes (MA, Soft_EX)
-- Brier score — probabilistic calibration of box-level scores
-- Expected Calibration Error (ECE, 10 bins) — calibration of confidence
-- Recall @ FP_per_image budget (e.g. 1, 3, 5 FP/img) — clinical FP budget
-
-Inputs are computed from a list of per-image (boxes, labels, scores) and
-matching list of (gt_boxes, gt_labels). A detection is "correct" if it has
-IoU >= match_iou with any unmatched GT of the same class.
-
-The module is dependency-light: numpy only (no sklearn) so it can be embedded
-in eval scripts without changing the environment contract. Tensors are
-converted to numpy before computation.
-"""
 
 from __future__ import annotations
 
@@ -37,7 +17,7 @@ FRCNN_LABEL_TO_CLASS: Dict[int, str] = {
 
 
 def _box_iou(a: np.ndarray, b: np.ndarray) -> np.ndarray:
-    """IoU matrix between [Na,4] and [Nb,4] xyxy boxes."""
+
     if a.size == 0 or b.size == 0:
         return np.zeros((a.shape[0], b.shape[0]), dtype=np.float32)
     a_x1 = a[:, None, 0]
@@ -72,7 +52,7 @@ def _per_class_tp_fp(
     cls_label: int,
     match_iou: float = 0.5,
 ) -> Tuple[np.ndarray, np.ndarray, int, int]:
-    """Return (scores_sorted_desc, tp_flags_sorted_desc, n_gt_total, n_images)."""
+
     scores_list: List[float] = []
     tp_list: List[int] = []
     n_gt_total = 0
@@ -183,12 +163,7 @@ def sensitivity_at_specificity(
     specificity: float = 0.95,
     match_iou: float = 0.5,
 ) -> Dict[str, float]:
-    """Sensitivity (recall) at the operating point with given specificity.
 
-    Specificity = 1 - FPR, computed against the per-detection FP labelling.
-    Approximates the clinical operating point where the system rejects 95%
-    of false positives.
-    """
     scores, tp, n_gt, _ = _per_class_tp_fp(detections, targets, cls_label, match_iou)
     if scores.size == 0 or n_gt == 0:
         return {"sensitivity": 0.0, "threshold": 1.0, "n_gt": n_gt}
@@ -220,10 +195,7 @@ def recall_at_fp_per_image(
     fp_per_image_budget: float = 1.0,
     match_iou: float = 0.5,
 ) -> Dict[str, float]:
-    """Recall achieved at a clinical FP-per-image budget.
 
-    Common operating points in DR screening: 1, 3, 5 FP/img.
-    """
     scores, tp, n_gt, n_images = _per_class_tp_fp(
         detections, targets, cls_label, match_iou
     )
@@ -253,11 +225,7 @@ def calibration_metrics(
     match_iou: float = 0.5,
     n_bins: int = 10,
 ) -> Dict[str, float]:
-    """Brier score + Expected Calibration Error (ECE) of detection confidences.
 
-    If ``cls_label`` is None, aggregates over all classes (overall calibration
-    of the detector). Per-detection ground truth is the TP/FP labelling.
-    """
     all_scores: List[float] = []
     all_tp: List[int] = []
     for cl in (LESION_CLASSES if cls_label is None else [None]):
@@ -304,23 +272,7 @@ def confusion_pair_rate(
     dst_label: int,
     match_iou: float = 0.5,
 ) -> Dict[str, float]:
-    """Confusion rate from src_label predictions toward dst_label ground truth.
 
-    For each prediction of class src_label, find the best-IoU GT box (across all
-    classes). When IoU >= match_iou and the matched GT class == dst_label, count
-    a confusion. The rate is confusions / total_src_predictions_with_match.
-
-    Returns:
-        {
-          "src_class":           int (1-indexed lesion class id),
-          "dst_class":           int,
-          "n_pred_src":          int,    # total predictions of src_label
-          "n_pred_src_matched":  int,    # predictions that had any GT match at IoU>=match_iou
-          "n_confusions":        int,    # of which were matched to a dst_label GT
-          "confusion_rate":      float,  # n_confusions / max(n_pred_src_matched, 1)
-          "match_iou":           float,
-        }
-    """
     n_pred_src = 0
     n_pred_src_matched = 0
     n_confusions = 0
@@ -369,14 +321,7 @@ def confusion_pair_rates_all(
     targets: List[Dict],
     match_iou: float = 0.5,
 ) -> Dict[str, Dict[str, float]]:
-    """Compute confusion rates for ALL ordered pairs of lesion classes.
 
-    Returns a dict keyed by ``"<src>__<dst>"`` (e.g. ``"MA__HE"``) and the
-    symmetric paired-direction key ``"<a>_X_<b>"`` for pair-level reporting.
-    Also exposes the ``ma_he_confusion_rate`` and its reverse + averaged pair
-    rate, which are the architecture §C3 gate (vi) primary candidates for
-    Mode 2A.
-    """
     inv = FRCNN_LABEL_TO_CLASS_INV()
     by_pair: Dict[str, Dict[str, float]] = {}
     for src_name in LESION_CLASSES:
@@ -442,10 +387,7 @@ def compute_all(
     fp_budgets: Sequence[float] = (1.0, 3.0, 5.0),
     match_iou: float = 0.5,
 ) -> Dict[str, object]:
-    """Compute per-class + aggregated clinical metrics dictionary.
 
-    The result is a JSON-serialisable nested dict.
-    """
     per_class: Dict[str, Dict[str, object]] = {}
     for cls_name in LESION_CLASSES:
         cl_label = FRCNN_LABEL_TO_CLASS_INV()[cls_name]

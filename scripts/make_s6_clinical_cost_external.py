@@ -1,17 +1,10 @@
-"""make_s6_clinical_cost_external.py — tabel suplemen S6 dari clinical_cost_external.json.
 
-Isi: AUROC pemisahan konfusi grade-shifting (UNSAFE_MISMATCH) dari within-grade
-(CLINICALLY_CLOSE_MISMATCH) untuk tiga sinyal, pada keempat kohort. Menjawab keberatan bahwa
-klaim kebutaan biaya klinis hanya bertumpu pada satu dataset.
-
-Keluaran: _FINAL_Latex/tables/S6_clinical_cost_external.tex. Jalankan dari root repo.
-"""
 import json
 from decimal import ROUND_HALF_UP, Decimal
 from pathlib import Path
 
 def _resolve(*candidates):
-    """Find the input in the research workspace layout or in the repository layout."""
+
     for base in Path(__file__).resolve().parents:
         for rel in candidates:
             p = base / rel
@@ -34,7 +27,7 @@ def q(v, nd=3):
 
 
 def cell(s):
-    """AUROC dengan CI; tanda dagger bila CI memuat 0.5, yaitu tak terbedakan dari tanpa informasi."""
+
     lo, hi = s["ci95"]
     mark = r"$^{\dagger}$" if s.get("ci_contains_half") else ""
     return rf"{q(s['auroc'])}{mark} [{q(lo)}, {q(hi)}]"

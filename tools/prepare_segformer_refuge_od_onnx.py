@@ -1,17 +1,5 @@
 #!/usr/bin/env python
-"""Prepare a REFUGE SegFormer optic-disc checkpoint for LGovNet B10.
 
-The Hugging Face model predicts three semantic classes:
-background, optic disc, and optic cup.  LGovNet's ExternalPretrainedProvider
-expects a single optic-disc probability mask.  This exporter wraps the
-SegFormer model so the ONNX output is:
-
-    input:  RGB tensor [1, 3, 512, 512] in [0, 1]
-    output: optic-disc probability [1, 1, 512, 512]
-
-The exported probability is P(Optic disc) + P(Optic cup), because the cup is
-an anatomical subregion inside the disc and should contribute to OD geometry.
-"""
 
 from __future__ import annotations
 

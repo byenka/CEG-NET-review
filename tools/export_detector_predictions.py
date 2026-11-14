@@ -1,61 +1,5 @@
 #!/usr/bin/env python
-"""
-export_detector_predictions.py
-Phase 19N — Stage 2 Bridge: detector checkpoint → DetectorBox JSON Cache
 
-Converts detector predictions into the DetectorBox JSON format
-expected by detector_backend.py's cached_predictions mode.
-
-This is the handoff from Stage 1 (frozen detector) to Stage 2 (governance
-pipeline). Once this cache exists, the governance pipeline can run without
-re-running the detector.
-
-── DetectorBox representation for a single 4-class detector ─────────────────
-
-    bbox_id:          "<stem>_b<NNNN>"  (zero-padded 4 digits)
-    head_predictions: []  (empty — detector is single-head, not multi-head)
-    ensemble_probs:   predicted class gets `score`, other 3 get (1-score)/3
-    assigned_zone:    ETDRS zone via approximate landmark estimate
-    detector_raw:     non-contract metadata (label, score, bbox) for debugging
-    r2a_raw:          legacy compatibility alias of detector_raw
-
-SAS note (evidence.py compute_sas):
-    head_predictions=[] triggers the max_ensemble fallback automatically.
-    SAS = max(ensemble_probs) = detection confidence score.
-    This is more informative than SAS=1.0 (which a synthetic single head
-    would always produce by trivially agreeing with itself).
-    Callers see used_fallback=True — this is expected and documented.
-
-Zone note:
-    AnatomyProvider is not yet implemented (Stage 2 scope).
-    estimate_landmarks_approx() is used as placeholder:
-      fovea = image centre, disc = fovea + 3.5 DD rightward (right-eye assumed).
-    WARNING: eye laterality is ignored. Replace with real AnatomyProvider before
-    governance ablations that depend on zone-specific APS signals.
-
-Output layout:
-    <output_dir>/
-        <split>/
-            <image_stem>.json   — list of DetectorBox dicts (one per prediction)
-        <split>_manifest.csv    — per-image prediction count summary
-    export_summary.json         — run metadata and aggregate stats
-
-Usage:
-    python tools/export_detector_predictions.py \\
-    --checkpoint outputs/detector_stage1/stage1c_fasterrcnn_r5b_ext25/fasterrcnn_best.pt \
-    --model_type fasterrcnn \\
-      --splits valid test \\
-      --score_thresh 0.05 \\
-      --detections_per_img 300 \\
-    --output_dir outputs/detector_cache/exported
-
-    # Then in governance pipeline:
-    from src.detector_backend import get_detector_outputs
-    preds = get_detector_outputs(
-        image_ids, mode="cached_predictions",
-        cache_dir="outputs/detector_cache/exported/test",
-    )
-"""
 
 from __future__ import annotations
 
@@ -223,24 +167,13 @@ def _load_retinanet_model(
 
 
 def _make_ensemble_probs(label_name: str, score: float) -> Dict[str, float]:
-    """Construct ensemble_probs for a single-head detector prediction.
 
-    Predicted class gets `score`. Other 3 classes share (1-score) equally.
-    Sum is always exactly 1.0 (floating-point exact within ~1e-16).
-
-    LEGACY synthetic fallback. With `--use_class_probs` (Pilar 1, gap G1) the
-    REAL ROI-head softmax is written to `detector_class_probs` and
-    `ensemble_probs` is populated from it instead.
-    """
     rest = (1.0 - score) / 3.0
     return {cls: (score if cls == label_name else rest) for cls in ALL_CLASSES}
 
 
 def _make_ensemble_probs_from_real(class_probs_row: List[float]) -> Dict[str, float]:
-    """Build ensemble_probs from the REAL multinomial vector returned by
-    predict_with_class_probs. Column k → lesion class ALL_CLASSES[k].
-    Renormalised to sum=1.0 to absorb float drift.
-    """
+
     s = float(sum(class_probs_row))
     if s <= 0.0:
         return {cls: 0.25 for cls in ALL_CLASSES}
@@ -267,18 +200,7 @@ def _predictions_to_detector_boxes(
     landmarks: AnatomicalLandmarks,
     class_probs: Optional[torch.Tensor] = None,  # [N, num_lesion_classes]
 ) -> List[dict]:
-    """Convert detector output to DetectorBox JSON list.
 
-    When `class_probs` is provided (Pilar 1, `--use_class_probs`), the REAL
-    multinomial distribution from the ROI head is written to
-    `detector_class_probs`, and `ensemble_probs` is populated from it.
-
-    `head_predictions` is kept EMPTY in both branches. Emitting a single-head
-    entry makes compute_sas() compute head-agreement = 1/1 = 1.0 for every
-    box (SAS becomes a dead constant — observed in logserver7). With an empty
-    list, compute_sas() falls back to max(ensemble_probs), which on the REAL
-    probabilities is a genuine, varying detector-confidence signal.
-    """
     result = []
     has_real = class_probs is not None and class_probs.numel() > 0
 
@@ -343,17 +265,7 @@ def export_split(
     model_type: str = "fasterrcnn",
     tta_hflip: bool = False,
 ) -> dict:
-    """Run model inference on `split` and write per-image DetectorBox JSON files.
 
-    When `use_class_probs=True` (Pilar 1, gap G1), inference uses
-    `predict_with_class_probs` which retains the full multinomial probability
-    vector per kept box. This activates real SDCA / e_pred signal downstream.
-
-    When `tta_hflip=True`, the class-probability path uses horizontal-flip TTA
-    and inverse-flips boxes back to original coordinates.
-
-    Returns aggregate stats dict for summary reporting.
-    """
     split_dir = Path(output_dir) / split
     split_dir.mkdir(parents=True, exist_ok=True)
 

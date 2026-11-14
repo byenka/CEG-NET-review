@@ -1,23 +1,11 @@
-"""make_s7_target_recalibration.py — tabel suplemen S7 dari target_recalibration.json.
 
-Isi: apakah sedikit sampel berlabel dari domain target memulihkan titik kerja yang tidak
-transfer? Tiga ambang dibandingkan pada bagian evaluasi yang SAMA: tau_sumber (dipilih pada
-OIA-DDR valid, yang dipakai naskah), tau_target (dipilih pada separuh kohort target yang tidak
-dievaluasi), tau_oracle (dipilih pada bagian evaluasi itu sendiri; batas atas yang tidak dapat
-dicapai di penempatan nyata).
-
-KRITERIA PRA-REGISTRASI TIDAK TERPENUHI dan tabel ini melaporkannya apa adanya. Angka SD dihitung
-ulang dari per_seed di JSON, TIDAK disalin dari catatan mana pun.
-
-Keluaran: _FINAL_Latex/tables/S7_target_recalibration.tex. Jalankan dari root repo.
-"""
 import json
 import statistics
 from decimal import ROUND_CEILING, ROUND_HALF_UP, Decimal
 from pathlib import Path
 
 def _resolve(*candidates):
-    """Find the input in the research workspace layout or in the repository layout."""
+
     for base in Path(__file__).resolve().parents:
         for rel in candidates:
             p = base / rel
@@ -41,12 +29,12 @@ def q(v, nd=3):
 
 
 def qb(v, nd=3):
-    """A stated bound must not round down, or the sentence becomes false."""
+
     return str(Decimal(repr(abs(float(v)))).quantize(Decimal(1).scaleb(-nd), rounding=ROUND_CEILING))
 
 
 def spread(cohort, which, field):
-    """SD antar 10 bagian evaluasi (5 seed x 2 belahan), dihitung ulang dari per_seed."""
+
     vals = [r[h][which][field] for r in cohort["per_seed"] for h in HALVES]
     return statistics.stdev(vals)
 

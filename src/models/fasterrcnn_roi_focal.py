@@ -1,8 +1,4 @@
-"""ROI focal-loss patch for torchvision Faster R-CNN.
 
-This keeps the detector architecture unchanged and only swaps the
-classification term used by ``roi_heads.fastrcnn_loss`` during training.
-"""
 
 from __future__ import annotations
 

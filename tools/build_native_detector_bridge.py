@@ -1,49 +1,5 @@
 #!/usr/bin/env python
-"""
-build_native_detector_bridge.py
-Phase 19N — conservative native bridge for dual-source detector caches.
 
-Why this tool exists:
-  Stage 3B/3C/3D currently consume one DetectorBox cache directory at a time.
-  A secondary detector cache can already be exported, but without a bridge it
-  remains auxiliary only and does not change SAS / SDCA behavior downstream.
-
-Safe design principle:
-  - Keep the existing one-cache Stage 3 contract unchanged.
-  - Anchor on the primary cache.
-  - Only fuse a secondary detection when it spatially matches a primary box.
-  - Do NOT inject unmatched secondary boxes by default.
-  - Preserve unmatched primary boxes exactly as degraded single-source records.
-
-Effect:
-  - Matched boxes become true multi-source DetectorBox records with
-    non-empty head_predictions and merged ensemble_probs.
-  - Unmatched boxes remain primary-only, so the bridge is conservative.
-
-Important scope note:
-    This does not retrain any detector. It only changes how exported detector
-    cache entries are represented before Stage 3. The bridge can also be chained
-    conservatively across more than two detector caches, as long as the existing
-    head_predictions carried by the primary cache are preserved.
-
-Cache hygiene note:
-    Stage 3 consumers glob all `*.json` files inside one split cache directory.
-    Therefore the bridge summary MUST live outside the split directory; otherwise
-    it is misread as an image cache file.
-
-Usage:
-  python tools/build_native_detector_bridge.py \
-    --primary_dir outputs/detector_cache/primary/oiaddr/valid \
-    --secondary_dir outputs/detector_cache/secondary/oiaddr/valid \
-    --output_dir outputs/detector_cache/native_bridge/oiaddr/valid
-
-  python tools/build_native_detector_bridge.py \
-    --primary_dir outputs/detector_cache/primary/oiaddr/test \
-    --secondary_dir outputs/detector_cache/secondary/oiaddr/test \
-    --output_dir outputs/detector_cache/native_bridge/oiaddr/test \
-    --iou_match 0.25 \
-    --include_secondary_only
-"""
 
 from __future__ import annotations
 
@@ -443,21 +399,7 @@ def _merge_primary_anchor(
     primary_source_name: str,
     secondary_source_name: str,
 ) -> dict:
-    """Evidence-enriching primary-anchored merge.
 
-    FIX (2026-05-21): the matched output box IS the primary box. Its
-    `detector_raw` (score, bbox, label), `detector_class_probs`,
-    `ensemble_probs` and `bbox_id` are kept UNCHANGED. This keeps
-    `pred_score` and the Stage 3C governance labels in exactly the same
-    regime as the single-primary cache — so B0 is no longer confounded by
-    a bridge-rewritten score, and the real ROI-softmax class probabilities
-    survive the bridge (no synthetic fallback).
-
-    Only `head_predictions` is enriched with the secondary source's head(s)
-    so that SAS becomes a real multi-source agreement signal. `merge_mode`
-    / `primary_weight` / `secondary_weight` no longer rewrite the box score
-    or bbox; they are kept only for CLI backward compatibility.
-    """
     new_box = copy.deepcopy(primary_box)
 
     primary_heads = _collect_source_heads(primary_box, primary_source_name)

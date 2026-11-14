@@ -1,13 +1,5 @@
 #!/usr/bin/env python
-"""make_certificate_verification_table.py — render S13 dari JSON verifikasi sertifikat.
 
-Membaca outputs/0506/certificates/verification.json (dihasilkan oleh
-tools/verify_certificates.py) dan menulis _FINAL_Latex/tables/S13_certificate_verification.tex.
-Tidak menghitung ulang apa pun.
-
-Jalankan dari root repo:
-  python tools/make_certificate_verification_table.py
-"""
 from __future__ import annotations
 
 import hashlib
@@ -15,7 +7,7 @@ import json
 from pathlib import Path
 
 def _resolve(*candidates):
-    """Cari berkas masukan di beberapa tata letak: workspace riset dan paket unggah."""
+
     for base in Path(__file__).resolve().parents:
         for rel in candidates:
             p = base / rel

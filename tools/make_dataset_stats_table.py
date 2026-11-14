@@ -1,30 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-"""Bangkitkan Tabel 1 (statistik dataset) dari artefak, bukan diketik ulang.
 
-KOLOM DAN SUMBERNYA:
-  * N_source : cacah berkas anotasi XML yang didistribusikan penyedia,
-               data/<ds>/xml/<split>/*.xml.
-  * N_eval   : cacah gambar pada cache deteksi primer per-gambar, dan
-  * preds/img: rata-rata deteksi per gambar pada cache yang sama. Cache dibaca dari
-               results/detector_outputs/primary_<ds>.zip (repositori kode; di workspace
-               lewat _UPLOAD_GITHUB/). Zip TJDR dan FGADR memuat gambar bebas-lesi
-               (9 dari 113 TJDR test, 105 dari 1.842 FGADR), sehingga preds/img TJDR test
-               205,1 dan FGADR 292,6, bukan 215,4 dan 294,1 dari export_summary.json lama
-               yang hanya memuat gambar berlesi.
-  * Kolom GT : seperti terbit (PUBLISHED_GT). Konvensinya berbeda antar kohort dan
-               keputusannya milik penulis: baris IDRiD dan TJDR MEMASUKKAN kotak
-               degenerate (IDRiD train 60, TJDR train 3), FGADR mengecualikannya. Bila
-               XML tersedia, mode bandingkan menghitung ulang kolom GT dari XML dan
-               melaporkan setiap selisih. N_GT/img dihitung atas N_source.
-
-Komentar kepala tabel dipertahankan seperti terbit; sumber preds/img yang sebenarnya
-adalah cache per-gambar di atas, bukan export_summary.json yang disebut komentar itu.
-
-Jalankan dari root repo:
-    python tools/make_dataset_stats_table.py            # bandingkan, jangan tulis
-    python tools/make_dataset_stats_table.py --write    # tulis berkas tabel
-"""
 from __future__ import annotations
 
 import argparse
@@ -74,7 +50,7 @@ PUBLISHED_GT = {
 
 
 def gt_stats(ds: str, split: str) -> dict:
-    """Hitung statistik GT satu split dari XML (kotak degenerate dibuang)."""
+
     xml_dir = ROOT / "data" / ds / "xml" / split
     per_class = Counter()
     ma_widths = []
@@ -114,7 +90,7 @@ def gt_stats(ds: str, split: str) -> dict:
 
 
 def cache_counts(ds: str, split: str):
-    """(N_eval, preds/img) dari cache primer per-gambar; (None, None) bila zip tidak ada."""
+
     for d in ZIP_DIRS:
         z = d / f"primary_{ds}.zip"
         if not z.is_file():
@@ -141,7 +117,7 @@ def collect() -> list:
 
 
 def compare(rows) -> None:
-    """Hitungan XML lawan kolom GT terbit; dilewati bila XML tidak tersedia."""
+
     names = ["N_source", "N_GT", "N_GT/img", "MA", "HE", "Hard_EX", "Soft_EX", "w_MA"]
     print(f"{'split':<16} {'kuantitas':<12} {'terbit':>10} {'dari XML':>10}")
     print("-" * 54)

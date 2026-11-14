@@ -1,29 +1,5 @@
 #!/usr/bin/env python
-"""train_yolo_compare.py — OPTIONAL modern comparators (YOLOv8 / RT-DETR) for the
-model-level comparison (E1), via ultralytics. Writes a ``compare_results.json``
-in the SAME schema as tools/train_detector_compare.py so the aggregator
-(tools/aggregate_detector_compare.py) can include these rows in Table 10.
 
-Honesty contract: YOLOv8/RT-DETR are stock ultralytics architectures — no custom
-module, no detector novelty claimed. They run on the SAME OIA-DDR split (converted
-by tools/convert_voc_to_yolo.py, identical samples/classes). Fairness caveat: the
-YOLO training recipe (augmentation, input size) differs from the torchvision
-detectors, so YOLO rows are reported as "modern reference" with that note, not as
-a perfectly matched controlled cell.
-
-Does NOT touch Mode 1. NEVER overwrites a previous result dir (guarded).
-
-Setup (server):
-    pip install ultralytics
-    python tools/convert_voc_to_yolo.py --data_root data/oiaddr --out data/oiaddr_yolo --link
-
-Usage:
-    python tools/train_yolo_compare.py --model yolov8s.pt \
-        --data data/oiaddr_yolo/data.yaml \
-        --output_dir outputs/detcmp_yolo/yolov8s \
-        --epochs 100 --imgsz 1280 --batch 8 --device 0 --eval_test
-    python tools/train_yolo_compare.py --model rtdetr-l.pt ... (RT-DETR)
-"""
 from __future__ import annotations
 
 import argparse
@@ -42,8 +18,7 @@ CLASS_NAMES = {0: "MA", 1: "HE", 2: "Hard_EX", 3: "Soft_EX"}
 
 
 def _load_model(model_name: str):
-    """Return an ultralytics model instance (YOLO or RTDETR). Clear error if the
-    package is missing."""
+
     try:
         from ultralytics import YOLO, RTDETR
     except Exception as exc:  # pragma: no cover - depends on server env
@@ -56,8 +31,7 @@ def _load_model(model_name: str):
 
 
 def _extract_map50(metrics) -> dict:
-    """Pull mAP@0.5 + per-class AP50 from an ultralytics metrics object,
-    defensively (attribute names vary slightly across versions)."""
+
     out = {"mAP_50": None, "per_class_AP50": {}}
     box = getattr(metrics, "box", None)
     if box is None:

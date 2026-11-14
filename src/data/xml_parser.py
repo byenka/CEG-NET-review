@@ -1,40 +1,4 @@
-"""
-xml_parser.py
-Parse Pascal VOC XML annotation files for LGov-Net dataset.
 
-Assumed XML structure (standard Pascal VOC):
-    <annotation>
-      <filename>image001.jpg</filename>
-      <size>
-        <width>512</width>
-        <height>512</height>
-      </size>
-      <object>
-        <name>MA</name>
-        <bndbox>
-          <xmin>45</xmin>
-          <ymin>120</ymin>
-          <xmax>60</xmax>
-          <ymax>135</ymax>
-        </bndbox>
-      </object>
-      ...
-    </annotation>
-
-Object dict contract (per LGov-Net Fase 2):
-    {
-        "label_raw": str,               # raw string from <name>, no mapping
-        "bbox": [xmin, ymin, xmax, ymax],  # integers
-        "cx": float,                    # bbox center x
-        "cy": float,                    # bbox center y
-        "w":  float,                    # width  = xmax - xmin
-        "h":  float,                    # height = ymax - ymin
-        "area": float,                  # w * h
-    }
-
-Malformed or unreadable files emit a warning and return None.
-No exception is ever raised to the caller.
-"""
 
 import warnings
 import xml.etree.ElementTree as ET
@@ -42,17 +6,7 @@ from pathlib import Path
 
 
 def parse_xml_file(xml_path: "str | Path") -> "dict | None":
-    """Parse a single Pascal VOC XML annotation file.
 
-    Args:
-        xml_path: Path to the .xml annotation file.
-
-    Returns:
-        Dict with keys ``image_name`` (str), ``width`` (int), ``height`` (int),
-        and ``objects`` (list[dict]) using the per-object contract above.
-        Returns ``None`` if the file is malformed or unreadable; a warning
-        is emitted instead of raising an exception.
-    """
     path = Path(xml_path)
 
     try:
@@ -131,17 +85,7 @@ def parse_xml_file(xml_path: "str | Path") -> "dict | None":
 
 
 def collect_all_labels(xml_dir: "str | Path") -> list:
-    """Scan all XML files in xml_dir and return sorted list of unique raw label strings.
 
-    Useful for auditing before any label-to-class mapping is applied.
-    Files that fail to parse are skipped with a warning.
-
-    Args:
-        xml_dir: Directory containing Pascal VOC XML files.
-
-    Returns:
-        Sorted list of unique label strings found across all files.
-    """
     labels: set = set()
     for xml_path in Path(xml_dir).glob("*.xml"):
         result = parse_xml_file(xml_path)
@@ -153,14 +97,7 @@ def collect_all_labels(xml_dir: "str | Path") -> list:
 
 
 def count_annotations_per_class(xml_dir: "str | Path") -> dict:
-    """Return mapping of {label_string: total_bbox_count} across all XML files.
 
-    Args:
-        xml_dir: Directory containing Pascal VOC XML files.
-
-    Returns:
-        Dict mapping raw label string to total number of bboxes.
-    """
     counts: dict = {}
     for xml_path in Path(xml_dir).glob("*.xml"):
         result = parse_xml_file(xml_path)
@@ -176,7 +113,7 @@ def count_annotations_per_class(xml_dir: "str | Path") -> dict:
 
 
 def _get_text(node: ET.Element, tag: str) -> "str | None":
-    """Return stripped text of a direct child tag, or None if absent/empty."""
+
     child = node.find(tag)
     if child is not None and child.text:
         return child.text.strip()
@@ -184,7 +121,7 @@ def _get_text(node: ET.Element, tag: str) -> "str | None":
 
 
 def _parse_int(node: ET.Element, tag: str, default: int = 0) -> int:
-    """Return integer value of a direct child tag, or default on any failure."""
+
     child = node.find(tag)
     try:
         return (

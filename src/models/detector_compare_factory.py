@@ -1,34 +1,4 @@
-"""detector_compare_factory.py — stock torchvision detectors for the MODEL-LEVEL
-comparison (E1). Used ONLY by tools/train_detector_compare.py.
 
-Scope + honesty contract:
-  - Every detector here is a STOCK torchvision architecture (no custom module).
-    Our primary detector (Faster R-CNN/ResNet-50-FPN) is itself stock; the
-    project config labels it ``architecture_label="Faster R-CNN/FPN baseline"``.
-    We claim NO detector novelty. This factory exists purely so the governance
-    contribution can be positioned/validated across detector families on the
-    SAME OIA-DDR split (model-level comparison + detector-agnostic test).
-  - Does NOT touch Mode 1: no Mode-1 checkpoint, script, or the audit tool is
-    modified. Comparison checkpoints live under their own output dirs.
-
-Label convention (matches the existing, proven r5b/r1a pipeline):
-  num_classes = NUM_CLASSES + 1 = 5  (labels 1..4, background slot 0).
-
-Supported model_type:
-  fasterrcnn       — Faster R-CNN/ResNet-50-FPN (v1)   [+ small-anchor tuning]
-  fasterrcnn_v2    — Faster R-CNN/ResNet-50-FPN v2 (improved recipe, 2021)
-  retinanet        — RetinaNet/ResNet-50-FPN (v1)
-  retinanet_v2     — RetinaNet/ResNet-50-FPN v2 (2021)
-  fcos             — FCOS/ResNet-50-FPN (anchor-free, 2019)
-  ssd300           — SSD300/VGG16 (one-stage classic)
-
-Anchor note (documented honestly): Faster R-CNN variants receive the
-small-anchor generator (sizes 8..128) consistent with our r5b config, because
-lesions are tiny. RetinaNet/FCOS/SSD use their standard anchor/point
-configurations (re-sizing their heads to match a custom generator is error-prone
-and would deviate from each detector's recommended usage). This is the standard
-"stock detector" comparison; the anchor config per family is reported.
-"""
 
 from __future__ import annotations
 
@@ -48,7 +18,7 @@ SUPPORTED = (
 
 
 def _backbone_imagenet_weights():
-    """Return ImageNet weights enum for ResNet-50 if available, else None."""
+
     try:
         from torchvision.models import ResNet50_Weights
         return ResNet50_Weights.IMAGENET1K_V1
@@ -67,14 +37,7 @@ def build_detector(
     min_size: Optional[int] = None,
     max_size: Optional[int] = None,
 ) -> torch.nn.Module:
-    """Build a stock torchvision detector with a head sized to ``num_classes``.
 
-    min_size / max_size: shorter-side / longer-side resize for the internal
-    GeneralizedRCNNTransform. When None, torchvision default (800/1333) is used —
-    the SAME as our Mode-1 r5b detector (verified: skrip asli tidak override).
-    Pass explicit values to match the resolution across ALL comparison models.
-    SSD300 input is architecturally fixed at 300px; these args are ignored for it.
-    """
     mt = model_type.lower()
     if mt not in SUPPORTED:
         raise ValueError(f"unknown model_type='{model_type}'. supported={SUPPORTED}")
@@ -138,7 +101,7 @@ def detector_config(model_type: str, num_classes: int, score_thresh: float,
                     detections_per_img: int, anchor_sizes, anchor_ratios,
                     min_size: Optional[int] = None,
                     max_size: Optional[int] = None) -> dict:
-    """Config dict saved into the checkpoint (provenance + reload)."""
+
     mt = model_type.lower()
     uses_small_anchors = mt == "fasterrcnn"
     # Record the EFFECTIVE resolution so Table 10 can show it per row.

@@ -55,7 +55,8 @@ CEG-Net pipeline described in the paper.
 
 Every table of the paper that reports a result is regenerated from the bundled
 files, without a GPU, without fitting a detector and without the image datasets,
-and compared byte for byte with the typeset version in `results/published_tables/`:
+and compared with the typeset version in `results/published_tables/`, ignoring
+LaTeX comment-only lines while checking all table content exactly:
 
 ```bash
 python tools/verify_tables_against_generators.py
@@ -63,7 +64,8 @@ python tools/verify_tables_against_generators.py
 
 The script runs each generator with its file writes redirected into a temporary
 directory, so nothing in the repository is overwritten, and exits non-zero if any
-table differs. It currently reports 31 of 31 generated tables identical. Three
+table differs. One generator currently requires a NumPy version with
+`numpy.trapezoid`; without it, 30 tables match and that generator fails. Three
 files are not generated: `T_impl_hyperparams.tex` and `T_impl_computational.tex`
 state settings rather than results, and `T14_category_breakdown.tex` is not
 typeset. To write the tables instead, run a generator directly; each writes under

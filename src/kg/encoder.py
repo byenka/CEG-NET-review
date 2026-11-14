@@ -1,45 +1,4 @@
-"""
-encoder.py
-2-layer heterogeneous GAT encoder for LGov-Net (Contribution 1).
 
-EXPLORATORY, NOT PART OF THE PRIMARY SYSTEM.
---------------------------------------------
-The reported gate reads a fixed prior table, sdm_norm_clinical_prior.json, which
-tools/audit_stage3a_kg.py writes with `build_clinical_prior_sdm` in src/kg/schema.py;
-no learned graph embedding enters it. This encoder appears only in the exploratory
-control reported as a negative result, the knowledge graph inside detector training
-(tools/train_stage5_mode2.py); the graph-attention gate control has its own
-implementation in _NATIVE/scripts/native_gate_experiment.py. The SDM written from this
-encoder by the stage-3A audit is a diagnostic and is not used for the evidence vector.
-
-Architecture (architecture-lgov-net-v2_rev.txt):
-
-  Input per node:
-    x_v = [one-hot(9) || clinical_attr(8)] ∈ R^17  (lesion nodes)
-    x_v = [one-hot(9)]                     ∈ R^9   (zone nodes)
-    All padded/projected to unified hidden_dim before message passing.
-
-  Edge-type embedding:
-    e_r ∈ R^edge_type_dim  per relation type r  (5 types for LGov-Net)
-
-  Attention — heterogeneous, single attention head per layer:
-    α_vu = softmax_v( LeakyReLU( a^T [W·x_v ‖ W·x_u ‖ e_r] ) )
-             v = target node, u = source node, r = edge type
-
-  Layer 1:  h_v = ELU( Σ_u α_vu · W · x_u )   ∈ R^hidden_dim
-  Layer 2:  e_v = GAT²(h_v, G)                  ∈ R^embedding_dim (default 64)
-
-  Directed edges (pathophysiological_mechanism): MA→HE, MA→Hard_EX, MA→Soft_EX
-    message flows source→target only (no reverse added).
-  Undirected edges: both directions included in edge_index.
-
-Outputs:
-  SDM_learned(c_i, c_j) = ‖e_ci - e_cj‖₂      lesion-pair semantic distance
-  Compat(c, a)           = σ(e_c^T W_compat e_a) lesion-zone plausibility
-
-No PyTorch Geometric dependency — implemented with pure PyTorch.
-Governance Gate, SDGL, and detector are NOT in scope for this module.
-"""
 
 from typing import Optional
 
@@ -109,29 +68,7 @@ def normalize_sdca(
     method: str = "log_scaled",
     eps: float = 1e-6,
 ) -> dict:
-    """Normalize raw SDM distances into a bounded range for governance gate input.
 
-    Produces both the raw and normalized SDCA value for each lesion pair.
-
-    Methods:
-        "log_scaled":     norm = log(1 + raw) / log(1 + max_raw)
-                          Bounded [0, 1].  Compresses large values gently while
-                          preserving ordering.  Robust when raw range is unknown
-                          before training.  Recommended default for early phases.
-        "divide_by_max":  norm = raw / max_raw
-                          Simple linear rescaling to [0, 1].
-                          Sensitive to outliers if one pair dominates.
-
-    Args:
-        sdm_dict: {(ci, cj): float} — output of compute_sdm().
-        method:   Normalization method. One of "log_scaled", "divide_by_max".
-        eps:      Minimum denominator to prevent division by zero when all
-                  distances are near zero (e.g. at random init).
-
-    Returns:
-        {(ci, cj): {"raw": float, "norm": float}}
-        All "norm" values are in [0.0, 1.0].
-    """
     import math
 
     values = list(sdm_dict.values())
@@ -164,25 +101,7 @@ def build_encoder_inputs(
     node_feat_dim: int = 17,
     device: "str | torch.device" = "cpu",
 ) -> dict:
-    """Convert a BuiltGraph dict (from builder.py) to encoder-ready tensors.
 
-    Handles feature padding (zone nodes dim=9 padded to node_feat_dim),
-    undirected→bidirectional edge expansion, and directed edge preservation.
-
-    Args:
-        kg:            Output dict from builder.build_graph_from_artifacts().
-        node_feat_dim: Unified input dim after padding. Must be >= max node
-                       feature dim (17 for LGov-Net lesion nodes).
-        device:        Target PyTorch device string or object.
-
-    Returns:
-        Dict with keys:
-          "x"             : Tensor[N, node_feat_dim]  padded feature matrix
-          "edge_index"    : Tensor[2, E]              expanded edge indices
-          "edge_type_ids" : Tensor[E]  int64          edge type per edge
-          "edge_weights"  : Tensor[E]  float32        KG init weights per edge
-          "node_names"    : list[str]                 name at each row index
-    """
     device = torch.device(device)
     node_features: dict = kg["node_features"]  # {name: list[float]}
     nodes: list = kg["nodes"]  # sorted by idx
@@ -242,16 +161,7 @@ def _scatter_softmax(
     target_indices: torch.Tensor,
     num_nodes: int,
 ) -> torch.Tensor:
-    """Numerically-stable per-target-node softmax over edge scores.
 
-    Args:
-        logits:         [E] raw attention scores.
-        target_indices: [E] destination node index per edge.
-        num_nodes:      Total node count N.
-
-    Returns:
-        [E] attention weights that sum to 1 per target node.
-    """
     # Subtract global max for stability (safe: N=9, typical E~80 edges)
     logits = logits - logits.detach().max()
     exp_vals = torch.exp(logits)
@@ -264,23 +174,7 @@ def _scatter_softmax(
 
 
 class HeteroGATLayer(nn.Module):
-    """Single layer of heterogeneous graph attention.
 
-    Implements the attention equation from the architecture spec:
-        α_vu = softmax_v( LeakyReLU( a^T [W·x_v ‖ W·x_u ‖ e_r] ) )
-        h_v  = Σ_u α_vu · (W · x_u)
-
-    where v is the target node, u is the source node, and r is the edge type.
-    Attention is modulated by KG edge weights (clinical priors) when supplied.
-
-    Args:
-        in_dim:           Input feature dimension.
-        out_dim:          Output feature dimension.
-        edge_type_dim:    Dimension of edge-type embedding e_r.
-        num_edge_types:   Number of distinct edge types (5 for LGov-Net).
-        leaky_relu_slope: Negative slope for LeakyReLU in attention scoring.
-        dropout:          Dropout applied to normalized attention weights.
-    """
 
     def __init__(
         self,
@@ -317,19 +211,7 @@ class HeteroGATLayer(nn.Module):
         edge_type_ids: torch.Tensor,  # [E] int64
         edge_weights: Optional[torch.Tensor],  # [E] float32 or None
     ) -> torch.Tensor:
-        """Run one heterogeneous GAT layer.
 
-        Args:
-            x:             Node feature matrix [N, in_dim].
-            edge_index:    Edge connectivity [2, E]: row 0 = src, row 1 = dst.
-            edge_type_ids: Integer edge type index per edge [E].
-            edge_weights:  Optional KG prior weights [E]. When supplied, raw
-                           attention scores are multiplied by these weights
-                           before softmax so clinical priors influence routing.
-
-        Returns:
-            Updated node representations [N, out_dim].
-        """
         N = x.size(0)
         src_idx, dst_idx = edge_index[0], edge_index[1]
 
@@ -359,34 +241,7 @@ class HeteroGATLayer(nn.Module):
 
 
 class LGovNetEncoder(nn.Module):
-    """2-layer heterogeneous GAT encoder for LGov-Net KG (Contribution 1).
 
-    Produces embedding_dim-dimensional representations for all 9 KG nodes
-    given the padded feature matrix and edge structure from build_encoder_inputs().
-
-    Encoder pipeline:
-        input_proj  (Linear, no bias)  → ELU
-        HeteroGATLayer-1 (hidden_dim → hidden_dim) → ELU → dropout
-        HeteroGATLayer-2 (hidden_dim → embedding_dim)
-
-    Also holds W_compat (learnable [embed_dim × embed_dim] matrix) used by
-    compute_compat() to score lesion-zone plausibility.
-
-    Args:
-        node_feat_dim:    Input dim after padding (17 for LGov-Net).
-        hidden_dim:       Width of Layer 1 output and input_proj target (default 64).
-        embedding_dim:    Final node embedding dimension e_v (default 64).
-        edge_type_dim:    Edge-type embedding dimension e_r (default 16).
-        num_edge_types:   Number of KG edge types (5).
-        dropout:          Dropout on attention weights and between GAT layers.
-        leaky_relu_slope: Negative slope for LeakyReLU inside attention.
-        compat_init_bias_mode: Initial logit bias for Compat scores.
-            "high_affinity_prior": add +1.0 bias to HIGH_AFFINITY lesion-zone
-                pairs (Hard_EX↔Foveal/Parafoveal, Soft_EX↔Peripapillary).
-                Gives σ(1.0) ≈ 0.731 for high-affinity pairs at init vs 0.5
-                for all others.  Traceable clinical prior without hardcoding.
-            "none": no bias, pure bilinear form (original behavior).
-    """
 
     def __init__(
         self,
@@ -453,20 +308,7 @@ class LGovNetEncoder(nn.Module):
         edge_type_ids: torch.Tensor,  # [E] int64
         edge_weights: Optional[torch.Tensor] = None,  # [E] float32
     ) -> torch.Tensor:
-        """Compute all N=9 node embeddings from padded features and KG structure.
 
-        Args:
-            x:             Node feature matrix [N, node_feat_dim].
-            edge_index:    [2, E] — row 0 src, row 1 dst (undirected already
-                           expanded to both directions by build_encoder_inputs).
-            edge_type_ids: [E] integer edge type codes.
-            edge_weights:  Optional KG prior weights [E]. Supplied via
-                           build_encoder_inputs → "edge_weights".
-
-        Returns:
-            [N, embedding_dim] — e_v for all 9 KG nodes.
-            Indices match build_encoder_inputs()["node_names"].
-        """
         h = F.elu(self.input_proj(x))  # [N, hidden_dim]
         h = F.elu(
             self.gat1(h, edge_index, edge_type_ids, edge_weights)
@@ -482,7 +324,7 @@ class LGovNetEncoder(nn.Module):
         edge_type_ids: torch.Tensor,
         edge_weights: Optional[torch.Tensor] = None,
     ) -> torch.Tensor:
-        """nn.Module standard interface — delegates to forward_node_embeddings."""
+
         return self.forward_node_embeddings(x, edge_index, edge_type_ids, edge_weights)
 
 
@@ -494,24 +336,7 @@ def compute_sdm(
     node_names: list,
     lesion_names: Optional[list] = None,
 ) -> dict:
-    """Compute pairwise SDM_learned between all lesion node pairs.
 
-    SDM_learned(c_i, c_j) = ‖e_ci - e_cj‖₂
-
-    Clinical interpretation: SDM(MA, HE) < SDM(MA, Hard_EX) because
-    confusing MA↔HE does not change ICDR severity grade while confusing
-    MA↔Hard_EX does (severity_transition edge weights 0.0 vs 1.0).
-
-    Args:
-        embeddings:   [N, embedding_dim] tensor from forward_node_embeddings().
-        node_names:   Ordered list of node names matching row indices of
-                      embeddings (from build_encoder_inputs()["node_names"]).
-        lesion_names: Subset of lesion class names. Defaults to all 4.
-
-    Returns:
-        {(c_i, c_j): float} — all unique unordered pairs (i < j by lesion index).
-        Floats allow JSON serialization and downstream numpy/scalar use.
-    """
     if lesion_names is None:
         lesion_names = LESION_NAMES
 
@@ -536,30 +361,7 @@ def compute_compat(
     zone_names: Optional[list] = None,
     compat_prior: Optional[torch.Tensor] = None,
 ) -> dict:
-    """Compute anatomical plausibility Compat(c, a) for all lesion-zone pairs.
 
-    Compat(c, a) = σ( e_c^T · W_compat · e_a + prior[c_idx, a_idx] )
-
-    The optional `compat_prior` (shape [4, 5]) adds a fixed logit bias before
-    sigmoid.  Set to encoder.compat_prior to activate HIGH_AFFINITY calibration.
-    When None, behaves exactly as the original bilinear form (prior=0 everywhere).
-
-    Used downstream as APS (Anatomical Plausibility Score) per detected bbox:
-    a bbox in zone a claiming class c gets APS = Compat(c, a).
-    APS < 0.5 triggers a downgrade in the governance gate.
-
-    Args:
-        embeddings:    [N, embedding_dim] from forward_node_embeddings().
-        W_compat:      [embedding_dim, embedding_dim] — encoder.W_compat parameter.
-        node_names:    Ordered list matching embedding row indices.
-        lesion_names:  Lesion classes to score. Defaults to all 4.
-        zone_names:    Zone names to score. Defaults to all 5.
-        compat_prior:  Optional [len(lesion_names), len(zone_names)] additive bias.
-                       Pass encoder.compat_prior to apply HIGH_AFFINITY calibration.
-
-    Returns:
-        {(lesion_name, zone_name): float} — sigmoid scores in [0, 1].
-    """
     if lesion_names is None:
         lesion_names = LESION_NAMES
     if zone_names is None:
@@ -592,21 +394,7 @@ def build_gat_encoder(
     dropout: float = 0.1,
     compat_init_bias_mode: str = "high_affinity_prior",
 ) -> LGovNetEncoder:
-    """Return a freshly initialized LGovNetEncoder with Xavier-initialized weights.
 
-    Args:
-        node_feat_dim:         Input dimension after padding (17 for LGov-Net).
-        hidden_dim:            Width of intermediate representations.
-        embedding_dim:         Output embedding dimension (must match SDGL config).
-        edge_type_dim:         Dimension of edge-type embedding vectors.
-        dropout:               Dropout on attention weights and between layers.
-        compat_init_bias_mode: "high_affinity_prior" | "none".
-                               Controls additive logit bias in Compat scoring.
-                               See LGovNetEncoder docstring for details.
-
-    Returns:
-        LGovNetEncoder module in training mode.
-    """
     return LGovNetEncoder(
         node_feat_dim=node_feat_dim,
         hidden_dim=hidden_dim,

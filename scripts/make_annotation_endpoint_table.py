@@ -1,16 +1,5 @@
 #!/usr/bin/env python
-"""make_annotation_endpoint_table.py — render S12 dari JSON beku endpoint anotasi.
 
-Tidak memasang model dan tidak menghitung ulang apa pun. Seluruh angka dibaca dari
-_NATIVE/results/annotation_endpoint.json, yang dihasilkan oleh
-_NATIVE/scripts/annotation_endpoint_experiment.py di bawah protokol terkunci
-_NATIVE/PROTOCOL_LOCK_annotation_endpoint.md.
-
-Keluaran: _FINAL_Latex/tables/S12_annotation_endpoint.tex
-
-Jalankan dari root repo:
-  python _NATIVE/scripts/make_annotation_endpoint_table.py
-"""
 from __future__ import annotations
 
 import hashlib
@@ -18,7 +7,7 @@ import json
 from pathlib import Path
 
 def _resolve(*candidates):
-    """Cari berkas masukan di beberapa tata letak: workspace riset dan paket unggah."""
+
     for base in Path(__file__).resolve().parents:
         for rel in candidates:
             p = base / rel

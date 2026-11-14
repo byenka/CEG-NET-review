@@ -1,32 +1,5 @@
 #!/usr/bin/env python
-"""make_kg_coupled_training_table.py — Tabel S4: knowledge graph di dalam pelatihan detektor.
 
-Hasil negatif yang dirujuk Sec. 3.1, Limitations dan Conclusion. Sebelum tabel ini ada,
-naskah menyatakan "coupling the knowledge graph into detector training does not improve
-over standard fine-tuning" tanpa rujukan ke bukti.
-
-Desain (alpha-PHASE 1.5, 2026-06-03): detektor beku r5b_ext25 epoch 18 di-fine-tune 20
-epoch lagi pada OIA-DDR train dalam empat konfigurasi berpasangan, tiga seed masing-masing:
-  B_none        : loss deteksi standar saja
-  D_kg_only     : + lambda_KG * L_KG + lambda_gate * L_gate (encoder KG ikut dilatih)
-  C_anchor_only : + lambda_anchor * L_anchor (distilasi ke detektor beku)
-  A_full        : + ketiganya
-Evaluasi pada OIA-DDR valid (149 gambar). Checkpoint tiap run dipilih pada split yang sama.
-
-Sumber, semuanya dibaca, tidak diketik:
-  outputs/_alpha_phase1p5_decomp/per_seed.csv
-  <run_dir>/mode2_summary.json                          bobot loss, epoch, batch per run
-  <run_dir>/audit_topk/clinical_metrics.json            dicatat untuk provenans
-  outputs/detector_eval/r5b_baseline/stage1a_raw.json   detektor beku: mAP50
-  outputs/mode2_v2_1_2026-06-01_crossdataset/baseline_r5b/oiaddr_valid/clinical_metrics.json
-                                                        detektor beku: ECE
-Keluaran:
-  _FINAL_Latex/tables/S4_kg_coupled_training.tex
-  outputs/_alpha_phase1p5_decomp/s4_table_values.json
-
-Jalankan dari root repo:
-  python tools/make_kg_coupled_training_table.py
-"""
 from __future__ import annotations
 
 import csv
@@ -68,7 +41,7 @@ def lam(v) -> str:
 
 
 def find_key(obj, key):
-    """Cari kunci pertama secara rekursif; kembalikan (nilai, jalur)."""
+
     stack = [(obj, "")]
     while stack:
         cur, path = stack.pop(0)
@@ -82,7 +55,7 @@ def find_key(obj, key):
 
 
 def collect() -> dict:
-    """Baca semua run dari workspace riset dan kembalikan nilai tabel."""
+
     rows = list(csv.DictReader(open(PER_SEED, newline="", encoding="utf-8")))
     groups: dict[str, list[dict]] = {}
     for r in rows:

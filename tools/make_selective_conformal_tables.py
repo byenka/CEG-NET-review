@@ -1,15 +1,5 @@
 #!/usr/bin/env python
-"""make_selective_conformal_tables.py — render S15 dan S16 dari JSON beku.
 
-S15: selective prediction (AURC, E-AURC) dan akurasi titik operasi conformal.
-S16: kalibrasi, mentah lawan temperature scaling lawan isotonik.
-
-Membaca outputs/0506/selective_conformal/{baselines,fusion_headtohead}.json.
-Tidak menghitung ulang apa pun.
-
-Jalankan dari root repo:
-  python tools/make_selective_conformal_tables.py
-"""
 from __future__ import annotations
 
 import hashlib

@@ -1,48 +1,5 @@
 #!/usr/bin/env python
-"""make_indomain_results.py — hasil in-domain OIA-DDR dengan SATU protokol (Opsi B).
 
-Latar: Tabel 2 dan 3 lama berasal dari run Stage3D terkunci yang memasang gate pada split
-TRAIN dengan sklearn MLP (32,16) dan LGG torch berlatih Gumbel-Softmax, dengan bootstrap
-1.000 resampel, sementara naskah dan tabel lain memakai gate numpy yang dipasang pada
-VALID. Skrip ini menghitung ulang hasil in-domain dengan protokol yang ditulis naskah.
-
-Protokol (Eq. gate; Sec. 4.3-4.4; tabel hiperparameter):
-  gate   : fit_mlp — satu lapis tersembunyi 16 tanh, GD full-batch 1.500 iterasi, lr 0.1,
-           standardisasi statistik valid; dipasang pada OIA-DDR VALID
-  tau*   : threshold_for_tp_ret(skor valid, 0.80)
-  seed   : gate 0..4; ringkasan mean dan SD SAMPEL (ddof 1)
-  CI     : bootstrap berpasangan image-clustered, 2.000 resampel, bootstrap_seed 0, untuk
-           SETIAP seed gate; skema resampel identik dengan paired_bootstrap_auprc
-  AUPRC  : average precision (sklearn average_precision_score) untuk SEMUA baris, selisih dan
-           bootstrap. Alasan: auprc() benchmark memakai trapezoid atas argsort biasa, sehingga
-           urutan di dalam kelompok skor kembar sembarang dan bergantung versi numpy/platform.
-           Diagnostik lokal 2026-09-15, batas trapezoid bila di dalam kelompok kembar negatif
-           atau positif didahulukan: evidence-only logreg (16 nilai unik) [0.424, 0.686];
-           MSP [0.4719, 0.4751]; entropy [0.4743, 0.4747]; margin [0.4706, 0.4726];
-           M0 [0.64855, 0.64868]. Average precision memperlakukan skor kembar sebagai satu
-           ambang sehingga deterministik. Trapezoid tetap dihitung dan disimpan untuk
-           cross-check dengan artefak server yang memakai auprc().
-Konfigurasi: deployed (outputs/0506/evsds_v2sec/oiaddr), sama dengan T12, T13, T14, S2, S3,
-tier dan sertifikat. Baris APS eksternal pada T3 mengganti kolom ev_aps dengan nilai model
-anatomi eksternal dari outputs/0506/evsds_full/stage3c (baris sejajar; diperiksa di sini).
-
-Cross-check (gagal = berhenti; semuanya memakai trapezoid seperti artefak server):
-  * B4 dan B6 per seed vs outputs/0506/evsds_pss/domain_shift_5seed.json
-  * seed 0 vs outputs/0506/evsds_v2sec/oiaddr_benchmark.json: selisih <= TOL_AUPRC, atau
-    nilai server berada di dalam batas urutan kembar lokal
-  * seed 0: CI bootstrap KG - M0 vs oiaddr_benchmark.json bootstrap_auprc.kg_minus_m0
-  * SDCA konstan per seed vs varian 'uniform' pada outputs/0506/sdm_prior_sensitivity.json
-
-Keluaran:
-  outputs/0506/indomain_5seed/indomain_results.json
-  _FINAL_Latex/tables/T2_governance_main.tex
-  _FINAL_Latex/tables/T3_evidence_fidelity.tex
-  _FINAL_Latex/tables/T8_fp_reduction_benchmark.tex
-
-Jalankan dari root repo:
-  python tools/make_indomain_results.py               # hitung semua lalu tulis tabel
-  python tools/make_indomain_results.py --tables_only # tulis ulang tabel dari JSON
-"""
 from __future__ import annotations
 
 import json
@@ -114,7 +71,7 @@ def summary(vals) -> dict:
 
 
 def tie_bounds(score: np.ndarray, y: np.ndarray):
-    """AUPRC trapezoid (rumus auprc()) bila di dalam kelompok kembar negatif / positif didahulukan."""
+
     def area(order):
         yy = y[order]
         tp, fp = np.cumsum(yy), np.cumsum(1 - yy)
@@ -125,7 +82,7 @@ def tie_bounds(score: np.ndarray, y: np.ndarray):
 
 
 def metric(score: np.ndarray, y: np.ndarray) -> dict:
-    """auprc = average precision; trapezoid dan batas urutan kembar disimpan untuk audit."""
+
     lo, hi = tie_bounds(score, y)
     return {"auprc": float(average_precision_score(y, score)),
             "auprc_trapezoid": float(auprc(score, y)),
@@ -135,7 +92,7 @@ def metric(score: np.ndarray, y: np.ndarray) -> dict:
 
 
 def paired_bootstrap_ap(s_a, s_b, label, image_id, n_boot, seed=0) -> dict:
-    """Skema resampel identik dengan paired_bootstrap_auprc, metrik average precision."""
+
     rng = np.random.default_rng(seed)
     uniq = np.unique(image_id)
     groups = [np.where(image_id == im)[0] for im in uniq]
@@ -159,7 +116,7 @@ def boot(sa: np.ndarray, sb: np.ndarray, yt: np.ndarray, img: np.ndarray) -> dic
 
 
 def gate_matrix(d: dict, name: str, aps_ext: np.ndarray) -> np.ndarray:
-    """Kolom disusun persis seperti build_methods(): [SAS, SDCA, APS, PSS, skor, sds, nsrc]."""
+
     cols = {c: d[c] for c in EV}
     if name == "score_only":
         return d["pred_score"].reshape(-1, 1)
@@ -190,7 +147,7 @@ def op_metrics(sv: np.ndarray, st: np.ndarray, yv: np.ndarray, yt: np.ndarray) -
 
 
 def s2_crosscheck(res: dict) -> dict:
-    """SDCA konstan identik secara matematis dengan prior 'uniform' pada S2."""
+
     d = json.loads(REF_S2.read_text(encoding="utf-8"))
     uni = next(v for v in d["results"] if v["variant"] == "uniform")
     mine = [r["auprc_trapezoid"] for r in res["gates"]["kg_sdca_const"]]
@@ -361,8 +318,7 @@ def summarize(res: dict) -> dict:
 
 
 def tables_only() -> int:
-    """Tulis ulang tabel dari JSON yang sudah ada, tanpa menghitung ulang model.
-    Repositori kode menyimpan JSON yang sama di results/tables_source/."""
+
     p = next((x for x in (OUT / "indomain_results.json",
                           ROOT / "results/tables_source/indomain_results.json") if x.exists()),
              OUT / "indomain_results.json")
@@ -465,16 +421,7 @@ def build_t3(res: dict) -> str:
 
 
 def fusion_rows() -> tuple[list[str], list[str]]:
-    """Baris baseline fusi skor dan baris gate-di-atas-fusi untuk T8.
 
-    Angka datang dari dua eksperimen terpisah yang memakai protokol sama dengan tabel ini
-    (fit pada OIA-DDR valid, 5 seed, average precision, tau* dari valid pada retensi TP 0.80):
-      _septem/scripts_optionB/baselines_nokg.json   baseline fusi + gate tanpa knowledge graph
-      _septem/scripts_optionB/gate_on_fusion.json   gate yang membaca skor fusi sebagai masukan
-    Penting: ketiga pass yang dirata-ratakan (primer, flip, detektor kedua) adalah pass yang
-    SUDAH dikonsumsi gate penuh lewat SAS, PSS dan ev_sds, jadi baseline ini tidak lebih mahal.
-    Mengembalikan ([], []) bila JSON belum ada, supaya generator tetap dapat dijalankan.
-    """
     exp = next((d for d in (ROOT / "_septem/scripts_optionB", ROOT / "results/experiments")
                 if (d / "baselines_nokg.json").is_file()), ROOT / "_septem/scripts_optionB")
     fus = exp / "baselines_nokg.json"

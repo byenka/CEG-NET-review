@@ -1,41 +1,5 @@
 #!/usr/bin/env python
-"""
-train_stage1c_fasterrcnn.py
-Phase 19N Stage 1C — Faster R-CNN/FPN established detector.
 
-RetinaNet stopped after R1a_v2 (mAP=0.0451) and R1a_v3 (mAP=0.0394) both failed
-the detector gate (mAP50 >= 0.05, all class AP50 >= 0.05).
-
-This script started as the historical R2a baseline and is now reused for the
-r4a/r5-series Faster R-CNN variants, including the current strong baseline
-`r5b_ext25`.
-
-The detector uses torchvision Faster R-CNN/FPN with:
-  - Pretrained COCO backbone (non-novel supporting component)
-  - Small-object-aware anchors (MA lesions are ~8x8px at model input)
-  - Same class mapping as all prior Stage 1 experiments
-  - hflip_prob=0.0 (no augmentation change)
-  - Balanced checkpoint: mAP50 + 0.5 * min_class_AP50
-
-Label mapping (locked):
-  ma -> 1 -> MA
-  he -> 2 -> HE
-  ex -> 3 -> Hard_EX
-  se -> 4 -> Soft_EX
-  background -> 0
-
-Usage:
-  # Smoke test
-  python tools/train_stage1c_fasterrcnn.py --max_images 8 --epochs 1 --smoke_test
-
-    # Reference r5b_ext25-style run
-  python tools/train_stage1c_fasterrcnn.py \\
-        --epochs 25 --batch_size 2 --lr 1e-4 \
-    --freeze_backbone_epochs 5 \\
-    --lr_schedule cosine \\
-    --seed 42 \\
-        --output_dir outputs/detector_stage1/stage1c_fasterrcnn_r5b_ext25
-"""
 
 from __future__ import annotations
 
@@ -173,7 +137,7 @@ def _build_fasterrcnn(
     roi_focal_gamma: float = 2.0,
     roi_focal_alpha_mode: str = "batch_balanced",
 ) -> torch.nn.Module:
-    """Load pretrained Faster R-CNN/FPN and replace classification head."""
+
     anchor_gen = AnchorGenerator(
         sizes=_ANCHOR_SIZES,
         aspect_ratios=_ANCHOR_RATIOS,
@@ -421,7 +385,7 @@ def _iou_matrix(a: torch.Tensor, b: torch.Tensor) -> torch.Tensor:
 
 
 def _ap50_manual(cls_id: int, preds: List[Dict], targets: List[Dict]) -> float:
-    """11-point interpolated AP50 for a single class."""
+
     det_scores, det_tp = [], []
     n_gt = 0
     for pred, tgt in zip(preds, targets):
@@ -479,7 +443,7 @@ def _manual_map50_result(preds: List[Dict], targets: List[Dict]) -> Dict:
 
 @torch.no_grad()
 def _val_map50(model, loader, device, score_thresh) -> Dict:
-    """Compute mAP50 and per-class AP50. Uses score_thresh=0.01 for comparability."""
+
     model.eval()
     _eval_thresh = 0.01
     all_preds, all_targets = [], []

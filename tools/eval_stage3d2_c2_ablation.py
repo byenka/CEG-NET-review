@@ -1,42 +1,5 @@
 #!/usr/bin/env python
-"""
-eval_stage3d2_c2_ablation.py
-Phase 19N — Stage 3D.2: C2 Ablation Audit.
 
-Determines whether B2_MLP gain over B0 (confirmed in Stage 3D.1) comes from
-clinical KG-derived SDCA, or merely from nonlinear score/class transformation.
-
-Ablation variants tested (all use MLP + SAS, varying only the second feature):
-  B0               : score threshold (baseline, no model)
-  B1               : [SAS]
-  B2_clinical      : [SAS, SDCA_clinical]  ← model under evaluation
-  B2_uniform       : [SAS, 0.5]            ← SDM collapses to uniform distance
-  B2_shuffled      : [SAS, SDCA_shuffled]  ← SDCA shuffled in train, orig in val/test
-  B2_score_pct     : [SAS, score_percentile] ← replace SDCA with score rank
-  B2_class_only    : [SAS, one_hot(pred_class)] ← 5 features: SAS + 4 class bits
-  B2_random_sdm_s* : [SAS, SDCA_random]  ← random class-conditioned values, 5 seeds
-
-Decision rule:
-    KG-derived SDCA contribution is only confirmed if B2_clinical consistently
-    and significantly beats B0 plus the main artifact controls
-    (B2_uniform/B2_shuffled/B2_score_pct/B2_class_only/B2_random_sdm)
-    across TP_ret targets on the test split.
-
-Inputs:
-  outputs/stage3c_audit/governance_features_{train,valid,test}.csv
-
-Outputs:
-  outputs/stage3d_ablation/c2_ablation_results.csv
-  outputs/stage3d_ablation/bootstrap_fp_supp_gain_ci.csv
-  outputs/stage3d_ablation/c2_ablation_decision.md
-
-Usage:
-    python tools/eval_stage3d2_c2_ablation.py \\
-      --stage3c_dir outputs/stage3c_audit \\
-      --output_dir  outputs/stage3d_ablation
-
-    python tools/eval_stage3d2_c2_ablation.py --lr_only  # skip MLP (faster debug)
-"""
 
 from __future__ import annotations
 
@@ -102,13 +65,7 @@ def _parse_records(records: List[dict]) -> Tuple[
     np.ndarray,  # is_tp
     List[str],  # image_ids
 ]:
-    """Parse records into base feature arrays.
 
-    Returns features dict with:
-      pred_score, ev_sas, ev_sdca_clinical,
-      class_MA, class_HE, class_Hard_EX, class_Soft_EX,
-      class_idx  (int array, for random SDM lookup)
-    """
     keys_float = ["pred_score", "ev_sas", "ev_sdca", "ev_aps", "ev_pss"]
     feat_lists: Dict[str, list] = {k: [] for k in keys_float}
     feat_lists["class_idx"] = []
@@ -175,12 +132,12 @@ def _parse_records(records: List[dict]) -> Tuple[
 
 
 def _make_sdca_uniform(n: int) -> np.ndarray:
-    """All class pairs assigned distance 0.5 (uniform SDM)."""
+
     return np.full(n, 0.5, dtype=np.float32)
 
 
 def _make_sdca_shuffled(sdca_clinical: np.ndarray, seed: int = 42) -> np.ndarray:
-    """Shuffle clinical SDCA values within this split (breaks semantic meaning)."""
+
     rng = np.random.default_rng(seed)
     shuffled = sdca_clinical.copy()
     rng.shuffle(shuffled)
@@ -188,12 +145,7 @@ def _make_sdca_shuffled(sdca_clinical: np.ndarray, seed: int = 42) -> np.ndarray
 
 
 def _make_sdca_random(class_idx: np.ndarray, seed: int) -> np.ndarray:
-    """Random class-conditioned SDCA using a random SDM (one per seed).
 
-    Generates a random 4x4 symmetric distance matrix (diag=0, values in [0,1]).
-    Assigns SDCA[box] = random_SDM[pred_class_idx, runner_up_idx].
-    Runner-up = first non-predicted class by index order.
-    """
     rng = np.random.default_rng(seed + 1000)  # offset to avoid overlap with other seeds
     # Random symmetric 4x4 SDM
     raw = rng.uniform(0.0, 1.0, size=(4, 4)).astype(np.float32)
@@ -214,12 +166,7 @@ def _build_feature_matrix(
     random_seed: int = 0,
     is_train: bool = False,
 ) -> np.ndarray:
-    """Build feature matrix X for a given ablation variant.
 
-    variant must be one of:
-      B0, B1, B2_clinical, B2_uniform, B2_shuffled,
-      B2_score_pct, B2_class_only, B2_random_sdm
-    """
     sas = feat["ev_sas"].reshape(-1, 1)
 
     if variant == "B0":
@@ -293,7 +240,7 @@ def _proba(model: object, sc: object, X: np.ndarray) -> np.ndarray:
 def _find_op_thresh(
     y_true: np.ndarray, y_score: np.ndarray, target: float
 ) -> Optional[float]:
-    """Highest threshold on this split where TP_ret >= target."""
+
     retain = y_true == 1
     n_ret = int(retain.sum())
     if n_ret == 0:
@@ -349,11 +296,7 @@ def _bootstrap_fp_supp_gain(
     n_bootstrap: int = 1000,
     seed: int = 42,
 ) -> dict:
-    """Bootstrap 95% CI for FP_supp_gain = FP_supp(model) - FP_supp(B0).
 
-    Resamples images (with replacement) from the TEST split.
-    Thresholds are fixed (selected from validation); only test set is bootstrapped.
-    """
     if not _SK:
         return {
             "mean_gain": None,

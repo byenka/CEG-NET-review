@@ -1,31 +1,4 @@
-"""
-coco_adapter.py
-FASE 19M-B — Pascal VOC XML → torchvision detection dataset adapter.
 
-Converts the LGov-Net Pascal VOC XML annotations into a PyTorch Dataset
-compatible with torchvision detection models (RetinaNet, FCOS, Faster R-CNN).
-
-Torchvision detection contract:
-    image:  Tensor [3, H, W]  in [0, 1] range (NO ImageNet normalization)
-    target: Dict {
-        "boxes":  FloatTensor [N, 4]  pixel coords [x1, y1, x2, y2]
-        "labels": Int64Tensor [N]     1-indexed class labels (0 = background)
-    }
-
-Class mapping (1-indexed for torchvision):
-    1 = MA
-    2 = HE
-    3 = Hard_EX
-    4 = Soft_EX
-
-Usage:
-    from src.data.coco_adapter import DRDetectionDataset, LABEL_NAMES
-
-    ds = DRDetectionDataset(split="train", data_root="data")
-    image, target = ds[0]
-    # image:  FloatTensor [3, H, W]
-    # target: {"boxes": FloatTensor[N,4], "labels": Int64Tensor[N]}
-"""
 
 from __future__ import annotations
 
@@ -80,21 +53,12 @@ NUM_CLASSES: int = len(LABEL_NAMES)
 
 
 def collate_fn(batch):
-    """Custom collate for variable-length detection targets."""
+
     return tuple(zip(*batch))
 
 
 class DRDetectionDataset(Dataset):
-    """Pascal VOC XML dataset adapted for torchvision detection models.
 
-    Returns ALL valid bounding boxes per image (not just the first one).
-    Images with no valid boxes are excluded.
-
-    Args:
-        split:      'train', 'valid', or 'test'.
-        data_root:  Directory containing ``images/`` and ``xml/`` sub-dirs.
-        max_images: Cap on number of images (None = no cap).
-    """
 
     def __init__(
         self,
@@ -220,7 +184,7 @@ class DRDetectionDataset(Dataset):
         return image, target
 
     def get_class_counts(self) -> Dict[str, int]:
-        """Count total annotations per class across dataset."""
+
         counts = {name: 0 for name in LABEL_NAMES}
         for s in self._samples:
             for lbl in s["labels"]:
